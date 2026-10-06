@@ -1,4 +1,4 @@
-import type { ChatMode, ChatTextSize, GenSettings } from '../../core/config/types';
+import type { ChatMode, ChatTextSize, HaratsanSettings } from '../../core/config/types';
 import type { TokenUsage } from '../../core/llm/usage';
 import type { ConfirmChoice } from '../agent/types';
 import type { DiffHunkPayload, HunkReviewStatus } from '../agent/diff';
@@ -63,7 +63,7 @@ export interface ChatUiMessage {
 	toolArgs?: string;
 	toolStatus?: ToolCallStatus;
 	usage?: TokenUsage;
-	// Картинки, сохранённые в `.gen/attachments/`
+	// Картинки, сохранённые в `.haratsan/attachments/`
 	attachments?: Array<{ path: string; mimeType: string }>;
 }
 
@@ -180,7 +180,7 @@ export interface ChatViewState {
 	pendingQuestion?: PendingQuestion;
 	todos?: ChatTodoItem[];
 	project?: ChatProjectStatus;
-	// Кастомные slash из `.gen/commands` для автодополнения Composer
+	// Кастомные slash из `.haratsan/commands` для автодополнения Composer
 	customSlashCommands?: Array<{
 		id: string;
 		name: string;
@@ -213,8 +213,8 @@ export interface ChatViewState {
 }
 
 export type ToWebviewMessage = | { type: 'state'; state: ChatViewState }
-	| { type: 'settings'; settings: GenSettings; apiKeySet: boolean; webSearchApiKeySet?: boolean; persistedAlwaysAllow?: string[]; personas?: PersonaOption[]; adminPolicy?: AdminPolicyInfo }
-	| { type: 'settingsSaved'; settings: GenSettings; apiKeySet: boolean; webSearchApiKeySet?: boolean; persistedAlwaysAllow?: string[]; personas?: PersonaOption[]; adminPolicy?: AdminPolicyInfo }
+	| { type: 'settings'; settings: HaratsanSettings; apiKeySet: boolean; webSearchApiKeySet?: boolean; persistedAlwaysAllow?: string[]; personas?: PersonaOption[]; adminPolicy?: AdminPolicyInfo }
+	| { type: 'settingsSaved'; settings: HaratsanSettings; apiKeySet: boolean; webSearchApiKeySet?: boolean; persistedAlwaysAllow?: string[]; personas?: PersonaOption[]; adminPolicy?: AdminPolicyInfo }
 	| { type: 'settingsError'; message: string }
 	| { type: 'models'; models: Array<{ id: string; label: string }>; requestId: number }
 	| { type: 'modelsError'; message: string; requestId: number }
@@ -225,12 +225,12 @@ export type ToWebviewMessage = | { type: 'state'; state: ChatViewState }
 	| { type: 'indexStatus'; status: IndexEngineStatus }
 	| { type: 'hooksData'; beforeSubmit: string[]; beforeShell: string[]; sessionDiff: string[]; sessionCompacting: string[]; shellEnv: string[]; fileWatcher: string[]; path?: string; error?: string; }
 	| { type: 'hooksSaved'; ok: boolean; error?: string }
-	// Builtin presets + кастомные агенты из `.gen/agents/`
+	// Builtin presets + кастомные агенты из `.haratsan/agents/`
 	| { type: 'agentsData'; presets: AgentPresetInfo[]; custom: AgentCustomInfo[]; error?: string }
 	| { type: 'agentsCloned'; relativePath: string; created: boolean; error?: string }
 	// Кандидаты rules + discovered skills/plugins (read-only UI)
 	| { type: 'rulesSkillsData'; rules: Array<{ label: string; path: string; exists: boolean }>; skills: Array<{ name: string; description: string; path: string }>; plugins: Array<{ kind: 'tool' | 'plugin' | 'npm'; name: string; description: string; path: string }>; }
-	// Список персон (builtin + `.gen/personas/*.md`) для Settings * Personas
+	// Список персон (builtin + `.haratsan/personas/*.md`) для Settings * Personas
 	| { type: 'personasData'; personas: PersonaOption[] }
 	// Короткий beep в chat webview (завершение хода)
 	| { type: 'playNotifySound' };
@@ -256,7 +256,7 @@ export interface PersonaOption {
 	description: string;
 	// Workspace-relative путь к `.md` (пусто у builtin)
 	path?: string;
-	// Источник: встроенный пресет или `.gen/personas/*.md`
+	// Источник: встроенный пресет или `.haratsan/personas/*.md`
 	source?: 'builtin' | 'custom';
 }
 
@@ -281,7 +281,7 @@ export type FromWebviewMessage = | { type: 'ready' }
 	| { type: 'setModel'; model: string }
 	| { type: 'openExternal'; url: string }
 	| { type: 'openSettings' }
-	| { type: 'saveSettings'; settings: GenSettings; apiKey?: string; clearApiKey?: boolean; webSearchApiKey?: string; clearWebSearchApiKey?: boolean; persistedAlwaysAllow?: string[] }
+	| { type: 'saveSettings'; settings: HaratsanSettings; apiKey?: string; clearApiKey?: boolean; webSearchApiKey?: string; clearWebSearchApiKey?: boolean; persistedAlwaysAllow?: string[] }
 	| { type: 'loadModels'; baseUrl: string; requestId: number }
 	| { type: 'checkConnection'; baseUrl: string; requestId: number }
 	| { type: 'openLogsFolder' }
@@ -314,7 +314,7 @@ export type FromWebviewMessage = | { type: 'ready' }
 	| { type: 'loadAgents' }
 	| { type: 'cloneAgentPreset'; id: string }
 	| { type: 'loadRulesSkills' }
-	// Пересканировать персоны (builtin + `.gen/personas/*.md`)
+	// Пересканировать персоны (builtin + `.haratsan/personas/*.md`)
 	| { type: 'loadPersonas' }
 	// Открыть путь проекта / абсолютный файл в редакторе (или http(s) во внешнем браузере)
 	| { type: 'openProjectPath'; path: string }

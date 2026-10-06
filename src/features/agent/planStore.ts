@@ -3,7 +3,7 @@ import { applyPlanFileText, DEFAULT_PLAN_RELATIVE, serializePlanMarkdown } from 
 import type { PlanReloadResult } from './planFile';
 import type { StickyPlan, StickyPlanSnapshot } from './plan';
 
-// Читает/пишет .gen/plan.md в первой папке workspace
+// Читает/пишет .haratsan/plan.md в первой папке workspace
 export class WorkspacePlanStore {
 	private lastCanonical = '';
 	private watcher?: vscode.FileSystemWatcher;
@@ -121,7 +121,7 @@ export class WorkspacePlanStore {
 		return result;
 	}
 
-	// Сбросить канон для diff; план загружается заново из `.gen/plan.md`
+	// Сбросить канон для diff; план загружается заново из `.haratsan/plan.md`
 	resetCanonical(): void {
 		this.lastCanonical = '';
 	}

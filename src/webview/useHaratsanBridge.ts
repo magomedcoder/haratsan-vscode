@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdminPolicyInfo, ChatViewState, IndexEngineStatus, PanelScreen, PersonaOption, ToWebviewMessage } from '../features/chat/protocol';
-import type { GenSettings } from '../core/config/types';
+import type { HaratsanSettings } from '../core/config/types';
 import { DEFAULT_SETTINGS } from '../core/config/types';
 import type { LlmModelOption } from '../core/llm/types';
 import type { AgentsPageData } from './components/settings/AgentsPage';
@@ -48,10 +48,10 @@ function playNotifyBeep(): void {
 	} catch {}
 }
 
-export function useGenBridge() {
+export function useHaratsanBridge() {
 	const [screen] = useState<PanelScreen>(readInitialScreen);
 	const [chat, setChat] = useState<ChatViewState>(EMPTY_CHAT);
-	const [settings, setSettings] = useState<GenSettings>(DEFAULT_SETTINGS);
+	const [settings, setSettings] = useState<HaratsanSettings>(DEFAULT_SETTINGS);
 	const [personas, setPersonas] = useState<PersonaOption[]>([]);
 	const [adminPolicy, setAdminPolicy] = useState<AdminPolicyInfo | undefined>();
 	const [apiKeySet, setApiKeySet] = useState(false);
@@ -218,7 +218,7 @@ export function useGenBridge() {
 		return () => window.removeEventListener('message', onMessage);
 	}, []);
 
-	const saveSettings = useCallback((next: GenSettings, api?: {
+	const saveSettings = useCallback((next: HaratsanSettings, api?: {
 		apiKey?: string;
 		clearApiKey?: boolean;
 		webSearchApiKey?: string;

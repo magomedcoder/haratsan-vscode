@@ -127,7 +127,7 @@ function toStickySteps(plan: AgentPlan): StickyPlanStep[] {
 	}));
 }
 
-// План сессии: in-memory кэш; при старте и перед ходом агента подгружается из `.gen/plan.md`
+// План сессии: in-memory кэш; при старте и перед ходом агента подгружается из `.haratsan/plan.md`
 export class StickyPlan {
 	private title = '';
 	private steps: StickyPlanStep[] = [];

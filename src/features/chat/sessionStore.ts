@@ -1,12 +1,12 @@
 import type { Memento } from 'vscode';
 import type { ChatUiMessage } from './protocol';
 
-const SESSIONS_KEY = 'gen.chat.sessions';
-const CURRENT_ID_KEY = 'gen.chat.currentSessionId';
+const SESSIONS_KEY = 'haratsan.chat.sessions';
+const CURRENT_ID_KEY = 'haratsan.chat.currentSessionId';
 // Черновики Composer: sessionId * текст
-const DRAFTS_KEY = 'gen.chat.drafts';
+const DRAFTS_KEY = 'haratsan.chat.drafts';
 // Chips Composer: sessionId * insert-строки
-const DRAFT_CHIPS_KEY = 'gen.chat.draftChips';
+const DRAFT_CHIPS_KEY = 'haratsan.chat.draftChips';
 
 const MAX_SESSIONS = 40;
 const MAX_STORED_MESSAGES = 80;

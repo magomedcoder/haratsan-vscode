@@ -4,7 +4,9 @@
 
 ## dev (Версия в разработке)
 
-- **Index / semantic:** стабильные remote embeddings (batch+retry+timeout, кэш `.gen/index/vectors.json` по content-hash); `localEmbeddingsMode=vector` локальный dense hash index; offline eval + парафразы, `recallAtK`, local-vector gate
+- **Index storage:** индекс кодовой базы и project map перенесены в VS Code `storageUri` (больше не пишутся в `.haratsan/index` / `.haratsan/map`; миграции старых файлов проекта нет)
+- **Переименование:** продукт переименован с Gen в **Haratsan** (UI, команды, настройки, пути конфига)
+- **Index / semantic:** стабильные remote embeddings (batch+retry+timeout, кэш `.haratsan/index/vectors.json` по content-hash); `localEmbeddingsMode=vector` локальный dense hash index; offline eval + парафразы, `recallAtK`, local-vector gate
 
 ## 0.5.0 (30 сентября 2026)
 
@@ -27,11 +29,11 @@
 - **Shell:** потоковый stdout/stderr для long `run_command` / `run_tests` / `run_scratch` (карточка tool + busyDetail, throttle 120ms); cancel через AbortSignal без гонок status
 - **Teams UI:** ResearchJobsPanel + Teams - карточки jobs субагентов (статус / interrupt / attach transcript), связка parent<->child сессий
 - **Субагенты:** `task` `background` / interrupt / resume; fan-out `prompts[]`; `allow_mutating_parallel` для mutating parallel (worktree на job); scout/explore `cleanup_worktree` + bulk cleanup в Teams
-- **Project:** `synthesize` пишет aggregate-отчёты в `.gen/reports/`
+- **Project:** `synthesize` пишет aggregate-отчёты в `.haratsan/reports/`
 - **Debug:** живой захват терминала через Shell Integration (`onDidStartTerminalShellExecution` + meta cmd/exit); ANSI срезается; в Debug Mode хвосты терминалов подмешиваются сами (если нет явного `@terminals`); `@terminals` выше ранжирует ненулевой exit
 - **Shell / PowerShell:** `run_scratch` умеет `.ps1` через `pwsh -File` (fallback `powershell`); file-based `pwsh`/`bash` разрешены даже из `deniedCommands`; `-Command`/`-c` по-прежнему запрещены; на Windows worktree start предпочитает `pwsh` (fallback `cmd.exe`)
 - **Shell / notify_on_output:** матч только по **новому** выводу job (без false positive на старый буфер); ANSI срезается; busyDetail/partial preview при watching / MATCH
-- **Shell / profiles:** `.gen/shell.json` - env templates и named profiles (`pathPrepend`/`pathAppend`); применяются в `run_command` / `run_tests` / `run_scratch` до хука `shell.env`; выбор: tool `profile`, `GEN_SHELL_PROFILE` или `defaultProfile`
+- **Shell / profiles:** `.haratsan/shell.json` - env templates и named profiles (`pathPrepend`/`pathAppend`); применяются в `run_command` / `run_tests` / `run_scratch` до хука `shell.env`; выбор: tool `profile`, `HARATSAN_SHELL_PROFILE` или `defaultProfile`
 - **Sessions:** `tabEvictionPolicy` (`closeOldestIdle` по умолчанию / `block`) - на лимите `maxTabCount` new/fork/handoff закрывает самые старые idle (не current и не busy)
 - **Sessions / compact:** lossless `exportArchive` на диске (ExtensionContext.storageUri / `export-archives/`); баннер + `/restore-archive` после compact; архив сбрасывается при clear/delete/restore
 
@@ -41,16 +43,16 @@
 - **Параллельный research:** `task` с `prompts[]` (+ `max_parallel`) для read-only fan-out; статус busy; агрегированный JSON
 - **Tools:** `list_code_definition_names` (top-level defs по outline, multi-root); `new_task` - handoff в новую вкладку
 - **Mentions:** `@problems`, `@git-changes` (staged/unstaged); поиск outline по всем корням workspace
-- **IDE:** Explain / Improve выделение; Add to Gen из editor / terminal / notebook; единый `gen.addToChat`
+- **IDE:** Explain / Improve выделение; Add to Haratsan из editor / terminal / notebook; единый `haratsan.addToChat`
 - **Plan <-> Act:** настройки `planModel` / `actModel`; `/deep-planning`; маршрутизация модели по режиму
 - **Checkpoints:** `/undo files|task`; `/compare` (Files / Task / оба / diff); `backgroundEditMode`
 - **Permissions:** быстрые пресеты (Ask all / Dev / Allow most)
-- **Worktrees:** команда «Gen: Управление worktrees» (список / открыть / удалить)
-- Plugins: `run_plugin` - spawn объявленных `command`/`args` или `bin` только под workspace (shell confirm; без `require` в host); `package.json` `gen`/`genAgent` и `.gen/npm-plugins.json` в `list_plugins` (без require/execute)
+- **Worktrees:** команда «Haratsan: Управление worktrees» (список / открыть / удалить)
+- Plugins: `run_plugin` - spawn объявленных `command`/`args` или `bin` только под workspace (shell confirm; без `require` в host); `package.json` `haratsan`/`haratsanAgent` и `.haratsan/npm-plugins.json` в `list_plugins` (без require/execute)
 - Project polish: бейдж «Project lead», усиленный промпт тимлида / `/project`, напоминание синтезировать после `task`
 - Режим **project**: промпт тимлида, slash `/project`, мутирующие tools как в multitask
 - **Tool confirm UX:** статус `awaiting_confirm` на карточке tool + строка busy; pretty JSON args; один центральный ask до execute; ConfirmCard в composer dock; вопрос перед text-only fallback, если сервер отклонил tools
-- **Index/codebase MVP:** `localEmbeddingsMode` (`off`|`trigram`); `embeddingsBaseUrl` / `embeddingsModel`; TS outline -> `.gen/index/outline.json`; tools `find_references`, `design_inspect`; PDF text + до 3 PNG через `pdftoppm`; debounce outline/symbols на watcher
+- **Index/codebase MVP:** `localEmbeddingsMode` (`off`|`trigram`); `embeddingsBaseUrl` / `embeddingsModel`; TS outline -> `.haratsan/index/outline.json`; tools `find_references`, `design_inspect`; PDF text + до 3 PNG через `pdftoppm`; debounce outline/symbols на watcher
 - Context: n_ctx probe + budget UI + hygiene; Merkle/LSP symbols/`@map`; `edit_file` / scratch / ephemeral / `repo_health`
 - `smallModel`: общий `resolveSmallModel` для title + compact/summary
 
@@ -59,17 +61,17 @@
 - **Переполнение контекста:** разбор `exceed_context_size_error` (в т.ч. вложенный JSON llama.cpp); preflight оценка + shrink; auto-compact перед ходом; ограниченный retry; `contextOverflowPolicy` на экране Запросы; понятные ошибки вместо сырого HTTP 400
 - Permissions v2: UI политики подтверждений (`allow` / `ask` / `review` / `deny`), Always + подсказка паттерна, session allowlist, auto-approve, continue-on-deny, capability toggles
 - Карточка подтверждения: кнопка **Always** + hint; allow/deny провайдеров по паттерну (`providerUsePolicy`)
-- Admin policy: блокировка security-ключей через `GEN_ADMIN_POLICY` / `/etc/gen/policy.json` (баннер read-only в Settings)
+- Admin policy: блокировка security-ключей через `HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` (баннер read-only в Settings)
 - Slash-режимы: `/debug` `/design` `/plan` `/ask` `/agent`; также `/export` `/init` `/compact` `/new` `/undo` `/sessions` `/models`
 - Режим **Plan**: правки только на чтение; shell ask или deny (`planShellPolicy`); handoff Plan<->Agent (banner + reminders)
-- Multitask + `plan_enter` / `plan_exit` / `switch_mode`; артефакты WritePlan в `.gen/plans/`
+- Multitask + `plan_enter` / `plan_exit` / `switch_mode`; артефакты WritePlan в `.haratsan/plans/`
 - Experimental code-mode: opt-in tool `execute` - JSON-шаги (без eval JS на хосте)
-- Skills и rules: `AGENTS.md` / `.genrules`, discovery + tool `skill`, `/init`; экран Rules/Skills
-- Personas: dropdown в Chat + экран Personas (`.gen/personas/`); экран Agents - clone builtin presets в `.gen/agents/`
-- Локальные plugins/tools: discovery `.gen/tools` и `.gen/plugins` (каталог + `list_plugins` / `plugin`)
-- Scaffold проекта: Enable / `/init` создаёт `.gen/{agents,commands,plugins,skills,tools,references,plans}`
-- Слои конфига: user `~/.config/gen/config.json` + project `.gen/config.json`; JSON Schema + валидация VS Code
-- Hooks: экран `.gen/hooks.json`; события `beforeSubmit` / `beforeShell` / `session.diff` / `session.compacting` / `shell.env` / `file.watcher`
+- Skills и rules: `AGENTS.md` / `.haratsanrules`, discovery + tool `skill`, `/init`; экран Rules/Skills
+- Personas: dropdown в Chat + экран Personas (`.haratsan/personas/`); экран Agents - clone builtin presets в `.haratsan/agents/`
+- Локальные plugins/tools: discovery `.haratsan/tools` и `.haratsan/plugins` (каталог + `list_plugins` / `plugin`)
+- Scaffold проекта: Enable / `/init` создаёт `.haratsan/{agents,commands,plugins,skills,tools,references,plans}`
+- Слои конфига: user `~/.config/haratsan/config.json` + project `.haratsan/config.json`; JSON Schema + валидация VSCode
+- Hooks: экран `.haratsan/hooks.json`; события `beforeSubmit` / `beforeShell` / `session.diff` / `session.compacting` / `shell.env` / `file.watcher`
 - Субагенты: `task` (`explore` / `general`), лимит вложенности, опциональные git worktrees + start command после create
 - Tools: `glob`, `grep`, `file_search`, `web_search`, `todo_write` / `todo_read`, `ask_question`, `edit_notebook`, `lsp`, `semantic_search` / `search_docs`
 - Web search: DuckDuckGo, Exa, Parallel или custom HTTP; model-routed patch (GPT оставляет `apply_patch`)
@@ -80,7 +82,7 @@
 - Indexing: toggles + статус движка (CPU trigram / remote embeddings); opt-in OTEL spans для LLM
 - Settings UI: отдельные экраны (Чат / Агент / Индекс / Права); нав Основное / Дополнительно; все разделы всегда видны; удобнее toggles полей
 - Usage: ledger токенов по моделям (totals/sort); placeholder Quota (OAuth)
-- Поиск по Settings; deep-links в VS Code; sidebar или bottom panel (`chatViewLocation`); light/HC polish
+- Поиск по Settings; deep-links в VSCode; sidebar или bottom panel (`chatViewLocation`); light/HC polish
 - LLM: учёт `Retry-After` при 429/5xx со статусом в composer; параллельные read-only tool batches; обрезка вывода tools
 - Images/attachments: paste/drag + vision; `read_file` изображений; лимиты resize; export/import сессий; lossless archive после compact
 
@@ -92,13 +94,13 @@
 - Исправление **Без спроса** (`open`): без диалогов для команд, плана и overwrite правок пользователя
 - Лимит итераций агента: `0` = без лимита
 - Локализация: чат/настройки webview + UI host через `l10n/bundle.l10n*.json` (EN/RU; новый язык - новый bundle-файл)
-- Opt-in проекта: не создавать `.gen/` при открытии папки; в чате Gen кнопка **Создать конфиг и индекс** (`.gen/config.json` + индекс)
+- Opt-in проекта: не создавать `.haratsan/` при открытии папки; в чате Gen кнопка **Создать конфиг и индекс** (`.haratsan/config.json` + индекс)
 - Composer context chips для `@file` / `@folder` / `@codebase` (выбор из автодополнения, снятие перед отправкой)
 - Редактирование user-сообщения; история после него обрезается и turn переотправляется
 - Accept / Reject по хункам в карточке tool-diff в чате
-- Настройки: отключить запись `.gen/plan.md` (`planWriteToFile`); при перезапуске план загружается из файла, не из workspaceState
+- Настройки: отключить запись `.haratsan/plan.md` (`planWriteToFile`); при перезапуске план загружается из файла, не из workspaceState
 - Режимы чата **Debug** / **Design**: tools логов (`find_logs`, `read_log_tail`) и Simple Browser / `fetch_page`
-- **`.genrules`** - опциональный файл правил проекта в system prompt agent / ask / комментариев
+- **`.haratsanrules`** - опциональный файл правил проекта в system prompt agent / ask / комментариев
 - Очередь turns при занятом агенте (**В очередь**; **Стоп** / **Очистить** сбрасывают очередь); итог токенов сессии в лог agent
 
 ## 0.1.0 (24 августа 2026)
@@ -112,16 +114,16 @@
   - LLM -> tool calls -> выполнение tools -> возврат результатов
   - карточки tool-call в чате (pending/ok/denied/error)
   - diff-preview для правок в режиме комментариев (и patch-first подход)
-  - multi-file plan: `propose_plan` -> `.gen/plan.md` (sticky, переживает clear чата) + `update_plan` + карточка «Открыть» / ручной edit с diff для модели
-  - локальный индекс кодовой базы (`.gen/index/`) + tool `codebase_search`
+  - multi-file plan: `propose_plan` -> `.haratsan/plan.md` (sticky, переживает clear чата) + `update_plan` + карточка «Открыть» / ручной edit с diff для модели
+  - локальный индекс кодовой базы (`.haratsan/index/`) + tool `codebase_search`
   - checkpoints: снапшот файлов до agent turn и предложение восстановления
-  - своё подтверждение: карточка в чате Gen для agent, комментариев и checkpoint (без отдельной вкладки и без native MessageBox)
+  - своё подтверждение: карточка в чате Haratsan для agent, комментариев и checkpoint (без отдельной вкладки и без native MessageBox)
   - совместное редактирование: снимок после write/patch, запрет full `write_file` поверх user-diff, confirm при patch поверх правок пользователя
-  - аудита в `Output` (`Gen Agent`): tool, путь/детали (с redaction), длительность, ok/error/denied
+  - аудита в `Output` (`Haratsan`): tool, путь/детали (с redaction), длительность, ok/error/denied
 - Workspace tools (sandboxed)
   - `list_dir`, `read_file`, `search_files`, `write_file`, `apply_patch`, `delete_file`, `create_dir`
   - path sandbox: запрет выхода за workspace (`..`, symlink escape, пути вне workspace)
-  - `.gitignore` / `.genignore` в корне workspace (пакет `ignore`, без `git check-ignore` на каждый tool)
+  - `.gitignore` / `.haratsanignore` в корне workspace (пакет `ignore`, без `git check-ignore` на каждый tool)
   - подтверждение для опасных операций (write/patch/delete и т.п.)
   - git tools в read-only режиме (`git_status`), диагностика (`get_diagnostics`)
   - команды/терминал с allow/denylist политиками
@@ -130,14 +132,14 @@
   - авторизация через `Authorization: Bearer` (или настраиваемые заголовок и схема)
   - retry для `429` и `5xx` с backoff (с сохранением ошибки/причин)
   - отмена запросов: отдельная обработка timeout vs abort
-  - логи запросов в `Output` (`Gen LLM`) без body и без ключа
+  - логи запросов в `Output` (`Haratsan LLM`) без body и без ключа
   - (опционально) запись логов на диск в фоне: `llm.log` / `agent.log` с очередью без блокировки запросов
 - Настройки продукта (в основном окне редактора, не в webview-панели чата)
   - настройки разделены на страницы: «Основное», «Чат и агент», «Запросы», «Комментарии», «Безопасность», «Логи»
   - кнопка «Сбросить по умолчанию»
   - загрузка моделей по `baseUrl`
 - Команды и локализация
-  - категория `Gen` в палитре команд
+  - категория `Haratsan` в палитре команд
   - сочетания по умолчанию: `Ctrl+Alt+G` - открыть чат; `Ctrl+Alt+/` - прокомментировать выделение
   - EN/RU: `package.nls` (манифест) и `vscode.l10n` (сообщения extension host)
 - Пайплайн комментариев

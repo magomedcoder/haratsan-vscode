@@ -2,12 +2,12 @@ import type { WebviewL10nPack } from '../l10n/loadBundle';
 
 declare global {
 	interface Window {
-		__GEN_L10N__?: WebviewL10nPack;
+		__HARATSAN_L10N__?: WebviewL10nPack;
 	}
 }
 
 function pack(): WebviewL10nPack {
-	return window.__GEN_L10N__ ?? { 
+	return window.__HARATSAN_L10N__ ?? { 
 		locale: 'en',
 		strings: {}
 	};

@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { buildAuthHeaders } from '../core/config/apiKey.js';
 import { HttpLlmClient } from '../core/llm/client.js';
 import { isRetryableError, LlmHttpError, parseRetryAfterMs, retryDelayMs, withCause } from '../core/llm/errors.js';
-import type { GenSettings } from '../core/config/types.js';
+import type { HaratsanSettings } from '../core/config/types.js';
 import { DEFAULT_SETTINGS } from '../core/config/types.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -12,7 +12,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 	});
 }
 
-function testSettings(over: Partial<GenSettings> = {}): GenSettings {
+function testSettings(over: Partial<HaratsanSettings> = {}): HaratsanSettings {
 	return {
 		...DEFAULT_SETTINGS,
 		baseUrl: 'http://llm.test',

@@ -94,7 +94,7 @@ export const fetchPageTool: ToolDefinition = {
 				redirect: 'follow',
 				headers: {
 					Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1',
-					'User-Agent': 'Gen-VSCode-Agent/0.2',
+					'User-Agent': 'Haratsan-VSCode-Agent/0.2',
 				},
 			});
 			const buf = await res.arrayBuffer();

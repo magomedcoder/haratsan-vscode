@@ -5,7 +5,7 @@ import { runCommentPipeline } from './runCommentPipeline';
 
 // Регистрирует команду "Прокомментировать выделение"
 export function registerCommentSelection(diffProvider: DiffContentProvider): vscode.Disposable {
-	return vscode.commands.registerCommand('gen.commentSelection', async () => {
+	return vscode.commands.registerCommand('haratsan.commentSelection', async () => {
 		const editor = getActiveEditor();
 		if (!editor) {
 			void vscode.window.showErrorMessage(vscode.l10n.t('comment.noActiveEditor'));

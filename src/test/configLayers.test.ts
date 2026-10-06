@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { deepMerge, parseFileConfig, pickNonDefaultSettings } from '../core/config/layers.js';
 import { applyAdminPolicy, matchAdminPattern, parseAdminPolicy, reloadAdminPolicy, resetAdminPolicyForTests, resolveAdminPolicyCandidates } from '../core/config/adminPolicy.js';
 import { DEFAULT_SETTINGS } from '../core/config/types.js';
-import { getGenUserConfigDir, getGenUserConfigPath } from '../core/config/userPaths.js';
+import { getHaratsanUserConfigDir, getHaratsanUserConfigPath } from '../core/config/userPaths.js';
 
 suite('config layers', () => {
 	test('deepMerge: объекты рекурсивно, массивы заменой', () => {
@@ -33,13 +33,13 @@ suite('config layers', () => {
 			systemPrompt: 'hello',
 			webSearchEnabled: false,
 			unknownKey: 42,
-			hooksPath: '.gen/custom-hooks.json',
+			hooksPath: '.haratsan/custom-hooks.json',
 			hooks: { beforeSubmit: ['echo'] },
 		});
 		assert.strictEqual(parsed.settings.systemPrompt, 'hello');
 		assert.strictEqual(parsed.settings.webSearchEnabled, false);
 		assert.strictEqual((parsed.settings as { unknownKey?: unknown }).unknownKey, undefined);
-		assert.strictEqual(parsed.hooksPath, '.gen/custom-hooks.json');
+		assert.strictEqual(parsed.hooksPath, '.haratsan/custom-hooks.json');
 		assert.deepStrictEqual(parsed.hooks, { beforeSubmit: ['echo'] });
 		assert.strictEqual('version' in parsed.settings, false);
 	});
@@ -54,27 +54,27 @@ suite('config layers', () => {
 		assert.strictEqual(overlay.temperature, undefined);
 	});
 
-	test('getGenUserConfigPath уважает GEN_CONFIG_DIR и XDG', () => {
-		const prevGen = process.env.GEN_CONFIG_DIR;
+	test('getHaratsanUserConfigPath уважает HARATSAN_CONFIG_DIR и XDG', () => {
+		const prevHaratsan = process.env.HARATSAN_CONFIG_DIR;
 		const prevXdg = process.env.XDG_CONFIG_HOME;
 		try {
-			process.env.GEN_CONFIG_DIR = path.join(os.tmpdir(), 'gen-cfg-test');
-			assert.strictEqual(getGenUserConfigDir(), path.resolve(process.env.GEN_CONFIG_DIR));
+			process.env.HARATSAN_CONFIG_DIR = path.join(os.tmpdir(), 'haratsan-cfg-test');
+			assert.strictEqual(getHaratsanUserConfigDir(), path.resolve(process.env.HARATSAN_CONFIG_DIR));
 			assert.strictEqual(
-				getGenUserConfigPath(),
-				path.join(path.resolve(process.env.GEN_CONFIG_DIR), 'config.json'),
+				getHaratsanUserConfigPath(),
+				path.join(path.resolve(process.env.HARATSAN_CONFIG_DIR), 'config.json'),
 			);
 
-			delete process.env.GEN_CONFIG_DIR;
+			delete process.env.HARATSAN_CONFIG_DIR;
 			if (process.platform === 'linux') {
 				process.env.XDG_CONFIG_HOME = path.join(os.tmpdir(), 'xdg-cfg');
-				assert.ok(getGenUserConfigDir().startsWith(process.env.XDG_CONFIG_HOME));
+				assert.ok(getHaratsanUserConfigDir().endsWith(`${path.sep}haratsan`) || getHaratsanUserConfigDir().endsWith('/haratsan'));
 			}
 		} finally {
-			if (prevGen === undefined) {
-				delete process.env.GEN_CONFIG_DIR;
+			if (prevHaratsan === undefined) {
+				delete process.env.HARATSAN_CONFIG_DIR;
 			} else {
-				process.env.GEN_CONFIG_DIR = prevGen;
+				process.env.HARATSAN_CONFIG_DIR = prevHaratsan;
 			}
 			if (prevXdg === undefined) {
 				delete process.env.XDG_CONFIG_HOME;
@@ -103,12 +103,12 @@ suite('config layers', () => {
 suite('admin policy', () => {
 	teardown(() => {
 		resetAdminPolicyForTests();
-		delete process.env.GEN_ADMIN_POLICY;
+		delete process.env.HARATSAN_ADMIN_POLICY;
 	});
 
 	test('parseAdminPolicy: только ADMIN_POLICY_KEYS', () => {
 		const parsed = parseAdminPolicy({
-			$schema: './schemas/gen-policy.schema.json',
+			$schema: './schemas/haratsan-policy.schema.json',
 			webSearchEnabled: false,
 			systemPrompt: 'ignored',
 			providerUsePatterns: ['corp-*', ''],
@@ -130,9 +130,9 @@ suite('admin policy', () => {
 		assert.ok(!matchAdminPattern('corp-*', 'other'));
 	});
 
-	test('resolveAdminPolicyCandidates: GEN_ADMIN_POLICY wins', () => {
-		const custom = path.join(os.tmpdir(), 'gen-admin-policy.json');
-		process.env.GEN_ADMIN_POLICY = custom;
+	test('resolveAdminPolicyCandidates: HARATSAN_ADMIN_POLICY wins', () => {
+		const custom = path.join(os.tmpdir(), 'haratsan-admin-policy.json');
+		process.env.HARATSAN_ADMIN_POLICY = custom;
 		assert.deepStrictEqual(resolveAdminPolicyCandidates(), [path.resolve(custom)]);
 	});
 
@@ -149,7 +149,7 @@ suite('admin policy', () => {
 			}),
 			'utf8',
 		);
-		process.env.GEN_ADMIN_POLICY = file;
+		process.env.HARATSAN_ADMIN_POLICY = file;
 		const snap = await reloadAdminPolicy();
 		assert.strictEqual(snap.active, true);
 		assert.ok(snap.lockedKeys.includes('webSearchEnabled'));
@@ -168,8 +168,8 @@ suite('admin policy', () => {
 		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
-	test('reloadAdminPolicy: missing GEN_ADMIN_POLICY * inactive', async () => {
-		process.env.GEN_ADMIN_POLICY = path.join(os.tmpdir(), 'gen-no-such-policy.json');
+	test('reloadAdminPolicy: missing HARATSAN_ADMIN_POLICY * inactive', async () => {
+		process.env.HARATSAN_ADMIN_POLICY = path.join(os.tmpdir(), 'haratsan-no-such-policy.json');
 		const snap = await reloadAdminPolicy();
 		assert.strictEqual(snap.active, false);
 		assert.deepStrictEqual(snap.lockedKeys, []);

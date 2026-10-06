@@ -60,7 +60,7 @@ async function readIgnoreLines(folderFsPath: string, fileName: string): Promise<
 }
 
 /**
- * Матчер корня workspace: `.gitignore` + `.genignore` + `.ignore` + `.rgignore` (если есть)
+ * Матчер корня workspace: `.gitignore` + `.haratsanignore` + `.ignore` + `.rgignore` (если есть)
  * (+ встроенный `.git`). Строки `!` (re-include) передаются в `ignore` как есть.
  * Не spawn'ит `git check-ignore`.
  */
@@ -71,14 +71,14 @@ export async function getFolderIgnoreMatcher(folderFsPath: string): Promise<Igno
 		return cached;
 	}
 
-	const [gitignore, genignore, dotIgnore, rgignore] = await Promise.all([
+	const [gitignore, haratsanIgnore, dotIgnore, rgignore] = await Promise.all([
 		readIgnoreLines(key, '.gitignore'),
-		readIgnoreLines(key, '.genignore'),
+		readIgnoreLines(key, '.haratsanignore'),
 		readIgnoreLines(key, '.ignore'),
 		readIgnoreLines(key, '.rgignore'),
 	]);
 
-	const matcher = createIgnoreMatcher([...gitignore, ...genignore, ...dotIgnore, ...rgignore]);
+	const matcher = createIgnoreMatcher([...gitignore, ...haratsanIgnore, ...dotIgnore, ...rgignore]);
 	cache.set(key, matcher);
 	return matcher;
 }

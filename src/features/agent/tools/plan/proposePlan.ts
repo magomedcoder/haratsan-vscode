@@ -9,7 +9,7 @@ import { confirmAlwaysOrSkip } from '../confirm';
 
 export const proposePlanTool: ToolDefinition = {
 	name: 'propose_plan',
-	description: 'Показать план правок (несколько файлов) и дождаться Approve. План сохраняется в `.gen/plan.md` и сессии. Опциональный slug - ещё и в `.gen/plans/<slug>.md`.',
+	description: 'Показать план правок (несколько файлов) и дождаться Approve. План сохраняется в `.haratsan/plan.md` и сессии. Опциональный slug - ещё и в `.haratsan/plans/<slug>.md`.',
 	parameters: {
 		type: 'object',
 		properties: {
@@ -41,7 +41,7 @@ export const proposePlanTool: ToolDefinition = {
 			},
 			slug: {
 				type: 'string',
-				description: 'Опционально: сохранить копию в `.gen/plans/<slug>.md`',
+				description: 'Опционально: сохранить копию в `.haratsan/plans/<slug>.md`',
 			},
 		},
 		required: ['title', 'steps'],
@@ -69,7 +69,7 @@ export const proposePlanTool: ToolDefinition = {
 		if (slugRaw) {
 			const slug = normalizePlanSlug(slugRaw);
 			if (!slug) {
-				namedNote = `\n(slug «${slugRaw}» некорректен - копия в .gen/plans не записана)`;
+				namedNote = `\n(slug «${slugRaw}» некорректен - копия в .haratsan/plans не записана)`;
 			} else {
 				try {
 					const { relativePath } = await writeNamedPlan(slug, {

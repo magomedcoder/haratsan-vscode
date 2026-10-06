@@ -278,7 +278,7 @@ export async function suggestMentions(query: string): Promise<MentionSuggestion[
 
 		const nameQuery = prefix.replace(/^agent\s+/, '').replace(/^agent:/, '').trim();
 		const uris = await vscode.workspace.findFiles(
-			new vscode.RelativePattern(folder, '.gen/agents/*.md'),
+			new vscode.RelativePattern(folder, '.haratsan/agents/*.md'),
 			undefined,
 			30,
 		);
@@ -324,7 +324,7 @@ export async function suggestMentions(query: string): Promise<MentionSuggestion[
 
 		const uris = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(folder, pathQuery ? `**/*${pathQuery.replace(/[^\w./-]/g, '')}*.md` : '{docs,Documentation,doc}/**/*.md'),
-			'**/{.gen,node_modules,.git}/**',
+			'**/{.haratsan,node_modules,.git}/**',
 			20,
 		);
 		const out: MentionSuggestion[] = uris.slice(0, 12).map((uri) => {
@@ -373,7 +373,7 @@ export async function suggestMentions(query: string): Promise<MentionSuggestion[
 
 	const kind: 'file' | 'folder' = prefix.startsWith('folder') ? 'folder' : 'file';
 
-	const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths) ?? '**/{.gen,node_modules,.git}/**';
+	const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths) ?? '**/{.haratsan,node_modules,.git}/**';
 	const glob = pathQuery ? `**/*${pathQuery.replace(/[^\w./-]/g, '')}*` : '**/*';
 
 	const uris = await vscode.workspace.findFiles(

@@ -10,7 +10,7 @@ import { clearIgnoreCache } from './gitIgnore';
 import { formatStickyPlanForPrompt, StickyPlan } from './plan';
 import { buildAgentSystemPrompt } from './prompts';
 import { includeApplyPatchForModel } from './modelRoutedPatch';
-import { getGenRulesManager } from '../project/genrules';
+import { getHaratsanRulesManager } from '../project/haratsanRules';
 import { loadProjectRulesAppendix } from '../project/projectRules';
 import { discoverSkills, formatSkillsCatalog } from '../project/skills';
 import { discoverLocalPlugins, formatPluginsCatalog } from '../project/plugins';
@@ -343,9 +343,9 @@ export class AgentSession {
 		const planSnap = plan.snapshot();
 		const planAppendix = planSnap?.approved ? formatStickyPlanForPrompt(planSnap) : '';
 		const planEditsAppendix = params.planEditsAppendix?.trim() ?? '';
-		const genRulesAppendix =
+		const haratsanRulesAppendix =
 			(await loadProjectRulesAppendix())
-			?? getGenRulesManager()?.getPromptAppendix()
+			?? getHaratsanRulesManager()?.getPromptAppendix()
 			?? '';
 		const skillsAppendix = depth === 0 ? (formatSkillsCatalog(await discoverSkills()) ?? '') : '';
 		const pluginsAppendix = depth === 0 ? (formatPluginsCatalog(await discoverLocalPlugins()) ?? '') : '';
@@ -376,7 +376,7 @@ export class AgentSession {
 				userEditsAppendix,
 				planAppendix,
 				planEditsAppendix,
-				genRulesAppendix,
+				haratsanRulesAppendix,
 				skillsAppendix,
 				pluginsAppendix,
 				scratchAppendix,

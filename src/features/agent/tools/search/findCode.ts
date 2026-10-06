@@ -59,7 +59,7 @@ function recentEditorPaths(): string[] {
 		}
 
 		const rel = vscode.workspace.asRelativePath(editor.document.uri, false).replace(/\\/g, '/');
-		if (rel && !rel.startsWith('.gen/')) {
+		if (rel && !rel.startsWith('.haratsan/')) {
 			out.push(rel);
 		}
 	}
@@ -135,7 +135,7 @@ async function runFileSearch(query: string, cap: number, signal?: AbortSignal): 
 		};
 	}
 
-	const uris = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,.gen}/**', 8000);
+	const uris = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,.haratsan}/**', 8000);
 	const scored: FindCodeRawHit[] = [];
 	for (const uri of uris) {
 		throwIfAborted(signal);

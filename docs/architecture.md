@@ -19,7 +19,7 @@ Comment command
 
 1. `resolveAgainstFolders` / symlink check  
 2. `deniedPaths` (`policy.ts`)  
-3. `.gitignore` + `.genignore` (`gitIgnore.ts`, cached per turn)
+3. `.gitignore` + `.haratsanignore` (`gitIgnore.ts`, cached per turn)
 
 ## Collaborative editing
 
@@ -29,12 +29,12 @@ Comment command
 
 ## Sticky plan
 
-- After approving `propose_plan`, the plan is written to **`.gen/plan.md`** when `planWriteToFile` is enabled; in-memory cache for the current session only.
-- On extension / workspace restart the plan loads from **`.gen/plan.md`**, not persisted storage.
-- **Clear** chat does **not** reset the plan; reset via `update_plan clear` / delete `.gen/plan.md`.
+- After approving `propose_plan`, the plan is written to **`.haratsan/plan.md`** when `planWriteToFile` is enabled; in-memory cache for the current session only.
+- On extension / workspace restart the plan loads from **`.haratsan/plan.md`**, not persisted storage.
+- **Clear** chat does **not** reset the plan; reset via `update_plan clear` / delete `.haratsan/plan.md`.
 - Before an agent turn the file is re-read; manual diff -> system prompt; file watcher for external edits.
 
-## Project rules (`.genrules`)
+## Project rules (`.haratsanrules`)
 
 - Optional markdown/text file in the workspace root: coding style, architecture, team conventions.
 - Loaded at extension start and on file change; injected into agent, ask, and comment prompts (truncated at 12k chars).
@@ -43,32 +43,32 @@ Comment command
 
 No npm and no arbitrary JS execution. Discovery + system-prompt catalog + tools `list_plugins` / `plugin` (+ Open on Settings Rules/Skills).
 
-| Kind           | Path                              | Notes                                                                    |
-| -------------- | --------------------------------- | ------------------------------------------------------------------------ |
-| Tool (file)    | `.gen/tools/<name>.md`            | YAML frontmatter: `name`, `description`                                  |
-| Tool (package) | `.gen/tools/<name>/TOOL.md`       | Same idea as skills/`SKILL.md`                                           |
-| Plugin         | `.gen/plugins/<name>/plugin.json` | Required discovery entry: `{ "name"?, "description"?, "instructions"? }` |
-| Plugin body    | `.gen/plugins/<name>/PLUGIN.md`   | Used when `instructions` in JSON is empty                                |
+| Kind           | Path                                   | Notes                                                                    |
+| -------------- | -------------------------------------- | ------------------------------------------------------------------------ |
+| Tool (file)    | `.haratsan/tools/<name>.md`            | YAML frontmatter: `name`, `description`                                  |
+| Tool (package) | `.haratsan/tools/<name>/TOOL.md`       | Same idea as skills/`SKILL.md`                                           |
+| Plugin         | `.haratsan/plugins/<name>/plugin.json` | Required discovery entry: `{ "name"?, "description"?, "instructions"? }` |
+| Plugin body    | `.haratsan/plugins/<name>/PLUGIN.md`   | Used when `instructions` in JSON is empty                                |
 
 The agent loads body via `plugin` (by name) or `read_file` using the catalog path. npm plugin packages - not yet.
 
 ## Config layers
 
-- User JSON + project `.gen/config.json` merge into effective `GenSettings` (`src/core/config/layers.ts`).
-- Optional **admin policy** (`GEN_ADMIN_POLICY` / `/etc/gen/policy.json` / `%ProgramData%/gen/policy.json`) locks a security subset - highest precedence (`src/core/config/adminPolicy.ts`).
+- User JSON + project `.haratsan/config.json` merge into effective `HaratsanSettings` (`src/core/config/layers.ts`).
+- Optional **admin policy** (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` / `%ProgramData%/gen/policy.json`) locks a security subset - highest precedence (`src/core/config/adminPolicy.ts`).
 - Precedence: defaults user UI (non-default) project **admin policy**. Remote `.well-known` / full MDM not implemented.
 - Details: [settings.md](settings.md).
 
-## Opt-in `.gen/` and scaffold
+## Opt-in `.haratsan/` and scaffold
 
-- Opening a folder does **not** create `.gen/`. Opt-in: chat banner (enable + index) or `/init`.
+- Opening a folder does **not** create `.haratsan/`. Opt-in: chat banner (enable + index) or `/init`.
 - `enableProject` / `ensureGenScaffold` (`src/features/project/config.ts`): `config.json` plus dirs `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` (`.gitkeep`, README; never overwrite).
 - Details: [codebase-index.md](codebase-index.md).
 
 ## Codebase index
 
-- Background indexing into `.gen/index/manifest.json` (`src/features/index/`).
-- Incremental by file hash; `.gen/` is not indexed.
+- Background indexing into workspace storage `index/<key>/manifest.json` (`src/features/index/`).
+- Incremental by file hash; `.haratsan/` is not indexed.
 - Tool `codebase_search` - trigram search over chunks.
 - Context Engine (`contextEngine.ts`): ranks index hits and open editors; used by `@codebase` and mention context packing.
 - Details: [codebase-index.md](codebase-index.md), mentions - [chat.md](chat.md).
@@ -78,4 +78,4 @@ The agent loads body via `plugin` (by name) or `read_file` using the catalog pat
 - Extension host: esbuild -> `dist/extension.js`
 - Webview: esbuild -> `dist/webview/`
 - Tests: `yarn test` (vscode-test)
-- Localization: `package.nls*.json` (commands/manifest), `l10n/bundle.l10n*.json` (host + webview UI). Webview strings are injected as `window.__GEN_L10N__` from the host locale.
+- Localization: `package.nls*.json` (commands/manifest), `l10n/bundle.l10n*.json` (host + webview UI). Webview strings are injected as `window.__HARATSAN_L10N__` from the host locale.

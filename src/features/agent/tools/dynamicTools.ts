@@ -37,7 +37,7 @@ function buildDynamicTool(item: LocalPluginInfo, name: string): ToolDefinition {
 	const pathHint = item.path;
 	return {
 		name,
-		description: `${item.description} [local .gen/tools; no JS]`.slice(0, 300),
+		description: `${item.description} [local .haratsan/tools; no JS]`.slice(0, 300),
 		parameters: {
 			type: 'object',
 			properties: {},
@@ -58,7 +58,7 @@ function buildDynamicTool(item: LocalPluginInfo, name: string): ToolDefinition {
 }
 
 /**
- * Пересканировать `.gen/tools` markdown и зарегистрировать в registry.
+ * Пересканировать `.haratsan/tools` markdown и зарегистрировать в registry.
  * JS не исполняется - tool только возвращает тело описания.
  */
 export async function refreshDynamicTools(): Promise<string[]> {

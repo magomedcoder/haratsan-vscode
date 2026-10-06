@@ -1,14 +1,12 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { mapDirForFolder, mapFilePath } from './indexStorage';
 import { loadManifest } from './store';
 import { listIndexableFiles, readIndexableText } from './scanner';
 import { loadOutlineIndex } from './tsOutline';
 import { summarizeOutlineForPath, type OutlineEntry } from './tsOutlineParse';
 import type { IndexManifest } from './types';
-
-export const PROJECT_MAP_DIR_RELATIVE = '.gen/map';
-export const PROJECT_MAP_RELATIVE = '.gen/map/project.json';
 
 export const PROJECT_MAP_LIMITS = {
 	maxFiles: 2_000,
@@ -347,8 +345,13 @@ export function isProjectMapStale(
 }
 
 async function loadCachedMap(folderFsPath: string): Promise<ProjectMapDocument | undefined> {
+	const file = mapFilePath(folderFsPath);
+	if (!file) {
+		return undefined;
+	}
+
 	try {
-		const raw = await fs.readFile(path.join(folderFsPath, PROJECT_MAP_RELATIVE), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		const parsed = JSON.parse(raw) as ProjectMapDocument;
 		if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.tree)) {
 			return undefined;
@@ -361,9 +364,13 @@ async function loadCachedMap(folderFsPath: string): Promise<ProjectMapDocument |
 }
 
 async function saveCachedMap(folderFsPath: string, doc: ProjectMapDocument): Promise<void> {
-	const dir = path.join(folderFsPath, PROJECT_MAP_DIR_RELATIVE);
+	const dir = mapDirForFolder(folderFsPath);
+	const file = mapFilePath(folderFsPath);
+	if (!dir || !file) {
+		return;
+	}
 	await fs.mkdir(dir, { recursive: true });
-	await fs.writeFile(path.join(folderFsPath, PROJECT_MAP_RELATIVE), JSON.stringify(doc, null, 2), 'utf8');
+	await fs.writeFile(file, JSON.stringify(doc, null, 2), 'utf8');
 }
 
 function mergeSummaryWithOutline(
@@ -459,7 +466,7 @@ function capOutput(result: ProjectMapResult): ProjectMapResult {
 }
 
 /**
- * Карта модулей проекта: дерево + краткие summary, кэш в `.gen/map/project.json`.
+ * Карта модулей проекта: дерево + краткие summary, кэш в workspace storage (`map/<key>/project.json`).
  * Источник: файлы индекса (если есть) или workspace scan с ignore.
  */
 export async function getProjectMap(opts: GetProjectMapOptions = {}): Promise<ProjectMapResult> {

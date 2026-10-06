@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { matchAdminPattern } from '../config/adminPolicy';
-import type { GenSettings } from '../config/types';
+import type { HaratsanSettings } from '../config/types';
 
 // Host из baseUrl (без порта/пути); при ошибке разбора - trim lowercase
 export function extractProviderHost(baseUrl: string): string {
@@ -42,7 +42,7 @@ export function matchesProviderUsePattern(pattern: string, host: string, modelId
  * @returns сообщение отказа или undefined если разрешено.
  */
 export function providerUseRefusalMessage(
-	settings: Pick<GenSettings, 'baseUrl' | 'providerUsePolicy' | 'providerUsePatterns'>,
+	settings: Pick<HaratsanSettings, 'baseUrl' | 'providerUsePolicy' | 'providerUsePatterns'>,
 	modelId: string,
 ): string | undefined {
 	const patterns = settings.providerUsePatterns.map((item) => item.trim()).filter(Boolean);
@@ -72,7 +72,7 @@ export function providerUseRefusalMessage(
 
 // Бросает Error с локализованным текстом, если провайдер запрещён
 export function assertProviderUseAllowed(
-	settings: Pick<GenSettings, 'baseUrl' | 'providerUsePolicy' | 'providerUsePatterns'>,
+	settings: Pick<HaratsanSettings, 'baseUrl' | 'providerUsePolicy' | 'providerUsePatterns'>,
 	modelId: string,
 ): void {
 	const message = providerUseRefusalMessage(settings, modelId);

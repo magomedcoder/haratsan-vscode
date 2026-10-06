@@ -5,16 +5,16 @@ import * as vscode from 'vscode';
 import { AGENT_LIMITS, looksBinary } from '../agent/policy';
 import { getSettings } from '../../core/config/settings';
 import type { ContextHit } from '../index/contextEngine';
-import { GEN_DIR_RELATIVE } from './config';
+import { HARATSAN_DIR_RELATIVE } from './config';
 
 // Манифест именованных ссылок (alias * path | git)
-export const REFERENCES_JSON_RELATIVE = `${GEN_DIR_RELATIVE}/references.json`;
+export const REFERENCES_JSON_RELATIVE = `${HARATSAN_DIR_RELATIVE}/references.json`;
 // Папка с отдельными JSON на alias (опционально)
-export const REFERENCES_DIR_RELATIVE = `${GEN_DIR_RELATIVE}/references`;
+export const REFERENCES_DIR_RELATIVE = `${HARATSAN_DIR_RELATIVE}/references`;
 // Managed-кэш после copy / shallow-clone
-export const REFERENCES_CACHE_RELATIVE = `${GEN_DIR_RELATIVE}/cache/references`;
+export const REFERENCES_CACHE_RELATIVE = `${HARATSAN_DIR_RELATIVE}/cache/references`;
 
-const META_FILE = '.gen-ref.json';
+const META_FILE = '.haratsan-ref.json';
 const MAX_REF_FILES = 12;
 
 export interface ReferenceDef {
@@ -114,7 +114,7 @@ async function readJsonFile(abs: string): Promise<unknown | undefined> {
 	}
 }
 
-// Загрузить все reference-определения из `.gen/references.json` и `.gen/references/*.json`
+// Загрузить все reference-определения из `.haratsan/references.json` и `.haratsan/references/*.json`
 export async function loadReferenceDefs(): Promise<ReferenceDef[]> {
 	const root = folderRoot();
 	if (!root) {
@@ -290,7 +290,7 @@ async function syncGitReference(root: string, def: ReferenceDef, cacheAbs: strin
 }
 
 /**
- * Убедиться, что alias лежит в `.gen/cache/references/<alias>/`.
+ * Убедиться, что alias лежит в `.haratsan/cache/references/<alias>/`.
  * При отсутствии кэша - copy (path) или shallow-clone (git).
  */
 export async function ensureReferenceCached(alias: string): Promise<ResolvedReferenceCache | { error: string }> {
@@ -317,7 +317,7 @@ export async function ensureReferenceCached(alias: string): Promise<ResolvedRefe
 	const def = await findReferenceDef(name);
 	if (!def) {
 		return { 
-			error: `reference «${name}» не найден в .gen/references.json` 
+			error: `reference «${name}» не найден в .haratsan/references.json` 
 		};
 	}
 
@@ -401,7 +401,7 @@ async function walkFiles(absDir: string, relBase: string, out: string[], budget:
 	}
 }
 
-// Собрать ContextHit из кэша reference (обход fs - findFiles исключает `.gen`)
+// Собрать ContextHit из кэша reference (обход fs - findFiles исключает `.haratsan`)
 export async function collectReferenceHits(resolved: ResolvedReferenceCache): Promise<ContextHit[]> {
 	const root = folderRoot();
 	if (!root) {

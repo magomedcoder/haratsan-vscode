@@ -9,7 +9,7 @@ const DEFAULT_MAX = 20;
 
 export const findSymbolTool: ToolDefinition = {
 	name: 'find_symbol',
-	description: 'Поиск символов (классы, функции, методы...) по LSP-кэшу `.gen/index/symbols.json` и TS outline `.gen/index/outline.json`. Предпочтительно для «где объявлен X».',
+	description: 'Поиск символов (классы, функции, методы...) по LSP-кэшу symbols и TS outline (workspace storage). Предпочтительно для «где объявлен X».',
 	parameters: {
 		type: 'object',
 		properties: {

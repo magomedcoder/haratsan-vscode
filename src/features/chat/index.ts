@@ -23,43 +23,43 @@ export function registerChat(context: vscode.ExtensionContext): vscode.Disposabl
 		vscode.window.registerWebviewViewProvider(CHAT_VIEW_ID, provider, webviewOpts),
 		vscode.window.registerWebviewViewProvider(CHAT_VIEW_SIDEBAR_ID, provider, webviewOpts),
 		registerHunkCodeLens(provider.getSession()),
-		vscode.commands.registerCommand('gen.openChat', async () => {
+		vscode.commands.registerCommand('haratsan.openChat', async () => {
 			await focusChatView();
 		}),
-		vscode.commands.registerCommand('gen.openChatPanel', async () => {
+		vscode.commands.registerCommand('haratsan.openChatPanel', async () => {
 			await focusChatView('panel');
 		}),
-		vscode.commands.registerCommand('gen.openChatSidebar', async () => {
+		vscode.commands.registerCommand('haratsan.openChatSidebar', async () => {
 			await focusChatView('sidebar');
 		}),
-		vscode.commands.registerCommand('gen.addSelectionToChat', async () => {
+		vscode.commands.registerCommand('haratsan.addSelectionToChat', async () => {
 			await provider.getSession().addSelectionToChat();
 		}),
-		vscode.commands.registerCommand('gen.addToChat', async () => {
+		vscode.commands.registerCommand('haratsan.addToChat', async () => {
 			await provider.getSession().addSelectionToChat();
 		}),
-		vscode.commands.registerCommand('gen.explainSelection', async () => {
+		vscode.commands.registerCommand('haratsan.explainSelection', async () => {
 			await provider.getSession().explainSelection();
 		}),
-		vscode.commands.registerCommand('gen.improveSelection', async () => {
+		vscode.commands.registerCommand('haratsan.improveSelection', async () => {
 			await provider.getSession().improveSelection();
 		}),
-		vscode.commands.registerCommand('gen.addTerminalToChat', async () => {
+		vscode.commands.registerCommand('haratsan.addTerminalToChat', async () => {
 			await provider.getSession().addTerminalSelectionToChat();
 		}),
-		vscode.commands.registerCommand('gen.notebook.addCell', async () => {
+		vscode.commands.registerCommand('haratsan.notebook.addCell', async () => {
 			await provider.getSession().addNotebookCellToChat('add');
 		}),
-		vscode.commands.registerCommand('gen.notebook.explainCell', async () => {
+		vscode.commands.registerCommand('haratsan.notebook.explainCell', async () => {
 			await provider.getSession().addNotebookCellToChat('explain');
 		}),
-		vscode.commands.registerCommand('gen.notebook.improveCell', async () => {
+		vscode.commands.registerCommand('haratsan.notebook.improveCell', async () => {
 			await provider.getSession().addNotebookCellToChat('improve');
 		}),
-		vscode.commands.registerCommand('gen.notebook.generateCell', async () => {
+		vscode.commands.registerCommand('haratsan.notebook.generateCell', async () => {
 			await provider.getSession().addNotebookCellToChat('generate');
 		}),
-		vscode.commands.registerCommand('gen.manageWorktrees', async () => {
+		vscode.commands.registerCommand('haratsan.manageWorktrees', async () => {
 			const items = await listAgentWorktrees();
 			if (!items.length) {
 				void vscode.window.showInformationMessage(vscode.l10n.t('chat.worktrees.empty'));

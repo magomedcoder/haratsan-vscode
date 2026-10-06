@@ -72,7 +72,7 @@ export function listToolsByTag(tag: ToolTag): ToolDefinition[] {
 		.map((e) => e.tool);
 }
 
-// Снять все dynamic (перед refresh `.gen/tools`)
+// Снять все dynamic (перед refresh `.haratsan/tools`)
 export function unregisterDynamicTools(): void {
 	for (const [name, entry] of [...BY_NAME.entries()]) {
 		if (entry.source === 'dynamic') {

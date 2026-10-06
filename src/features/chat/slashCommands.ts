@@ -6,7 +6,7 @@ export interface SlashCommand {
 	name: string;
 	// Ключ i18n для подписи в автодополнении (builtin)
 	detailKey?: string;
-	// Готовая подпись (кастомные команды из `.gen/commands`)
+	// Готовая подпись (кастомные команды из `.haratsan/commands`)
 	detail?: string;
 	// Если задан - переключает режим чата
 	mode?: ChatMode;

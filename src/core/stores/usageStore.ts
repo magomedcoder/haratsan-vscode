@@ -7,7 +7,7 @@ export interface ModelUsage {
 	lastUsed: number;
 }
 
-const STORAGE_KEY = 'gen.usage.byModel';
+const STORAGE_KEY = 'haratsan.usage.byModel';
 
 let store: Memento | undefined;
 const memory = new Map<string, ModelUsage>();
@@ -15,7 +15,7 @@ const memory = new Map<string, ModelUsage>();
 export function initUsageStore(context: ExtensionContext): void {
 	store = context.globalState;
 	const raw = store.get<Record<string, ModelUsage>>(STORAGE_KEY, {});
-	for (const [key, value] of Object.entries(raw ?? {})) {
+	for (const [key, value] of Object.entries(raw)) {
 		memory.set(key, value);
 	}
 }
@@ -35,7 +35,9 @@ export function recordUsage(model: string, promptTokens: number, completionToken
 		lastUsed: Date.now(),
 	};
 	memory.set(id, next);
-	void store?.update(STORAGE_KEY, Object.fromEntries(memory.entries()));
+	if (store) {
+		void store.update(STORAGE_KEY, Object.fromEntries(memory.entries()));
+	}
 }
 
 export function getUsageMap(): Record<string, ModelUsage> {
@@ -49,5 +51,7 @@ export function readUsage(): Record<string, ModelUsage> {
 
 export function resetUsage(): void {
 	memory.clear();
-	void store?.update(STORAGE_KEY, {});
+	if (store) {
+		void store.update(STORAGE_KEY, {});
+	}
 }

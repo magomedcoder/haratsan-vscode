@@ -106,7 +106,7 @@ function fileStem(uri: vscode.Uri): string {
 	return base.replace(/\.md$/i, '');
 }
 
-// Обнаружить кастомные slash-команды из `.gen/commands/*.md`
+// Обнаружить кастомные slash-команды из `.haratsan/commands/*.md`
 export async function discoverCustomCommands(): Promise<CustomCommand[]> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	if (!folder) {
@@ -114,7 +114,7 @@ export async function discoverCustomCommands(): Promise<CustomCommand[]> {
 	}
 
 	const uris = await vscode.workspace.findFiles(
-		new vscode.RelativePattern(folder, '.gen/commands/*.md'),
+		new vscode.RelativePattern(folder, '.haratsan/commands/*.md'),
 		undefined,
 		80,
 	);

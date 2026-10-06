@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import { getSettings } from '../../core/config/settings';
-import { GEN_DIR_RELATIVE } from '../project/config';
+import { HARATSAN_DIR_RELATIVE } from '../project/config';
 import { AGENT_LIMITS, previewText } from './policy';
 import { resolveHostShellInvoker } from './scriptRunner';
 import { defaultWorkspaceCwd } from './shellSession';
@@ -12,7 +12,7 @@ import { defaultWorkspaceCwd } from './shellSession';
 const execFileAsync = promisify(execFile);
 
 // Относительный каталог worktrees внутри workspace
-export const WORKTREES_DIR_RELATIVE = path.join(GEN_DIR_RELATIVE, 'worktrees');
+export const WORKTREES_DIR_RELATIVE = path.join(HARATSAN_DIR_RELATIVE, 'worktrees');
 
 export interface WorktreeCreateResult {
 	ok: boolean;
@@ -171,7 +171,7 @@ export async function runWorktreeStartCommand(
 }
 
 /**
- * Создать git worktree: сначала `.gen/worktrees/<slug>/`, при отказе git - sibling `<repo>.gen-worktrees/<slug>` рядом с workspace.
+ * Создать git worktree: сначала `.haratsan/worktrees/<slug>/`, при отказе git - sibling `<repo>.haratsan-worktrees/<slug>` рядом с workspace.
  * Не удаляет worktree после использования (review вручную).
  */
 export async function createAgentWorktree(params: {
@@ -195,7 +195,7 @@ export async function createAgentWorktree(params: {
 	const primaryPath = path.join(repoCwd, WORKTREES_DIR_RELATIVE, slug);
 	const siblingPath = path.join(
 		path.dirname(repoCwd),
-		`${path.basename(repoCwd)}.gen-worktrees`,
+		`${path.basename(repoCwd)}.haratsan-worktrees`,
 		slug,
 	);
 
@@ -205,11 +205,11 @@ export async function createAgentWorktree(params: {
 	}> = [
 		{ 
 			path: primaryPath, 
-			branch: `gen/wt-${slug}` 
+			branch: `haratsan/wt-${slug}` 
 		},
 		{ 
 			path: siblingPath, 
-			branch: `gen/wt-${slug}-s` 
+			branch: `haratsan/wt-${slug}-s` 
 		},
 	];
 	const errors: string[] = [];
@@ -291,7 +291,7 @@ export interface AgentWorktreeInfo {
 	branch?: string;
 }
 
-// Список worktree под `.gen/worktrees/` (+ git worktree list если есть)
+// Список worktree под `.haratsan/worktrees/` (+ git worktree list если есть)
 export async function listAgentWorktrees(): Promise<AgentWorktreeInfo[]> {
 	const root = defaultWorkspaceCwd();
 	const dir = path.join(root, WORKTREES_DIR_RELATIVE);

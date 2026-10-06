@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import { getSettings } from '../../core/config/settings';
-import type { GenSettings } from '../../core/config/types';
+import type { HaratsanSettings } from '../../core/config/types';
+import { isIndexStorageAvailable } from './indexStorage';
 import { getIndexManagerInstance } from './IndexManager';
 import { inspectManifest, loadManifest } from './store';
 import type { IndexProgress } from './types';
 
 /**
  * Режим движка индекса / семантического поиска.
- * AST-outline через TypeScript `createSourceFile` -> `.gen/index/outline.json`.
+ * AST-outline через TypeScript `createSourceFile` -> workspace storage outline.json.
  */
 export type IndexEngineMode = 'cpu-trigram' | 'remote' | 'local-vector';
 
@@ -34,7 +35,7 @@ export interface IndexEngineStatus {
  * иначе CPU trigram.
  */
 export function resolveIndexEngineMode(
-	settings: Pick<GenSettings, 'embeddingsBaseUrl' | 'baseUrl' | 'localEmbeddingsMode'>,
+	settings: Pick<HaratsanSettings, 'embeddingsBaseUrl' | 'baseUrl' | 'localEmbeddingsMode'>,
 ): IndexEngineMode {
 	if (settings.localEmbeddingsMode === 'vector') {
 		return 'local-vector';
@@ -64,18 +65,23 @@ export async function collectIndexEngineStatus(): Promise<IndexEngineStatus> {
 
 	if (folderFs) {
 		try {
-			const probe = await inspectManifest(folderFs);
-			corrupt = probe.corrupt;
-			missingDirDigests = probe.missingDirDigests;
-			if (probe.corrupt && (!progressState || progressState === 'idle' || progressState === 'ready')) {
-				progressState = 'error';
-				lastError = lastError || `Corrupt index manifest (${probe.repairReason ?? 'invalid'})`;
-			} else if (
-				probe.missingDirDigests &&
-				(!progressState || progressState === 'idle' || progressState === 'ready') &&
-				!lastError
-			) {
-				lastError = 'Missing dirDigests - Repair recommended';
+			if (!isIndexStorageAvailable()) {
+				progressState = progressState && progressState !== 'idle' ? progressState : 'error';
+				lastError = lastError || 'Workspace storage unavailable (no storageUri)';
+			} else {
+				const probe = await inspectManifest(folderFs);
+				corrupt = probe.corrupt;
+				missingDirDigests = probe.missingDirDigests;
+				if (probe.corrupt && (!progressState || progressState === 'idle' || progressState === 'ready')) {
+					progressState = 'error';
+					lastError = lastError || `Corrupt index manifest (${probe.repairReason ?? 'invalid'})`;
+				} else if (
+					probe.missingDirDigests &&
+					(!progressState || progressState === 'idle' || progressState === 'ready') &&
+					!lastError
+				) {
+					lastError = 'Missing dirDigests - Repair recommended';
+				}
 			}
 		} catch {}
 	}

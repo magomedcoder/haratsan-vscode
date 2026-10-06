@@ -1,26 +1,26 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { GEN_CONFIG_RELATIVE } from '../../features/project/config';
+import { HARATSAN_CONFIG_RELATIVE } from '../../features/project/config';
 import { getAdminPolicySnapshot, reloadAdminPolicy, resolveAdminPolicyCandidates } from './adminPolicy';
-import { DEFAULT_SETTINGS, type GenSettings } from './types';
-import { getGenUserConfigPath } from './userPaths';
+import { DEFAULT_SETTINGS, type HaratsanSettings } from './types';
+import { getHaratsanUserConfigPath } from './userPaths';
 
 /**
  * Слои JSON-конфига (MVP, без remote `.well-known`).
  *
  * Приоритет (низкий * высокий):
  * 1. `DEFAULT_SETTINGS`
- * 2. user: `~/.config/gen/config.json` (XDG / APPDATA - см. userPaths)
- * 3. Gen Settings UI (`globalState`) - только ключи, отличающиеся от defaults
- * 4. project: `<workspace>/.gen/config.json`
- * 5. admin policy (`GEN_ADMIN_POLICY` / `/etc/gen/policy.json` / ProgramData) - locked-ключи
+ * 2. user: `~/.config/haratsan/config.json`
+ * 3. Haratsan Settings UI (`globalState`) - только ключи, отличающиеся от defaults
+ * 4. project: `<workspace>/.haratsan/config.json`
+ * 5. admin policy (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json`) - locked-ключи
  *
- * VS Code `contributes.configuration` сейчас только `gen.chatViewLocation` (синхронизируется из effective settings) - не отдельный файл-слой.
+ * VSCode `contributes.configuration` сейчас только `haratsan.chatViewLocation` (синхронизируется из effective settings) - не отдельный файл-слой.
  * UI Settings не ломаем: слои аддитивны; project перекрывает user и UI только по ключам, явно заданным в JSON; admin нельзя обойти.
  */
 
-/** Ключи GenSettings, которые можно задать в JSON-слоях */
+/** Ключи HaratsanSettings, которые можно задать в JSON-слоях */
 export const FILE_LAYER_KEYS = [
 	'systemPrompt',
 	'commentSystemPrompt',
@@ -102,18 +102,18 @@ export const FILE_LAYER_KEYS = [
 	'maxTabCount',
 	'maxConcurrentRuns',
 	'tabEvictionPolicy',
-] as const satisfies readonly (keyof GenSettings)[];
+] as const satisfies readonly (keyof HaratsanSettings)[];
 
 export type FileLayerKey = (typeof FILE_LAYER_KEYS)[number];
 
 const FILE_LAYER_KEY_SET = new Set<string>(FILE_LAYER_KEYS);
 
-// Метаданные `.gen/config.json` - не маппятся в GenSettings
+// Метаданные `.haratsan/config.json` - не маппятся в HaratsanSettings
 const META_KEYS = new Set(['version', 'createdAt', '$schema']);
 
 export interface ParsedFileConfig {
-	// Overlay для GenSettings (только известные ключи)
-	settings: Partial<GenSettings>;
+	// Overlay для HaratsanSettings (только известные ключи)
+	settings: Partial<HaratsanSettings>;
 	// Относительный/абсолютный путь к hooks.json
 	hooksPath?: string;
 	// Inline-хуки из конфига (`hooks: { beforeSubmit: ... }`)
@@ -136,7 +136,7 @@ const EMPTY_PARSED: ParsedFileConfig = {
 let snapshot: ConfigLayersSnapshot = {
 	user: EMPTY_PARSED,
 	project: EMPTY_PARSED,
-	userPath: getGenUserConfigPath(),
+	userPath: getHaratsanUserConfigPath(),
 	projectPath: undefined,
 	adminPolicyPath: undefined,
 };
@@ -187,7 +187,7 @@ export function parseFileConfig(raw: unknown): ParsedFileConfig {
 	}
 
 	const obj = raw as Record<string, unknown>;
-	const settings: Partial<GenSettings> = {};
+	const settings: Partial<HaratsanSettings> = {};
 
 	for (const [key, value] of Object.entries(obj)) {
 		if (META_KEYS.has(key) || key === 'hooks' || key === 'hooksPath') {
@@ -234,7 +234,7 @@ function projectConfigPath(): string | undefined {
 		return undefined;
 	}
 
-	return path.join(root, GEN_CONFIG_RELATIVE);
+	return path.join(root, HARATSAN_CONFIG_RELATIVE);
 }
 
 // Текущий снимок слоёв (sync cache)
@@ -244,8 +244,8 @@ export function getConfigLayersSnapshot(): ConfigLayersSnapshot {
 
 // Overlay settings из файлов с приоритетом project > user (без UI - UI мержится в getSettings)
 export function getFileSettingsOverlay(): {
-	user: Partial<GenSettings>;
-	project: Partial<GenSettings>;
+	user: Partial<HaratsanSettings>;
+	project: Partial<HaratsanSettings>;
 } {
 	return {
 		user: snapshot.user.settings,
@@ -286,7 +286,7 @@ function notifyLayerListeners(): void {
 
 // Перечитать user + project + admin policy в cache
 export async function reloadConfigLayers(): Promise<ConfigLayersSnapshot> {
-	const userPath = getGenUserConfigPath();
+	const userPath = getHaratsanUserConfigPath();
 	const projPath = projectConfigPath();
 
 	const [userRaw, projectRaw] = await Promise.all([
@@ -316,13 +316,13 @@ export async function reloadConfigLayers(): Promise<ConfigLayersSnapshot> {
  * Ключи UI-хранилища, отличающиеся от DEFAULT_SETTINGS.
  * Так JSON-слои «просвечивают», пока пользователь не менял поле в Settings UI.
  */
-export function pickNonDefaultSettings(stored: Partial<GenSettings> | undefined): Partial<GenSettings> {
+export function pickNonDefaultSettings(stored: Partial<HaratsanSettings> | undefined): Partial<HaratsanSettings> {
 	if (!stored || typeof stored !== 'object') {
 		return {};
 	}
 
-	const out: Partial<GenSettings> = {};
-	for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof GenSettings)[]) {
+	const out: Partial<HaratsanSettings> = {};
+	for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof HaratsanSettings)[]) {
 		if (!(key in stored)) {
 			continue;
 		}
@@ -374,7 +374,7 @@ export function initConfigLayers(context: vscode.ExtensionContext): void {
 			return;
 		}
 
-		const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, GEN_CONFIG_RELATIVE));
+		const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, HARATSAN_CONFIG_RELATIVE));
 		const onProject = (): void => {
 			void reloadConfigLayers();
 		};
@@ -399,7 +399,7 @@ export function initConfigLayers(context: vscode.ExtensionContext): void {
 	);
 
 	// User config вне workspace - AbsolutePattern / путь к файлу
-	const userPath = getGenUserConfigPath();
+	const userPath = getHaratsanUserConfigPath();
 	try {
 		const userWatcher = vscode.workspace.createFileSystemWatcher(userPath);
 		const onUser = (): void => {
@@ -413,7 +413,7 @@ export function initConfigLayers(context: vscode.ExtensionContext): void {
 		);
 	} catch {}
 
-	// Admin policy (системный путь / GEN_ADMIN_POLICY)
+	// Admin policy (системный путь / HARATSAN_ADMIN_POLICY)
 	for (const policyPath of resolveAdminPolicyCandidates()) {
 		try {
 			const policyWatcher = vscode.workspace.createFileSystemWatcher(policyPath);

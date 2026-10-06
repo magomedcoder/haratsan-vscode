@@ -1,20 +1,20 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type { GenSettings } from './types';
+import type { HaratsanSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
 /**
  * Managed / admin policy layer (MDM-паттерн, без полного Enterprise).
  *
  * Путь к policy.json (первый существующий):
- * 1. `GEN_ADMIN_POLICY` - явный путь к файлу
- * 2. Linux/macOS: `/etc/gen/policy.json`
- * 3. Windows: `%ProgramData%/gen/policy.json`
+ * 1. `HARATSAN_ADMIN_POLICY` - явный путь к файлу
+ * 2. Linux/macOS: `/etc/haratsan/policy.json`
+ * 3. Windows: `%ProgramData%/haratsan/policy.json`
  *
  * Ключи из файла принудительно перекрывают user / UI / project.
  */
 
-// Ключи GenSettings, которые admin policy может заблокировать / форсировать
+// Ключи HaratsanSettings, которые admin policy может заблокировать / форсировать
 export const ADMIN_POLICY_KEYS = [
 	'approvalPolicy',
 	'autoApprove',
@@ -29,7 +29,7 @@ export const ADMIN_POLICY_KEYS = [
 	'otelEndpoint',
 	'providerUsePolicy',
 	'providerUsePatterns',
-] as const satisfies readonly (keyof GenSettings)[];
+] as const satisfies readonly (keyof HaratsanSettings)[];
 
 export type AdminPolicyKey = (typeof ADMIN_POLICY_KEYS)[number];
 
@@ -42,8 +42,8 @@ export interface AdminPolicySnapshot {
 	active: boolean;
 	// Абсолютный путь к загруженному файлу
 	path?: string;
-	// Overlay GenSettings (только ADMIN_POLICY_KEYS)
-	settings: Partial<GenSettings>;
+	// Overlay HaratsanSettings (только ADMIN_POLICY_KEYS)
+	settings: Partial<HaratsanSettings>;
 	// Имена заблокированных ключей
 	lockedKeys: string[];
 }
@@ -58,21 +58,20 @@ let snapshot: AdminPolicySnapshot = EMPTY;
 
 /**
  * Кандидаты пути к admin policy (порядок приоритета).
- * Если задан `GEN_ADMIN_POLICY` - только он (даже если файла нет * нет политики).
+ * Если задан `HARATSAN_ADMIN_POLICY` - только он (даже если файла нет * нет политики).
  */
 export function resolveAdminPolicyCandidates(): string[] {
-	const envPath = process.env.GEN_ADMIN_POLICY?.trim();
+	const envPath = process.env.HARATSAN_ADMIN_POLICY?.trim();
 	if (envPath) {
 		return [path.resolve(envPath)];
 	}
 
 	if (process.platform === 'win32') {
-		// Обычно ProgramData = C:\ProgramData
 		const programData = process.env.PROGRAMDATA?.trim() || 'C:\\ProgramData';
-		return [path.join(programData, 'gen', 'policy.json')];
+		return [path.join(programData, 'haratsan', 'policy.json')];
 	}
 
-	return [path.join('/etc', 'gen', 'policy.json')];
+	return [path.join('/etc', 'haratsan', 'policy.json')];
 }
 
 // Простой glob-like match (`*`, prefix*, *suffix)
@@ -103,7 +102,7 @@ export function matchAdminPattern(pattern: string, subject: string): boolean {
 }
 
 export function parseAdminPolicy(raw: unknown): {
-	settings: Partial<GenSettings>;
+	settings: Partial<HaratsanSettings>;
 	lockedKeys: string[];
 } {
 	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -114,7 +113,7 @@ export function parseAdminPolicy(raw: unknown): {
 	}
 
 	const obj = raw as Record<string, unknown>;
-	const settings: Partial<GenSettings> = {};
+	const settings: Partial<HaratsanSettings> = {};
 	const lockedKeys: string[] = [];
 
 	for (const [key, value] of Object.entries(obj)) {
@@ -163,7 +162,7 @@ export function isAdminPolicyActive(): boolean {
 /**
  * Применить admin overlay к уже смерженным settings (после user/UI/project).
  */
-export function applyAdminPolicy(merged: Partial<GenSettings>): Partial<GenSettings> {
+export function applyAdminPolicy(merged: Partial<HaratsanSettings>): Partial<HaratsanSettings> {
 	if (!snapshot.active || snapshot.lockedKeys.length === 0) {
 		return merged;
 	}
@@ -175,7 +174,7 @@ export function applyAdminPolicy(merged: Partial<GenSettings>): Partial<GenSetti
 }
 
 // Перед записью в UI globalState: locked-ключи сбрасываем к defaults, чтобы после снятия политики в store не остались «зашитые» значения
-export function stripAdminLockedForStorage(settings: GenSettings): GenSettings {
+export function stripAdminLockedForStorage(settings: HaratsanSettings): HaratsanSettings {
 	if (!snapshot.active || snapshot.lockedKeys.length === 0) {
 		return settings;
 	}
@@ -200,7 +199,7 @@ export function stripAdminLockedForStorage(settings: GenSettings): GenSettings {
 // Перечитать admin policy с диска
 export async function reloadAdminPolicy(): Promise<AdminPolicySnapshot> {
 	const candidates = resolveAdminPolicyCandidates();
-	const envForced = Boolean(process.env.GEN_ADMIN_POLICY?.trim());
+	const envForced = Boolean(process.env.HARATSAN_ADMIN_POLICY?.trim());
 
 	for (const candidate of candidates) {
 		const raw = await readJsonFile(candidate);

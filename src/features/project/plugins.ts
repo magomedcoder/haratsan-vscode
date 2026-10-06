@@ -11,14 +11,14 @@ function pathIsInside(child: string, parent: string): boolean {
  *
  * Конвенция:
  * - Инструменты:
- *   - `.gen/tools/<name>.md` - однофайловое описание (YAML frontmatter: name, description)
- *   - `.gen/tools/<name>/TOOL.md` - пакет в папке
+ *   - `.haratsan/tools/<name>.md` - однофайловое описание (YAML frontmatter: name, description)
+ *   - `.haratsan/tools/<name>/TOOL.md` - пакет в папке
  * - Плагины:
- *   - `.gen/plugins/<name>/plugin.json` - манифест (обязательная точка обнаружения) { "name"?, "description"?, "instructions"? }
+ *   - `.haratsan/plugins/<name>/plugin.json` - манифест (обязательная точка обнаружения) { "name"?, "description"?, "instructions"? }
  *   - если `instructions` пуст - тело берётся из соседнего `PLUGIN.md`
  * - npm:
- *   - `package.json` с полем `gen` или `genAgent` (объект / строка имени; опц. command/args/bin)
- *   - `.gen/npm-plugins.json` - список `{ "name", "description"?, "package"?, "command"?, "args"?, "bin"? }` или строк
+ *   - `package.json` с полем `haratsan` / `haratsanAgent`
+ *   - `.haratsan/npm-plugins.json` - список `{ "name", "description"?, "package"?, "command"?, "args"?, "bin"? }` или строк
  *   - execute: только spawn объявленной команды под workspace / node_modules (tool `run_plugin`); без require() в host
  */
 
@@ -47,11 +47,11 @@ const MAX_BODY_CHARS = 16_000;
 const MAX_ITEMS = 60;
 
 const TOOL_GLOBS = [
-	'.gen/tools/*.md',
-	'.gen/tools/*/TOOL.md',
+	'.haratsan/tools/*.md',
+	'.haratsan/tools/*/TOOL.md',
 ];
 
-const PLUGIN_GLOB = '.gen/plugins/*/plugin.json';
+const PLUGIN_GLOB = '.haratsan/plugins/*/plugin.json';
 
 function parseFrontmatter(raw: string): { name?: string; description?: string; body: string } {
 	const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/.exec(raw.trim());
@@ -218,7 +218,7 @@ function pushNpmEntry(
 	});
 }
 
-interface ParsedGenPluginField {
+interface ParsedHaratsanPluginField {
 	name: string;
 	description?: string;
 	command?: string;
@@ -226,7 +226,7 @@ interface ParsedGenPluginField {
 	bin?: string;
 }
 
-function parseGenPluginField(raw: unknown, pkgName: string): ParsedGenPluginField | undefined {
+function parseHaratsanPluginField(raw: unknown, pkgName: string): ParsedHaratsanPluginField | undefined {
 	if (typeof raw === 'string' && raw.trim()) {
 		return { name: raw.trim(), description: `npm package ${pkgName}` };
 	}
@@ -373,9 +373,10 @@ async function discoverNpmPluginsFromPackageJson(
 	try {
 		const data = JSON.parse(raw) as Record<string, unknown>;
 		const pkgName = typeof data.name === 'string' ? data.name : 'package';
-		const field = data.gen ?? data.genAgent;
-		const parsed = parseGenPluginField(field, pkgName);
-		if (!parsed) {
+		const fieldKey = (['haratsan', 'haratsanAgent'] as const).find((k) => data[k] !== undefined);
+		const field = fieldKey ? data[fieldKey] : undefined;
+		const parsed = parseHaratsanPluginField(field, pkgName);
+		if (!parsed || !fieldKey) {
 			return;
 		}
 
@@ -408,8 +409,8 @@ async function discoverNpmPluginsFromPackageJson(
 			description: parsed.description,
 			path: 'package.json',
 			body: executable
-				? `Объявлено в package.json (${data.gen ? 'gen' : 'genAgent'}). Запуск: tool run_plugin (spawn, без require).`
-				: `Объявлено в package.json (${data.gen ? 'gen' : 'genAgent'}). Добавь command/args или bin для run_plugin.`,
+				? `Объявлено в package.json (${fieldKey}). Запуск: tool run_plugin (spawn, без require).`
+				: `Объявлено в package.json (${fieldKey}). Добавь command/args или bin для run_plugin.`,
 			executable,
 		});
 	} catch {}
@@ -421,7 +422,7 @@ async function discoverNpmPluginsList(
 	out: LocalPluginInfo[],
 ): Promise<void> {
 	const workspaceRoot = workspaceRootFs(folder);
-	const listUri = vscode.Uri.joinPath(folder.uri, '.gen', 'npm-plugins.json');
+	const listUri = vscode.Uri.joinPath(folder.uri, '.haratsan', 'npm-plugins.json');
 	const raw = await readText(listUri);
 	if (raw === undefined) {
 		return;
@@ -454,7 +455,7 @@ async function discoverNpmPluginsList(
 				}
 				pushNpmEntry(seen, out, {
 					name: pkgName,
-					path: '.gen/npm-plugins.json',
+					path: '.haratsan/npm-plugins.json',
 					executable,
 				});
 				continue;
@@ -510,7 +511,7 @@ async function discoverNpmPluginsList(
 			pushNpmEntry(seen, out, {
 				name,
 				description,
-				path: '.gen/npm-plugins.json',
+				path: '.haratsan/npm-plugins.json',
 				executable,
 			});
 		}
@@ -524,7 +525,7 @@ export async function resolveNpmPluginExecutable(name: string): Promise<LocalPlu
 	return items.find((item) => item.kind === 'npm' && item.name.toLowerCase() === key && item.executable);
 }
 
-// Обнаружить локальные tools (`.gen/tools`) и plugins (`.gen/plugins`) + npm catalog
+// Обнаружить локальные tools (`.haratsan/tools`) и plugins (`.haratsan/plugins`) + npm catalog
 export async function discoverLocalPlugins(): Promise<LocalPluginInfo[]> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	if (!folder) {
@@ -592,7 +593,7 @@ export function formatPluginsCatalog(items: LocalPluginInfo[]): string | undefin
 	return [
 		'Локальные plugins/tools (описание; JS не require в host).',
 		'npm с command/args/bin: tool run_plugin (spawn под workspace, с подтверждением shell).',
-		'Tools из `.gen/tools` также доступны как LLM tools по имени (registry).',
+		'Tools из `.haratsan/tools` также доступны как LLM tools по имени (registry).',
 		'Иначе загрузи инструкции через tool plugin по имени или read_file:',
 		...lines,
 	].join('\n');

@@ -2,7 +2,7 @@
 
 [Русская версия](commands-ru.md)
 
-In the command palette they appear as **Gen: ...** (`Gen` category).
+In the command palette they appear as **Haratsan: ...** (`Haratsan` category).
 
 ## Default keybindings
 
@@ -11,19 +11,19 @@ In the command palette they appear as **Gen: ...** (`Gen` category).
 | Open chat         | `Ctrl+Alt+G` | `Cmd+Alt+G` |
 | Comment selection | `Ctrl+Alt+/` | `Cmd+Alt+/` |
 
-You can change bindings: **File -> Preferences -> Keyboard Shortcuts** (search `Gen`).
+You can change bindings: **File -> Preferences -> Keyboard Shortcuts** (search `Haratsan`).
 
 Settings open from the Settings button in the chat header (no separate command or keybinding).
 
 ## Command list
 
-### Gen: Comment selection
+### Haratsan: Comment selection
 
 Available when there is a selection in the editor (context menu + hotkey).  
 Pipeline: prompt -> LLM -> extract -> validate -> diff -> apply.  
 See [comments.md](comments.md).
 
-### Gen: Comment file
+### Haratsan: Comment file
 
 Comments for the entire open file. Editor context menu item (no default hotkey).
 

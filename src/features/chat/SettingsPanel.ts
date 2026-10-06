@@ -17,7 +17,7 @@ import { clearActivity, readActivity } from '../../core/stores/activityStore';
 import { readUsage, resetUsage } from '../../core/stores/usageStore';
 import { createNonce, renderChatHtml } from './chatHtml';
 import type { AdminPolicyInfo, FromWebviewMessage, PersonaOption, ToWebviewMessage } from './protocol';
-const VIEW_TYPE = 'gen.settings';
+const VIEW_TYPE = 'haratsan.settings';
 function isAbortError(err: unknown): boolean {
 	return err instanceof Error && err.name === 'AbortError';
 }
@@ -290,7 +290,7 @@ export class SettingsPanel {
 			return vscode.Uri.joinPath(folder.uri, configured);
 		}
 
-		return vscode.Uri.joinPath(folder.uri, '.gen', 'hooks.json');
+		return vscode.Uri.joinPath(folder.uri, '.haratsan', 'hooks.json');
 	}
 
 	// Разобрать список команд из hooks.json (строки или { command })
@@ -417,7 +417,7 @@ export class SettingsPanel {
 		}
 
 		try {
-			const genDir = vscode.Uri.joinPath(folder.uri, '.gen');
+			const genDir = vscode.Uri.joinPath(folder.uri, '.haratsan');
 			try {
 				await vscode.workspace.fs.createDirectory(genDir);
 			} catch {}
@@ -465,7 +465,7 @@ export class SettingsPanel {
 		}
 
 		try {
-			const genDir = vscode.Uri.joinPath(folder.uri, '.gen');
+			const genDir = vscode.Uri.joinPath(folder.uri, '.haratsan');
 			try {
 				await vscode.workspace.fs.createDirectory(genDir);
 			} catch {}
@@ -566,7 +566,7 @@ export class SettingsPanel {
 		} catch {}
 	}
 
-	// Отправить список builtin presets и кастомных агентов из `.gen/agents/`
+	// Отправить список builtin presets и кастомных агентов из `.haratsan/agents/`
 	private async postAgentsData(): Promise<void> {
 		try {
 			const custom = await discoverCustomAgents();
@@ -602,7 +602,7 @@ export class SettingsPanel {
 		}
 	}
 
-	// Клонировать builtin preset в `.gen/agents/` и открыть файл
+	// Клонировать builtin preset в `.haratsan/agents/` и открыть файл
 	private async handleCloneAgentPreset(id: string): Promise<void> {
 		try {
 			const { relativePath, created } = await cloneBuiltinPreset(id);

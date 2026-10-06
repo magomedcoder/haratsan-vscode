@@ -1,12 +1,12 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { GEN_DIR_RELATIVE } from './config';
+import { HARATSAN_DIR_RELATIVE } from './config';
 
-const SCRATCH_REL = `${GEN_DIR_RELATIVE}/scratch`;
+const SCRATCH_REL = `${HARATSAN_DIR_RELATIVE}/scratch`;
 const MAX_LIST = 24;
 
-// Краткий каталог файлов `.gen/scratch/` для system prompt appendix.
+// Краткий каталог файлов `.haratsan/scratch/` для system prompt appendix.
 export async function formatScratchCatalog(): Promise<string | undefined> {
 	const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 	if (!root) {
@@ -31,7 +31,7 @@ export async function formatScratchCatalog(): Promise<string | undefined> {
 	}
 
 	const lines = [
-		'Scratch (`.gen/scratch/`): одноразовые скрипты; запуск только через `run_scratch` (не eval). Файлы:',
+		'Scratch (`.haratsan/scratch/`): одноразовые скрипты; запуск только через `run_scratch` (не eval). Файлы:',
 		...files.map((f) => `- ${SCRATCH_REL}/${f}`),
 	];
 	if (names.length > MAX_LIST) {

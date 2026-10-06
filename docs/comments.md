@@ -4,8 +4,8 @@
 
 Commands:
 
-- **Gen: Comment selection** - selected fragment (`Ctrl+Alt+/` / `Cmd+Alt+/`)
-- **Gen: Comment file** - entire open file (context menu)
+- **Haratsan: Comment selection** - selected fragment (`Ctrl+Alt+/` / `Cmd+Alt+/`)
+- **Haratsan: Comment file** - entire open file (context menu)
 
 ## Pipeline
 

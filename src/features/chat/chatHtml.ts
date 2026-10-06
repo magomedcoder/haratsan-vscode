@@ -16,7 +16,7 @@ export function renderChatHtml(params: {
 	l10n: WebviewL10nPack;
 }): string {
 	const { cspSource, nonce, scriptUri, styleUri, l10n } = params;
-	const title = params.title ?? l10n.strings['chat.webviewTitle'] ?? 'Gen Chat';
+	const title = params.title ?? l10n.strings['chat.webviewTitle'] ?? 'Haratsan Chat';
 	const screen = params.screen ?? 'chat';
 	const lang = l10n.locale || 'en';
 	const codiconsLink = params.codiconsStyleUri
@@ -34,7 +34,7 @@ export function renderChatHtml(params: {
 </head>
 <body data-screen="${screen}">
 	<div id="root"></div>
-	<script nonce="${nonce}">window.__GEN_L10N__=${escapeScriptJson(l10n)};</script>
+	<script nonce="${nonce}">window.__HARATSAN_L10N__=${escapeScriptJson(l10n)};</script>
 	<script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

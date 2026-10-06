@@ -46,7 +46,7 @@ export const runCommandTool: ToolDefinition = {
 			},
 			profile: {
 				type: 'string',
-				description: 'Имя профиля из `.gen/shell.json` (иначе defaultProfile / GEN_SHELL_PROFILE)',
+				description: 'Имя профиля из `.haratsan/shell.json` (иначе defaultProfile / HARATSAN_SHELL_PROFILE)',
 			},
 		},
 		required: ['command'],

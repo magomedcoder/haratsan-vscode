@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-config.schema.json",
-	"title": "Gen Agent config",
-	"description": "User (`~/.config/gen/config.json`) or project (`.gen/config.json`) layer. Only keys listed in FILE_LAYER_KEYS plus hooks/hooksPath/meta are applied. Strings may use `${env:VAR}` / `{env:VAR}` and `{file:path}` interpolation where supported.",
+	"$id": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-config.schema.json",
+	"title": "Haratsan config",
+	"description": "User (`~/.config/haratsan/config.json`) or project (`.haratsan/config.json`) layer. Only keys listed in FILE_LAYER_KEYS plus hooks/hooksPath/meta are applied. Strings may use `${env:VAR}` / `{env:VAR}` and `{file:path}` interpolation where supported.",
 	"type": "object",
 	"properties": {
 		"$schema": {
@@ -15,14 +15,14 @@
 		},
 		"createdAt": {
 			"type": "string",
-			"description": "ISO timestamp when project Gen was initialized (metadata)."
+			"description": "ISO timestamp when project Haratsan was initialized (metadata)."
 		},
 		"hooksPath": {
 			"type": "string",
 			"description": "Path to hooks.json (workspace-relative or absolute)."
 		},
 		"hooks": {
-			"$ref": "gen-hooks.schema.json#/$defs/hooksObject",
+			"$ref": "haratsan-hooks.schema.json#/$defs/hooksObject",
 			"description": "Inline hooks; non-empty lists override the hooks file."
 		},
 		"systemPrompt": { "type": "string" },
@@ -51,7 +51,7 @@
 		"webSearchHttpHeader": { "type": "string" },
 		"webSearchApiKey": {
 			"type": "string",
-			"description": "Deprecated in JSON - use Settings UI / SecretStorage (gen.webSearchApiKey). Ignored if present in config layers."
+			"description": "Deprecated in JSON - use Settings UI / SecretStorage (haratsan.webSearchApiKey). Ignored if present in config layers."
 		},
 		"webFetchEnabled": { "type": "boolean" },
 		"skillsPaths": {

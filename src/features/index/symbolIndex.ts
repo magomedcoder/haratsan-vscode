@@ -1,16 +1,13 @@
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
 import type * as vscodeTypes from 'vscode';
 import { getSettings } from '../../core/config/settings';
 import { isProjectEnabled } from '../project/config';
-import { INDEX_DIR_RELATIVE } from './types';
+import { INDEX_SYMBOLS_FILE, indexDirForFolder, indexFilePath } from './indexStorage';
 import { loadManifest } from './store';
 import { parseSymbolIndexJson, applySymbolPathRemove, applySymbolPathUpdate, type SymbolIndexDocument, type SymbolIndexEntry } from './symbolIndexParse';
 
 export type { SymbolIndexDocument, SymbolIndexEntry } from './symbolIndexParse';
 export { parseSymbolIndexJson, applySymbolPathRemove, applySymbolPathUpdate } from './symbolIndexParse';
-
-export const SYMBOL_INDEX_RELATIVE = '.gen/index/symbols.json';
 
 export const SYMBOL_INDEX_LIMITS = {
 	maxFiles: 200,
@@ -57,17 +54,33 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function symbolsPathForFolder(folderFsPath: string): string {
-	return path.join(folderFsPath, SYMBOL_INDEX_RELATIVE);
+function symbolsPathForFolder(folderFsPath: string): string | undefined {
+	return indexFilePath(folderFsPath, INDEX_SYMBOLS_FILE);
 }
 
 export async function loadSymbolIndex(folderFsPath: string): Promise<SymbolIndexDocument | undefined> {
+	const file = symbolsPathForFolder(folderFsPath);
+	if (!file) {
+		return undefined;
+	}
+
 	try {
-		const raw = await fs.readFile(symbolsPathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		return parseSymbolIndexJson(raw);
 	} catch {
 		return undefined;
 	}
+}
+
+async function writeSymbolIndex(folderFsPath: string, doc: SymbolIndexDocument): Promise<void> {
+	const dir = indexDirForFolder(folderFsPath);
+	const file = symbolsPathForFolder(folderFsPath);
+	if (!dir || !file) {
+		return;
+	}
+	
+	await fs.mkdir(dir, { recursive: true });
+	await fs.writeFile(file, JSON.stringify(doc, null, 2), 'utf8');
 }
 
 function flattenSymbols(
@@ -143,8 +156,7 @@ export async function buildSymbolIndex(
 		symbols,
 	};
 
-	await fs.mkdir(path.join(folderFs, INDEX_DIR_RELATIVE), { recursive: true });
-	await fs.writeFile(symbolsPathForFolder(folderFs), JSON.stringify(doc, null, 2), 'utf8');
+	await writeSymbolIndex(folderFs, doc);
 	return doc;
 }
 
@@ -189,10 +201,7 @@ function emptySymbolDoc(): SymbolIndexDocument {
 }
 
 async function saveSymbolDoc(folderFs: string, doc: SymbolIndexDocument): Promise<void> {
-	await fs.mkdir(path.join(folderFs, INDEX_DIR_RELATIVE), {
-		recursive: true
-	});
-	await fs.writeFile(symbolsPathForFolder(folderFs), JSON.stringify(doc, null, 2), 'utf8');
+	await writeSymbolIndex(folderFs, doc);
 }
 
 // Per-file upsert в symbols.json через LSP DocumentSymbolProvider

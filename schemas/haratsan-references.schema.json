@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-references.schema.json",
-	"title": "Gen Agent references",
-	"description": "Named @alias / @ref pointers (`.gen/references.json` or `.gen/references/<alias>.json`).",
+	"$id": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-references.schema.json",
+	"title": "Haratsan references",
+	"description": "Named @alias / @ref pointers (`.haratsan/references.json` or `.haratsan/references/<alias>.json`).",
 	"type": "object",
 	"properties": {
 		"$schema": {
@@ -47,7 +47,7 @@
 		"alias": {
 			"type": "string",
 			"pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$",
-			"description": "For per-file `.gen/references/<alias>.json` entries."
+			"description": "For per-file `.haratsan/references/<alias>.json` entries."
 		},
 		"path": {
 			"type": "string",

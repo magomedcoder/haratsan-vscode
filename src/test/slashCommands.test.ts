@@ -118,7 +118,7 @@ suite('slashCommands', () => {
 		const slash = customToSlashCommand({
 			name: 'review',
 			body: 'Review $ARGUMENTS',
-			path: '.gen/commands/review.md',
+			path: '.haratsan/commands/review.md',
 			argumentsHint: 'path flags',
 		});
 		assert.strictEqual(slash.needsArgs, true);

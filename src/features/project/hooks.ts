@@ -99,7 +99,7 @@ function isNotifyOnly(event: HookEvent): boolean {
 	return event === 'session.diff' || event === 'file.watcher';
 }
 
-// Загрузить hooks: hooksPath из слоёв конфига * иначе `.gen/hooks.json`, плюс inline `hooks` из JSON
+// Загрузить hooks: hooksPath из слоёв конфига * иначе `.haratsan/hooks.json`, плюс inline `hooks` из JSON
 export async function loadProjectHooks(): Promise<ProjectHooks> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	const fromFile = folder
@@ -120,7 +120,7 @@ function resolveHooksUri(folder: vscode.WorkspaceFolder): vscode.Uri {
 		return vscode.Uri.joinPath(folder.uri, configured);
 	}
 
-	return vscode.Uri.joinPath(folder.uri, '.gen', 'hooks.json');
+	return vscode.Uri.joinPath(folder.uri, '.haratsan', 'hooks.json');
 }
 
 async function readHooksFile(uri: vscode.Uri): Promise<ProjectHooks> {
@@ -242,7 +242,7 @@ export async function runHookEvent(
 
 	for (const item of list) {
 		const result = await runShellHook(item.command, cwd, {
-			GEN_HOOK_EVENT: event,
+			HARATSAN_HOOK_EVENT: event,
 			...envExtra,
 		}, signal);
 		if (result.vetoed || !result.ok) {
@@ -271,21 +271,21 @@ export async function runHookEvent(
 
 export async function runBeforeSubmitHook(text: string, signal?: AbortSignal): Promise<HookRunResult> {
 	return runHookEvent('beforeSubmit', {
-		GEN_HOOK_TEXT: text.slice(0, 4_000),
+		HARATSAN_HOOK_TEXT: text.slice(0, 4_000),
 	}, signal);
 }
 
 export async function runBeforeShellHook(commandLine: string, signal?: AbortSignal): Promise<HookRunResult> {
 	return runHookEvent('beforeShell', {
-		GEN_HOOK_COMMAND: commandLine.slice(0, 2_000),
+		HARATSAN_HOOK_COMMAND: commandLine.slice(0, 2_000),
 	}, signal);
 }
 
-// Notify после turn-diff: пути через GEN_HOOK_PATHS
+// Notify после turn-diff: пути через HARATSAN_HOOK_PATHS
 export async function runSessionDiffHook(paths: string[], turnId: string): Promise<HookRunResult> {
 	return runHookEvent('session.diff', {
-		GEN_HOOK_PATHS: paths.join('\n').slice(0, 8_000),
-		GEN_HOOK_TURN_ID: turnId.slice(0, 200),
+		HARATSAN_HOOK_PATHS: paths.join('\n').slice(0, 8_000),
+		HARATSAN_HOOK_TURN_ID: turnId.slice(0, 200),
 	});
 }
 
@@ -361,7 +361,7 @@ function envMapFromJson(parsed: unknown): Record<string, string> | undefined {
 
 /**
  * Перед spawn run_command: inject/modify env (или veto).
- * Env: GEN_HOOK_EVENT=shell.env, GEN_HOOK_COMMAND, GEN_HOOK_CWD.
+ * Env: HARATSAN_HOOK_EVENT=shell.env, HARATSAN_HOOK_COMMAND, HARATSAN_HOOK_CWD.
  * stdout * merge env map (JSON или KEY=value).
  */
 export async function runShellEnvHook(
@@ -385,9 +385,9 @@ export async function runShellEnvHook(
 
 	for (const item of list) {
 		const result = await runShellHook(item.command, hookCwd, {
-			GEN_HOOK_EVENT: 'shell.env',
-			GEN_HOOK_COMMAND: commandLine.slice(0, 2_000),
-			GEN_HOOK_CWD: cwd.slice(0, 2_000),
+			HARATSAN_HOOK_EVENT: 'shell.env',
+			HARATSAN_HOOK_COMMAND: commandLine.slice(0, 2_000),
+			HARATSAN_HOOK_CWD: cwd.slice(0, 2_000),
 		}, signal);
 
 		if (result.vetoed || !result.ok) {
@@ -412,8 +412,8 @@ export async function runShellEnvHook(
 export type FileWatcherEventKind = 'create' | 'change' | 'delete';
 
 /**
- * Notify (soft failure): изменения под `.gen/**`.
- * Env: GEN_HOOK_PATH, GEN_HOOK_FILE_EVENT, GEN_HOOK_PATHS, GEN_HOOK_FILE_EVENTS.
+ * Notify (soft failure): изменения под `.haratsan/**`.
+ * Env: HARATSAN_HOOK_PATH, HARATSAN_HOOK_FILE_EVENT, HARATSAN_HOOK_PATHS, HARATSAN_HOOK_FILE_EVENTS.
  */
 export async function runFileWatcherHook(
 	entries: Array<{ path: string; event: FileWatcherEventKind }>,
@@ -425,9 +425,9 @@ export async function runFileWatcherHook(
 	const paths = entries.map((e) => e.path);
 	const events = entries.map((e) => e.event);
 	return runHookEvent('file.watcher', {
-		GEN_HOOK_PATH: paths[0]!.slice(0, 2_000),
-		GEN_HOOK_FILE_EVENT: events[0]!,
-		GEN_HOOK_PATHS: paths.join('\n').slice(0, 8_000),
-		GEN_HOOK_FILE_EVENTS: events.join('\n').slice(0, 4_000),
+		HARATSAN_HOOK_PATH: paths[0]!.slice(0, 2_000),
+		HARATSAN_HOOK_FILE_EVENT: events[0]!,
+		HARATSAN_HOOK_PATHS: paths.join('\n').slice(0, 8_000),
+		HARATSAN_HOOK_FILE_EVENTS: events.join('\n').slice(0, 4_000),
 	});
 }

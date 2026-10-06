@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-shell.schema.json",
-	"title": "Gen Agent shell profiles",
-	"description": "Workspace shell env templates (`.gen/shell.json`). Applied before spawn for run_command / run_tests / run_scratch. Order: profile env -> shell.env hook. Select profile via tool `profile`, env GEN_SHELL_PROFILE, or defaultProfile.",
+	"$id": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-shell.schema.json",
+	"title": "Haratsan shell profiles",
+	"description": "Workspace shell env templates (`.haratsan/shell.json`). Applied before spawn for run_command / run_tests / run_scratch. Order: profile env -> shell.env hook. Select profile via tool `profile`, env HARATSAN_SHELL_PROFILE, or defaultProfile.",
 	"type": "object",
 	"properties": {
 		"$schema": {
@@ -15,7 +15,7 @@
 		},
 		"defaultProfile": {
 			"type": "string",
-			"description": "Имя профиля по умолчанию (если не заданы tool profile / GEN_SHELL_PROFILE)."
+			"description": "Имя профиля по умолчанию (если не заданы tool profile / HARATSAN_SHELL_PROFILE)."
 		},
 		"description": {
 			"type": "string",

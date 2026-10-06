@@ -19,7 +19,7 @@ suite('gitIgnore matcher', () => {
 		assert.ok(!ignoresRelative(ig, 'src/main.go'));
 	});
 
-	test('genignore-подобные шаблоны', () => {
+	test('haratsanignore-подобные шаблоны', () => {
 		const ig = createIgnoreMatcher(['secrets/', '*.pem', '.env']);
 		assert.ok(ignoresRelative(ig, 'secrets/token.txt'));
 		assert.ok(ignoresRelative(ig, 'certs/server.pem'));

@@ -87,7 +87,7 @@ function sectionToMessage(heading: string, body: string): ChatUiMessage | undefi
 }
 
 /**
- * Разбор markdown экспорта (`# Экспорт чата Gen` + секции `## ...`).
+ * Разбор markdown экспорта (`# Экспорт чата Haratsan` + секции `## ...`).
  * Пустые секции пропускаются; id сообщений - новые.
  */
 export function parseExportedMarkdown(md: string): ChatUiMessage[] {

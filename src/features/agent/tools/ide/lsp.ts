@@ -141,7 +141,7 @@ async function enrichLocations(
 
 export const lspTool: ToolDefinition = {
 	name: 'lsp',
-	description: 'Языковые сервисы VS Code: definition | references | hover | symbols. Координаты line и character - 0-based (как LSP). Только чтение.',
+	description: 'Языковые сервисы VSCode: definition | references | hover | symbols. Координаты line и character - 0-based (как LSP). Только чтение.',
 	parameters: {
 		type: 'object',
 		properties: {

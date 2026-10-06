@@ -3,7 +3,7 @@ import { writeLog } from '../../core/log/logger';
 import { runFileWatcherHook, type FileWatcherEventKind } from './hooks';
 
 const DEBOUNCE_MS = 400;
-const GEN_GLOB = '.gen/**';
+const HARATSAN_GLOB = '.haratsan/**';
 
 export function initFileWatcherHooks(context: vscode.ExtensionContext): FileWatcherHooksManager {
 	const manager = new FileWatcherHooksManager();
@@ -11,7 +11,7 @@ export function initFileWatcherHooks(context: vscode.ExtensionContext): FileWatc
 	return manager;
 }
 
-// Лёгкий watcher на `.gen/**`: debounce * hook `file.watcher` (notify-only)
+// Лёгкий watcher на `.haratsan/**`: debounce * hook `file.watcher` (notify-only)
 export class FileWatcherHooksManager implements vscode.Disposable {
 	private readonly folderListener: vscode.Disposable;
 	private watchDisposables: vscode.Disposable[] = [];
@@ -51,7 +51,7 @@ export class FileWatcherHooksManager implements vscode.Disposable {
 		}
 
 		const watcher = vscode.workspace.createFileSystemWatcher(
-			new vscode.RelativePattern(folder, GEN_GLOB),
+			new vscode.RelativePattern(folder, HARATSAN_GLOB),
 		);
 		this.watchDisposables = [
 			watcher,

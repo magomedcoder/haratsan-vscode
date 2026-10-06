@@ -22,7 +22,7 @@ export const runTestsTool: ToolDefinition = {
 			},
 			profile: {
 				type: 'string',
-				description: 'Имя профиля из `.gen/shell.json`',
+				description: 'Имя профиля из `.haratsan/shell.json`',
 			},
 		},
 		additionalProperties: false,

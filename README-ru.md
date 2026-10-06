@@ -1,12 +1,12 @@
-# Gen Agent VS Code extension
+# Haratsan VSCode extension
 
 [English version](README.md)
 
-Минимальная версия VS Code: **1.125.0**
+Минимальная версия VSCode: **1.125.0**
 
-AI-чат и coding-агент **Gen**. Работает с **llama.cpp** и любым **OpenAI-совместимым** API.
+AI-чат и coding-агент **Haratsan**. Работает с **llama.cpp** и любым **OpenAI-совместимым** API.
 
-Читает и правит код, запускает команды, ищет по репозиторию. Режимы Ask / Agent / Plan / Debug, mentions, сессии, `.gen/` для правил проекта. MCP не поддерживается.
+Читает и правит код, запускает команды, ищет по репозиторию. Режимы Ask / Agent / Plan / Debug, mentions, сессии, `.haratsan/` для правил проекта. MCP не поддерживается.
 
 ## Документация
 
@@ -18,7 +18,7 @@ AI-чат и coding-агент **Gen**. Работает с **llama.cpp** и л�
 - [Команды](docs/commands-ru.md)
 - [Инструменты](docs/tools-ru.md)
 - [Комментарии](docs/comments-ru.md)
-- [Безопасность](docs/security-ru.md) (в т.ч. `.genignore`)
+- [Безопасность](docs/security-ru.md) (в т.ч. `.haratsanignore`)
 - [Логи](docs/logging-ru.md)
 - [Архитектура](docs/architecture-ru.md)
 - [Индекс кодовой базы](docs/codebase-index-ru.md)

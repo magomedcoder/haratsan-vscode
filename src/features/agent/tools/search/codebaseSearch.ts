@@ -8,7 +8,7 @@ import { throwIfAborted } from '../../workspacePath';
 
 export const codebaseSearchTool: ToolDefinition = {
 	name: 'codebase_search',
-	description: 'Поиск по проиндексированной кодовой базе (триграммы). Быстрее полного grep/glob по большому проекту. Индекс в .gen/index/.',
+	description: 'Поиск по проиндексированной кодовой базе (триграммы). Быстрее полного grep/glob по большому проекту. Индекс в VS Code workspace storage.',
 	parameters: {
 		type: 'object',
 		properties: {

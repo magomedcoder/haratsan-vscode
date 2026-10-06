@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getApiKey, buildAuthHeaders } from '../config/apiKey';
-import { getSettings, setSessionModel, type GenSettings } from '../config/settings';
+import { getSettings, setSessionModel, type HaratsanSettings } from '../config/settings';
 import { httpErrorMessage, isAbortError, isRetryableError, LlmHttpError, parseErrorDetail, parseRetryAfterMs, retryDelayMs, toAbortError, toTimeoutError, isTimeoutError } from './errors';
 import type { LlmRetryInfo } from './types';
 import { logLlm } from './log';
@@ -507,7 +507,7 @@ export class HttpLlmClient implements LlmClient {
 
 	// GET /props или ../props; кэш n_ctx. Ошибки глотаем
 	private async probeNCtxSoft(
-		settings: GenSettings,
+		settings: HaratsanSettings,
 		model: string,
 		signal?: AbortSignal,
 	): Promise<void> {
@@ -538,7 +538,7 @@ export class HttpLlmClient implements LlmClient {
 	// Один GET без retry-шума (для optional /props)
 	private async requestJsonOnceSoft(
 		path: string,
-		settings: GenSettings,
+		settings: HaratsanSettings,
 		timeoutMs: number,
 		signal?: AbortSignal,
 	): Promise<unknown> {
@@ -553,7 +553,7 @@ export class HttpLlmClient implements LlmClient {
 		return result;
 	}
 
-	private async resolveSessionModel(settings: GenSettings): Promise<string> {
+	private async resolveSessionModel(settings: HaratsanSettings): Promise<string> {
 		const current = settings.model.trim();
 		if (current) {
 			return current;
@@ -577,7 +577,7 @@ export class HttpLlmClient implements LlmClient {
 		}
 	}
 
-	private async authHeaders(settings: GenSettings): Promise<Record<string, string>> {
+	private async authHeaders(settings: HaratsanSettings): Promise<Record<string, string>> {
 		const key = await this.readApiKey();
 		return buildAuthHeaders(key, settings.authHeader, settings.authScheme);
 	}
@@ -639,7 +639,7 @@ export class HttpLlmClient implements LlmClient {
 	private async requestStream(
 		body: Record<string, unknown>,
 		signal: AbortSignal | undefined,
-		settings: GenSettings,
+		settings: HaratsanSettings,
 		onDelta?: (chunk: string) => void,
 		onThinkingDelta?: (chunk: string) => void,
 		onRetry?: (info: LlmRetryInfo) => void,
@@ -663,7 +663,7 @@ export class HttpLlmClient implements LlmClient {
 		body: Record<string, unknown>,
 		headers: Record<string, string>,
 		signal: AbortSignal | undefined,
-		settings: GenSettings,
+		settings: HaratsanSettings,
 		onDelta?: (chunk: string) => void,
 		onThinkingDelta?: (chunk: string) => void,
 	): Promise<{ result: CompleteResult; status: number }> {
@@ -815,7 +815,7 @@ export class HttpLlmClient implements LlmClient {
 	private async requestJson<T>(
 		path: string,
 		init: RequestInit,
-		settings: GenSettings,
+		settings: HaratsanSettings,
 		onRetry?: (info: LlmRetryInfo) => void,
 	): Promise<T> {
 		const url = new URL(path, settings.baseUrl).toString();

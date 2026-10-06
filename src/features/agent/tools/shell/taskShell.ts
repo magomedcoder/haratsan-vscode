@@ -255,7 +255,7 @@ async function mapPool<T>(
 export const taskTool: ToolDefinition = {
 	name: 'task',
 	description:
-		'Запустить субагента (explore | general | scout | docs-researcher | code-reviewer | кастомный из `.gen/agents/`) для подзадачи. Explore/scout/presets - read-only; general - полный набор tools. Параллельный research: prompts[] (readonly). Параллельные mutating: prompts[] + allow_mutating_parallel (отдельные worktree). background/run_in_background - не блокировать parent. synthesize - записать aggregate в `.gen/reports/`.',
+		'Запустить субагента (explore | general | scout | docs-researcher | code-reviewer | кастомный из `.haratsan/agents/`) для подзадачи. Explore/scout/presets - read-only; general - полный набор tools. Параллельный research: prompts[] (readonly). Параллельные mutating: prompts[] + allow_mutating_parallel (отдельные worktree). background/run_in_background - не блокировать parent. synthesize - записать aggregate в `.haratsan/reports/`.',
 	parameters: {
 		type: 'object',
 		properties: {
@@ -278,7 +278,7 @@ export const taskTool: ToolDefinition = {
 			},
 			use_worktree: {
 				type: 'boolean',
-				description: 'Создать git worktree под `.gen/worktrees/`. Для mutating parallel - worktree на каждый prompt.',
+				description: 'Создать git worktree под `.haratsan/worktrees/`. Для mutating parallel - worktree на каждый prompt.',
 			},
 			background: {
 				type: 'boolean',
@@ -298,7 +298,7 @@ export const taskTool: ToolDefinition = {
 			},
 			synthesize: {
 				type: 'boolean',
-				description: 'После parallel/single записать markdown-отчёт в `.gen/reports/` (project mode - по умолчанию true).',
+				description: 'После parallel/single записать markdown-отчёт в `.haratsan/reports/` (project mode - по умолчанию true).',
 			},
 			cleanup_worktree: {
 				type: 'boolean',

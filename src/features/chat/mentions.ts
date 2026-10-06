@@ -267,7 +267,7 @@ async function resolveDocsContext(query: string): Promise<string> {
 	for (const pattern of patterns) {
 		const uris = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(folder, pattern),
-			'**/{.gen,node_modules,.git}/**',
+			'**/{.haratsan,node_modules,.git}/**',
 			24,
 		);
 
@@ -311,7 +311,7 @@ async function resolveDocsContext(query: string): Promise<string> {
 	return candidates.length ? toPack(candidates) : empty;
 }
 
-// Тело `.gen/agents/{name}.md` в контекст
+// Тело `.haratsan/agents/{name}.md` в контекст
 async function resolveAgentContext(name: string | undefined): Promise<string> {
 	if (!name?.trim()) {
 		return '[agent] укажи имя: @agent name';
@@ -337,7 +337,7 @@ async function resolveAgentContext(name: string | undefined): Promise<string> {
 		}
 
 		seen.add(file);
-		const uri = vscode.Uri.joinPath(folder.uri, '.gen', 'agents', file);
+		const uri = vscode.Uri.joinPath(folder.uri, '.haratsan', 'agents', file);
 		try {
 			const bytes = await vscode.workspace.fs.readFile(uri);
 			let text = new TextDecoder('utf8', { fatal: false }).decode(bytes);
@@ -356,7 +356,7 @@ async function resolveAgentContext(name: string | undefined): Promise<string> {
 
 	// Поиск по glob, если точное имя не совпало
 	const uris = await vscode.workspace.findFiles(
-		new vscode.RelativePattern(folder, '.gen/agents/*.md'),
+		new vscode.RelativePattern(folder, '.haratsan/agents/*.md'),
 		undefined,
 		40,
 	);
@@ -382,7 +382,7 @@ async function resolveAgentContext(name: string | undefined): Promise<string> {
 		}
 	}
 
-	return `[agent] файл .gen/agents/${slug || rawName}.md не найден`;
+	return `[agent] файл .haratsan/agents/${slug || rawName}.md не найден`;
 }
 
 // Хвосты терминалов: rank по query (cleanText) + token quota

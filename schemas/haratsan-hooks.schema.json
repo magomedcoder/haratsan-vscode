@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-hooks.schema.json",
-	"title": "Gen Agent hooks",
-	"description": "Project hooks (`.gen/hooks.json`). beforeSubmit / beforeShell / session.compacting / shell.env veto on exit ≠ 0; session.diff / file.watcher are notify-only. Env: GEN_HOOK_EVENT + event-specific vars. shell.env stdout: JSON {\"env\":{...}} or KEY=value.",
+	"$id": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-hooks.schema.json",
+	"title": "Haratsan hooks",
+	"description": "Project hooks (`.haratsan/hooks.json`). beforeSubmit / beforeShell / session.compacting / shell.env veto on exit ≠ 0; session.diff / file.watcher are notify-only. Env: HARATSAN_HOOK_EVENT + event-specific vars. shell.env stdout: JSON {\"env\":{...}} or KEY=value.",
 	"type": "object",
 	"properties": {
 		"$schema": {
@@ -14,19 +14,19 @@
 		},
 		"beforeSubmit": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Veto on non-zero exit. Env: GEN_HOOK_TEXT."
+			"description": "Veto on non-zero exit. Env: HARATSAN_HOOK_TEXT."
 		},
 		"beforeShell": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Veto on non-zero exit. Env: GEN_HOOK_COMMAND."
+			"description": "Veto on non-zero exit. Env: HARATSAN_HOOK_COMMAND."
 		},
 		"sessionDiff": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Notify-only (alias of session.diff). Env: GEN_HOOK_TURN_ID, GEN_HOOK_PATHS."
+			"description": "Notify-only (alias of session.diff). Env: HARATSAN_HOOK_TURN_ID, HARATSAN_HOOK_PATHS."
 		},
 		"session.diff": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Notify-only. Env: GEN_HOOK_TURN_ID, GEN_HOOK_PATHS."
+			"description": "Notify-only. Env: HARATSAN_HOOK_TURN_ID, HARATSAN_HOOK_PATHS."
 		},
 		"sessionCompacting": {
 			"$ref": "#/$defs/hookCommandList",
@@ -42,15 +42,15 @@
 		},
 		"shell.env": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Before run_command spawn. Env: GEN_HOOK_COMMAND, GEN_HOOK_CWD. stdout JSON {\"env\":{K:V}} or KEY=value merges into process env. Exit ≠ 0 vetoes."
+			"description": "Before run_command spawn. Env: HARATSAN_HOOK_COMMAND, HARATSAN_HOOK_CWD. stdout JSON {\"env\":{K:V}} or KEY=value merges into process env. Exit ≠ 0 vetoes."
 		},
 		"fileWatcher": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Alias of file.watcher. Notify-only for `.gen/**` changes."
+			"description": "Alias of file.watcher. Notify-only for `.haratsan/**` changes."
 		},
 		"file.watcher": {
 			"$ref": "#/$defs/hookCommandList",
-			"description": "Notify-only (debounced). Env: GEN_HOOK_PATH, GEN_HOOK_FILE_EVENT, GEN_HOOK_PATHS, GEN_HOOK_FILE_EVENTS."
+			"description": "Notify-only (debounced). Env: HARATSAN_HOOK_PATH, HARATSAN_HOOK_FILE_EVENT, HARATSAN_HOOK_PATHS, HARATSAN_HOOK_FILE_EVENTS."
 		}
 	},
 	"additionalProperties": {

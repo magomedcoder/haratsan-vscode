@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-export const GEN_SHELL_RELATIVE = '.gen/shell.json';
+export const HARATSAN_SHELL_RELATIVE = '.haratsan/shell.json';
 
 export interface ShellProfile {
 	description?: string;
@@ -86,7 +86,7 @@ function parseProfile(raw: unknown): ShellProfile | undefined {
 }
 
 /**
- * Разобрать JSON `.gen/shell.json`
+ * Разобрать JSON `.haratsan/shell.json`
  * Поддержка:
  * - именованные `profiles` + `defaultProfile`
  * - shorthand top-level `env` / `pathPrepend` / `pathAppend` -> профиль `default`
@@ -194,7 +194,7 @@ export function buildPathEnv(opts: {
 
 /**
  * Выбрать профиль и собрать env (без process.env - только overlay для spawn).
- * Приоритет имени: explicit -> GEN_SHELL_PROFILE -> defaultProfile -> "default" -> первый ключ.
+ * Приоритет имени: explicit -> HARATSAN_SHELL_PROFILE -> defaultProfile -> "default" -> первый ключ.
  */
 export function resolveShellProfileEnv(opts: {
 	config: ShellProfilesConfig | undefined;
@@ -202,7 +202,7 @@ export function resolveShellProfileEnv(opts: {
 	// process.env.PATH (или аналог) для pathPrepend/Append
 	basePath?: string;
 	workspaceRoot?: string;
-	// process.env.GEN_SHELL_PROFILE
+	// process.env.HARATSAN_SHELL_PROFILE
 	envProfileOverride?: string;
 }): ResolvedShellProfileEnv {
 	const config = opts.config;
@@ -240,14 +240,14 @@ export function resolveShellProfileEnv(opts: {
 	};
 }
 
-// Загрузить `.gen/shell.json` из workspace (нет файла -> undefined)
+// Загрузить `.haratsan/shell.json` из workspace (нет файла -> undefined)
 export async function loadShellProfiles(folderPath?: string): Promise<ShellProfilesConfig | undefined> {
 	const root = folderFsPath(folderPath);
 	if (!root) {
 		return undefined;
 	}
 
-	const uri = vscode.Uri.file(path.join(root, GEN_SHELL_RELATIVE));
+	const uri = vscode.Uri.file(path.join(root, HARATSAN_SHELL_RELATIVE));
 	try {
 		const bytes = await vscode.workspace.fs.readFile(uri);
 		const raw = JSON.parse(new TextDecoder().decode(bytes)) as unknown;
@@ -257,7 +257,7 @@ export async function loadShellProfiles(folderPath?: string): Promise<ShellProfi
 	}
 }
 
-// Env overlay для spawn: profile (+ опц. имя) из `.gen/shell.json`
+// Env overlay для spawn: profile (+ опц. имя) из `.haratsan/shell.json`
 export async function getShellProfileEnv(opts?: {
 	profileName?: string;
 	folderPath?: string;
@@ -269,7 +269,7 @@ export async function getShellProfileEnv(opts?: {
 		profileName: opts?.profileName,
 		basePath: process.env.PATH,
 		workspaceRoot: root,
-		envProfileOverride: process.env.GEN_SHELL_PROFILE,
+		envProfileOverride: process.env.HARATSAN_SHELL_PROFILE,
 	});
 }
 

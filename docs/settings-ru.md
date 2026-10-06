@@ -14,12 +14,12 @@
 
 ## Слои конфига (JSON)
 
-Effective `GenSettings` собирается из нескольких слоёв (приоритет **низкий  высокий**):
+Effective `HaratsanSettings` собирается из нескольких слоёв (приоритет **низкий  высокий**):
 
 1. Встроенные `DEFAULT_SETTINGS`
-2. User: `~/.config/gen/config.json` (Linux: `$XDG_CONFIG_HOME/gen` или `~/.config/gen`; Windows: `%APPDATA%/gen`; macOS: `~/.config/gen`; override: `GEN_CONFIG_DIR`)
-3. Gen Settings UI (extension `globalState`) - только поля, **отличающиеся от defaults**
-4. Project: `<workspace>/.gen/config.json` (только явно заданные ключи)
+2. User: `~/.config/haratsan/config.json`; override: `HARATSAN_CONFIG_DIR`
+3. Haratsan Settings UI (extension `globalState`) - только поля, **отличающиеся от defaults**
+4. Project: `<workspace>/.haratsan/config.json` (только явно заданные ключи)
 5. **Admin policy** (наивысший): блокирует/форсирует security-subset - project/UI не могут переопределить
 
 **Не реализовано:** remote `.well-known`, полный MDM/SSO.
@@ -28,9 +28,9 @@ Effective `GenSettings` собирается из нескольких слоё�
 
 Опциональный машинный policy-файл (первый найденный):
 
-1. `GEN_ADMIN_POLICY` - абсолютный путь к JSON (если задан - пробуется только он)
-2. Linux / macOS: `/etc/gen/policy.json`
-3. Windows: `%ProgramData%/gen/policy.json`
+1. `HARATSAN_ADMIN_POLICY` - абсолютный путь (если задан - только он)
+2. Linux / macOS: `/etc/haratsan/policy.json`
+3. Windows: `%ProgramData%/haratsan/policy.json`
 
 Ключи из файла **блокируются** и форсируют effective settings. Lock-ключи: `approvalPolicy`, `autoApprove`, `continueLoopOnDeny`, `enableTerminal`, `enableFileReading`, `enableWorkspaceContext`, `webSearchEnabled`, `webFetchEnabled`, `allowExternalDirectory`, `otelEnabled`, `otelEndpoint`, `providerUsePolicy`, `providerUsePatterns`.
 
@@ -38,7 +38,7 @@ Effective `GenSettings` собирается из нескольких слоё�
 
 ```json
 {
-  "$schema": "./schemas/gen-policy.schema.json",
+  "$schema": "./schemas/haratsan-policy.schema.json",
   "webSearchEnabled": false,
   "webFetchEnabled": false,
   "allowExternalDirectory": false,
@@ -46,29 +46,29 @@ Effective `GenSettings` собирается из нескольких слоё�
 }
 ```
 
-При активной политике в Gen Settings - баннер только для чтения со списком locked keys. Schema: `schemas/gen-policy.schema.json` (опционально; в `jsonValidation` не подключена).
+При активной политике в Haratsan Settings - баннер только для чтения со списком locked keys. Schema: `schemas/haratsan-policy.schema.json` (опционально; в `jsonValidation` не подключена).
 
-UI настроек Gen не ломается: слои аддитивны. Project перекрывает user и изменённые UI-поля по ключам из JSON; admin побеждает для locked keys. Единственный ключ в VS Code Settings (`gen.chatViewLocation`) синхронизируется из effective config для `when`-clause views.
+UI настроек Haratsan не ломается: слои аддитивны. Project перекрывает user и изменённые UI-поля по ключам из JSON; admin побеждает для locked keys. Единственный ключ в VSCode Settings (`haratsan.chatViewLocation`) синхронизируется из effective config для `when`-clause views.
 
-Поддерживаемые ключи JSON (subset `GenSettings`): `systemPrompt`, `commentSystemPrompt`, `primaryTools`, `watcherIgnore`, `webSearch*` (`webSearchBackend`: `duckduckgo` \| `exa` \| `parallel` \| `http`), `webFetchEnabled`, `skillsPaths` / `skillsUrls` / `instructionUrls`, `personaId`, `usernameDisplay`, deny/security lists, agent/indexing knobs, timeouts, `chatMode`, `planShellPolicy` (`ask` \| `deny`), `shareMode`, `revealOnEdit`, `thinkingDisplay`, `chatViewLocation`, и др. - полный список в `FILE_LAYER_KEYS` (`src/core/config/layers.ts`).
+Поддерживаемые ключи JSON (subset `HaratsanSettings`): `systemPrompt`, `commentSystemPrompt`, `primaryTools`, `watcherIgnore`, `webSearch*` (`webSearchBackend`: `duckduckgo` \| `exa` \| `parallel` \| `http`), `webFetchEnabled`, `skillsPaths` / `skillsUrls` / `instructionUrls`, `personaId`, `usernameDisplay`, deny/security lists, agent/indexing knobs, timeouts, `chatMode`, `planShellPolicy` (`ask` \| `deny`), `shareMode`, `revealOnEdit`, `thinkingDisplay`, `chatViewLocation`, и др. - полный список в `FILE_LAYER_KEYS` (`src/core/config/layers.ts`).
 
 Дополнительно в JSON:
 
 - `hooksPath` - путь к `hooks.json` (относительно workspace или абсолютный)
-- `hooks` - inline-команды хуков (как в `.gen/hooks.json`); непустые списки перекрывают файл
+- `hooks` - inline-команды хуков (как в `.haratsan/hooks.json`); непустые списки перекрывают файл
 
-### Хуки (`.gen/hooks.json`)
+### Хуки (`.haratsan/hooks.json`)
 
-Shell-команды по событиям. Всегда есть `GEN_HOOK_EVENT`. Ненулевой exit - **veto**, если не указано notify-only.
+Shell-команды по событиям. Всегда есть `HARATSAN_HOOK_EVENT`. Ненулевой exit - **veto**, если не указано notify-only.
 
-| Событие              | Когда                                          | Payload (env)                                                                                                   | stdout / управление                                                                                             |
-| -------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `beforeSubmit`       | Перед отправкой в чат                          | `GEN_HOOK_TEXT`                                                                                                 | exit ≠ 0 * блокирует send                                                                                       |
-| `beforeShell`        | Перед shell-инструментами агента               | `GEN_HOOK_COMMAND`                                                                                              | exit ≠ 0 * блокирует команду                                                                                    |
-| `shell.env`          | После `beforeShell`, перед spawn `run_command` | `GEN_HOOK_COMMAND`, `GEN_HOOK_CWD`                                                                              | JSON `{"env":{"K":"V"}}` / `{"K":"V"}` или строки `KEY=value` * merge в env дочернего процесса; exit ≠ 0 * veto |
-| `session.diff`       | После записи файлов turn’ом                    | `GEN_HOOK_PATHS`, `GEN_HOOK_TURN_ID`                                                                            | только notify                                                                                                   |
-| `session.compacting` | Перед `/compact`                               | -                                                                                                               | exit ≠ 0 * блокирует compact                                                                                    |
-| `file.watcher`       | Debounce изменений под `.gen/**`               | `GEN_HOOK_PATH`, `GEN_HOOK_FILE_EVENT` (`create`\|`change`\|`delete`), `GEN_HOOK_PATHS`, `GEN_HOOK_FILE_EVENTS` | только notify                                                                                                   |
+| Событие              | Когда                                          | Payload (env)                                                                                        | stdout / управление                                                                                             |
+| -------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `beforeSubmit`       | Перед отправкой в чат                          | `HARATSAN_HOOK_TEXT`                                                                                 | exit ≠ 0 * блокирует send                                                                                       |
+| `beforeShell`        | Перед shell-инструментами агента               | `HARATSAN_HOOK_COMMAND`                                                                              | exit ≠ 0 * блокирует команду                                                                                    |
+| `shell.env`          | После `beforeShell`, перед spawn `run_command` | `HARATSAN_HOOK_COMMAND` / `HARATSAN_HOOK_COMMAND`, `HARATSAN_HOOK_CWD`                               | JSON `{"env":{"K":"V"}}` / `{"K":"V"}` или строки `KEY=value` * merge в env дочернего процесса; exit ≠ 0 * veto |
+| `session.diff`       | После записи файлов turn’ом                    | `HARATSAN_HOOK_PATHS`, `HARATSAN_HOOK_TURN_ID`                                                       | только notify                                                                                                   |
+| `session.compacting` | Перед `/compact`                               | -                                                                                                    | exit ≠ 0 * блокирует compact                                                                                    |
+| `file.watcher`       | Debounce изменений под `.haratsan/**`          | `HARATSAN_HOOK_PATH`, `HARATSAN_HOOK_FILE_EVENT`, `HARATSAN_HOOK_PATHS`, `HARATSAN_HOOK_FILE_EVENTS` | только notify                                                                                                   |
 
 Алиасы: `sessionDiff` / `session.diff`, `shellEnv` / `shell.env`, `fileWatcher` / `file.watcher`.
 
@@ -76,19 +76,19 @@ Shell-команды по событиям. Всегда есть `GEN_HOOK_EVEN
 
 ### JSON Schema
 
-С установленным расширением VS Code валидирует файлы через `contributes.jsonValidation` (`$schema` не обязателен):
+С установленным расширением VSCode валидирует файлы через `contributes.jsonValidation` (`$schema` не обязателен):
 
-| Файл                                                   | Схема в расширении                   |
-| ------------------------------------------------------ | ------------------------------------ |
-| `**/.gen/config.json`, `**/gen/config.json` (user XDG) | `schemas/gen-config.schema.json`     |
-| `**/.gen/hooks.json`                                   | `schemas/gen-hooks.schema.json`      |
-| `**/.gen/references.json`, `**/.gen/references/*.json` | `schemas/gen-references.schema.json` |
+| Файл                                                             | Схема в расширении                   |
+| ---------------------------------------------------------------- | ------------------------------------ |
+| `**/.haratsan/config.json`, `**/gen/config.json` (user XDG)      | `schemas/gen-config.schema.json`     |
+| `**/.haratsan/hooks.json`                                        | `schemas/gen-hooks.schema.json`      |
+| `**/.haratsan/references.json`, `**/.haratsan/references/*.json` | `schemas/gen-references.schema.json` |
 
 Опциональный `$schema` (редакторы без расширения или явное закрепление версии):
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-config.schema.json"
+  "$schema": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/gen-config.schema.json"
 }
 ```
 
@@ -149,8 +149,8 @@ Shell-команды по событиям. Всегда есть `GEN_HOOK_EVEN
 
 ## Логи
 
-| Поле        | По умолчанию | Описание                                        |
-| ----------- | ------------ | ----------------------------------------------- |
-| Писать логи | выкл.        | Output `Gen LLM` / `Gen Agent` + файлы на диске |
+| Поле        | По умолчанию | Описание                                                  |
+| ----------- | ------------ | --------------------------------------------------------- |
+| Писать логи | выкл.        | Output `Haratsan LLM` / `Haratsan Agent` + файлы на диске |
 
 Кнопка **Открыть папку логов**. Подробнее: [logging-ru.md](logging-ru.md).

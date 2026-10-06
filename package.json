@@ -1,5 +1,5 @@
 {
-  "name": "gen-agent-vscode",
+  "name": "haratsan-vscode",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
   "publisher": "magomedcoder",
@@ -8,7 +8,7 @@
   "version": "0.5.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/magomedcoder/gen-agent-vscode"
+    "url": "https://github.com/magomedcoder/haratsan-vscode"
   },
   "l10n": "./l10n",
   "engines": {
@@ -23,114 +23,114 @@
   "contributes": {
     "commands": [
       {
-        "command": "gen.commentSelection",
+        "command": "haratsan.commentSelection",
         "title": "%command.commentSelection.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.commentFile",
+        "command": "haratsan.commentFile",
         "title": "%command.commentFile.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.openChat",
+        "command": "haratsan.openChat",
         "title": "%command.openChat.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.openChatPanel",
+        "command": "haratsan.openChatPanel",
         "title": "%command.openChatPanel.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.openChatSidebar",
+        "command": "haratsan.openChatSidebar",
         "title": "%command.openChatSidebar.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.addSelectionToChat",
+        "command": "haratsan.addSelectionToChat",
         "title": "%command.addSelectionToChat.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.addToChat",
+        "command": "haratsan.addToChat",
         "title": "%command.addToChat.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.explainSelection",
+        "command": "haratsan.explainSelection",
         "title": "%command.explainSelection.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.improveSelection",
+        "command": "haratsan.improveSelection",
         "title": "%command.improveSelection.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.addTerminalToChat",
+        "command": "haratsan.addTerminalToChat",
         "title": "%command.addTerminalToChat.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.notebook.addCell",
+        "command": "haratsan.notebook.addCell",
         "title": "%command.notebook.addCell.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.notebook.explainCell",
+        "command": "haratsan.notebook.explainCell",
         "title": "%command.notebook.explainCell.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.notebook.improveCell",
+        "command": "haratsan.notebook.improveCell",
         "title": "%command.notebook.improveCell.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.notebook.generateCell",
+        "command": "haratsan.notebook.generateCell",
         "title": "%command.notebook.generateCell.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.manageWorktrees",
+        "command": "haratsan.manageWorktrees",
         "title": "%command.manageWorktrees.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.hunk.accept",
+        "command": "haratsan.hunk.accept",
         "title": "%command.hunkAccept.title%",
         "category": "%extension.category%"
       },
       {
-        "command": "gen.hunk.reject",
+        "command": "haratsan.hunk.reject",
         "title": "%command.hunkReject.title%",
         "category": "%extension.category%"
       }
     ],
     "keybindings": [
       {
-        "command": "gen.openChat",
+        "command": "haratsan.openChat",
         "key": "ctrl+alt+g",
         "mac": "cmd+alt+g"
       },
       {
-        "command": "gen.addSelectionToChat",
+        "command": "haratsan.addSelectionToChat",
         "key": "ctrl+l",
         "mac": "cmd+l",
         "when": "editorTextFocus && editorHasSelection"
       },
       {
-        "command": "gen.commentSelection",
+        "command": "haratsan.commentSelection",
         "key": "ctrl+alt+/",
         "mac": "cmd+alt+/",
         "when": "editorHasSelection && editorTextFocus"
       }
     ],
     "configuration": {
-      "title": "%configuration.gen.title%",
+      "title": "%configuration.haratsan.title%",
       "properties": {
-        "gen.chatViewLocation": {
+        "haratsan.chatViewLocation": {
           "type": "string",
           "enum": [
             "panel",
@@ -138,11 +138,11 @@
             "both"
           ],
           "default": "both",
-          "description": "%config.gen.chatViewLocation.description%",
+          "description": "%config.haratsan.chatViewLocation.description%",
           "enumDescriptions": [
-            "%config.gen.chatViewLocation.panel%",
-            "%config.gen.chatViewLocation.sidebar%",
-            "%config.gen.chatViewLocation.both%"
+            "%config.haratsan.chatViewLocation.panel%",
+            "%config.haratsan.chatViewLocation.sidebar%",
+            "%config.haratsan.chatViewLocation.both%"
           ]
         }
       }
@@ -150,130 +150,130 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "gen-sidebar",
-          "title": "%viewsContainers.activitybar.gen-sidebar.title%",
+          "id": "haratsan-sidebar",
+          "title": "%viewsContainers.activitybar.haratsan-sidebar.title%",
           "icon": "media/logo.svg"
         }
       ],
       "panel": [
         {
-          "id": "gen",
-          "title": "%viewsContainers.panel.gen.title%",
+          "id": "haratsan",
+          "title": "%viewsContainers.panel.haratsan.title%",
           "icon": "media/logo.svg"
         }
       ]
     },
     "views": {
-      "gen": [
+      "haratsan": [
         {
           "type": "webview",
-          "id": "gen.chatView",
-          "name": "%views.gen.chatView.name%",
+          "id": "haratsan.chatView",
+          "name": "%views.haratsan.chatView.name%",
           "icon": "media/logo.svg",
-          "when": "config.gen.chatViewLocation != 'sidebar'"
+          "when": "config.haratsan.chatViewLocation != 'sidebar'"
         }
       ],
-      "gen-sidebar": [
+      "haratsan-sidebar": [
         {
           "type": "webview",
-          "id": "gen.chatViewSidebar",
-          "name": "%views.gen.chatView.name%",
+          "id": "haratsan.chatViewSidebar",
+          "name": "%views.haratsan.chatView.name%",
           "icon": "media/logo.svg",
-          "when": "config.gen.chatViewLocation != 'panel'"
+          "when": "config.haratsan.chatViewLocation != 'panel'"
         }
       ]
     },
     "menus": {
       "commandPalette": [
         {
-          "command": "gen.hunk.accept",
+          "command": "haratsan.hunk.accept",
           "when": "false"
         },
         {
-          "command": "gen.hunk.reject",
+          "command": "haratsan.hunk.reject",
           "when": "false"
         }
       ],
       "editor/context": [
         {
-          "command": "gen.addToChat",
+          "command": "haratsan.addToChat",
           "when": "editorHasSelection && editorTextFocus",
-          "group": "gen@0"
+          "group": "haratsan@0"
         },
         {
-          "command": "gen.explainSelection",
+          "command": "haratsan.explainSelection",
           "when": "editorHasSelection && editorTextFocus",
-          "group": "gen@1"
+          "group": "haratsan@1"
         },
         {
-          "command": "gen.improveSelection",
+          "command": "haratsan.improveSelection",
           "when": "editorHasSelection && editorTextFocus",
-          "group": "gen@2"
+          "group": "haratsan@2"
         },
         {
-          "command": "gen.commentSelection",
+          "command": "haratsan.commentSelection",
           "when": "editorHasSelection && editorTextFocus",
-          "group": "gen@3"
+          "group": "haratsan@3"
         },
         {
-          "command": "gen.commentFile",
+          "command": "haratsan.commentFile",
           "when": "editorTextFocus",
-          "group": "gen@4"
+          "group": "haratsan@4"
         }
       ],
       "terminal/context": [
         {
-          "command": "gen.addTerminalToChat",
-          "group": "gen@1"
+          "command": "haratsan.addTerminalToChat",
+          "group": "haratsan@1"
         }
       ],
       "notebook/cell/title": [
         {
-          "command": "gen.notebook.addCell",
-          "group": "gen@1"
+          "command": "haratsan.notebook.addCell",
+          "group": "haratsan@1"
         },
         {
-          "command": "gen.notebook.explainCell",
-          "group": "gen@2"
+          "command": "haratsan.notebook.explainCell",
+          "group": "haratsan@2"
         },
         {
-          "command": "gen.notebook.improveCell",
-          "group": "gen@3"
+          "command": "haratsan.notebook.improveCell",
+          "group": "haratsan@3"
         },
         {
-          "command": "gen.notebook.generateCell",
-          "group": "gen@4"
+          "command": "haratsan.notebook.generateCell",
+          "group": "haratsan@4"
         }
       ]
     },
     "jsonValidation": [
       {
         "fileMatch": [
-          "**/.gen/config.json",
-          "**/gen/config.json"
+          "**/.haratsan/config.json",
+          "**/haratsan/config.json"
         ],
-        "url": "./schemas/gen-config.schema.json"
+        "url": "./schemas/haratsan-config.schema.json"
       },
       {
         "fileMatch": [
-          "**/.gen/hooks.json",
-          "**/gen/hooks.json"
+          "**/.haratsan/hooks.json",
+          "**/haratsan/hooks.json"
         ],
-        "url": "./schemas/gen-hooks.schema.json"
+        "url": "./schemas/haratsan-hooks.schema.json"
       },
       {
         "fileMatch": [
-          "**/.gen/shell.json",
-          "**/gen/shell.json"
+          "**/.haratsan/shell.json",
+          "**/haratsan/shell.json"
         ],
-        "url": "./schemas/gen-shell.schema.json"
+        "url": "./schemas/haratsan-shell.schema.json"
       },
       {
         "fileMatch": [
-          "**/.gen/references.json",
-          "**/.gen/references/*.json"
+          "**/.haratsan/references.json",
+          "**/.haratsan/references/*.json"
         ],
-        "url": "./schemas/gen-references.schema.json"
+        "url": "./schemas/haratsan-references.schema.json"
       }
     ]
   },

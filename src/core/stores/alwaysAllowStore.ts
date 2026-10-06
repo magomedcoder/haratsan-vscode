@@ -1,6 +1,6 @@
 import type { ExtensionContext, Memento } from 'vscode';
 
-const STORAGE_KEY = 'gen.persistedAlwaysAllow';
+const STORAGE_KEY = 'haratsan.persistedAlwaysAllow';
 const MAX_PATTERNS = 200;
 const MAX_PATTERN_LEN = 400;
 
@@ -32,12 +32,19 @@ function normalizeList(raw: unknown): string[] {
 }
 
 export function getPersistedAlwaysAllow(): string[] {
-	return normalizeList(store?.get<string[]>(STORAGE_KEY));
+	if (!store) {
+		return [];
+	}
+	
+	return normalizeList(store.get<string[]>(STORAGE_KEY));
 }
 
 export async function setPersistedAlwaysAllow(patterns: string[]): Promise<string[]> {
 	const next = normalizeList(patterns);
-	await store?.update(STORAGE_KEY, next);
+	if (store) {
+		await store.update(STORAGE_KEY, next);
+	}
+
 	return next;
 }
 
@@ -56,7 +63,9 @@ export async function addPersistedAlwaysAllow(pattern: string): Promise<string[]
 }
 
 export async function clearPersistedAlwaysAllow(): Promise<void> {
-	await store?.update(STORAGE_KEY, []);
+	if (store) {
+		await store.update(STORAGE_KEY, []);
+	}
 }
 
 // Смержить persisted * sessionAllow (без дублей)

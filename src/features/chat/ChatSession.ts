@@ -44,10 +44,10 @@ import { pathExists, resolveWorkspacePath } from '../agent/workspacePath';
 import { startGitSyncAutoKeep } from './gitSyncKeep';
 import { customToSlashCommand, discoverCustomCommands, expandCommandTemplate, validateCommandArgs } from '../project/customCommands';
 import type { CustomCommand } from '../project/customCommands';
-import { getGenRulesManager } from '../project/genrules';
+import { getHaratsanRulesManager } from '../project/haratsanRules';
 import { formatPersonaAppendix, resolvePersona } from '../project/personas';
 import { runBeforeSubmitHook, runSessionCompactingHook, runSessionDiffHook } from '../project/hooks';
-import { ensureGenScaffold } from '../project/config';
+import { ensureHaratsanScaffold } from '../project/config';
 
 const MAX_STORED = 80;
 // Максимум сообщений в очереди, пока занят текущий turn
@@ -832,7 +832,7 @@ export class ChatSession {
 	}
 
 	private async reloadPlanForTurn(): Promise<{ planEditsAppendix?: string; parseError?: string }> {
-		// При отключённой записи в файл план живёт в памяти до перезапуска; с диска читаем только если `.gen/plan.md` есть
+		// При отключённой записи в файл план живёт в памяти до перезапуска; с диска читаем только если `.haratsan/plan.md` есть
 		if (!getSettings().planWriteToFile) {
 			const raw = await this.planStore.readRaw();
 			if (!raw?.trim()) {
@@ -1257,7 +1257,7 @@ export class ChatSession {
 		return { sessionId: created.id };
 	}
 
-	// Удалить git worktree субагента (только под `.gen/worktrees/`)
+	// Удалить git worktree субагента (только под `.haratsan/worktrees/`)
 	async cleanupWorktree(worktreePath: string): Promise<void> {
 		const trimmed = worktreePath.trim();
 		if (!trimmed) {
@@ -2887,7 +2887,7 @@ export class ChatSession {
 				}
 				const projectRules =
 					(await loadProjectRulesAppendix())
-					?? getGenRulesManager()?.getPromptAppendix();
+					?? getHaratsanRulesManager()?.getPromptAppendix();
 				if (projectRules?.trim()) {
 					rulesParts.push(projectRules.trim());
 				}
@@ -3315,8 +3315,8 @@ export class ChatSession {
 			return `## Tool ${m.toolName ?? ''}\n\n\`\`\`\n${m.content}\n\`\`\``;
 		});
 		const header = fromArchive
-			? '# Экспорт чата Gen\n\n_Экспорт полной истории до compact (архив сессии)._\n'
-			: '# Экспорт чата Gen\n';
+			? '# Экспорт чата Haratsan\n\n_Экспорт полной истории до compact (архив сессии)._\n'
+			: '# Экспорт чата Haratsan\n';
 		const doc = await vscode.workspace.openTextDocument({
 			content: `${header}\n${lines.join('\n\n')}\n`,
 			language: 'markdown',
@@ -3325,7 +3325,7 @@ export class ChatSession {
 		await vscode.window.showTextDocument(doc, { preview: false });
 	}
 
-	// Импорт markdown-экспорта (`# Экспорт чата Gen`) в новую сессию
+	// Импорт markdown-экспорта (`# Экспорт чата Haratsan`) в новую сессию
 	async importSessionMarkdown(): Promise<void> {
 		const uris = await vscode.window.showOpenDialog({
 			canSelectMany: false,
@@ -3382,14 +3382,14 @@ export class ChatSession {
 			return;
 		}
 
-		// Каталоги `.gen/{agents,commands,...}` - без перезаписи существующих файлов
-		await ensureGenScaffold(folder.uri.fsPath);
+		// Каталоги `.haratsan/{agents,commands,...}` - без перезаписи существующих файлов
+		await ensureHaratsanScaffold(folder.uri.fsPath);
 
 		const uri = vscode.Uri.joinPath(folder.uri, 'AGENTS.md');
 		const stub = [
 			'# AGENTS.md',
 			'',
-			'Правила проекта для Gen / coding-агентов.',
+			'Правила проекта для Haratsan / coding-агентов.',
 			'',
 			hint ? `## Заметки\n\n${hint}` : '## Обзор\n\nОпиши архитектуру, соглашения и ограничения проекта.',
 			'',
@@ -3399,14 +3399,14 @@ export class ChatSession {
 			this.append({
 				id: messageId(),
 				role: 'assistant',
-				content: 'AGENTS.md уже есть. Каталоги `.gen/` проверены. Отредактируй AGENTS.md или добавь `.genrules` для правил Gen.',
+				content: 'AGENTS.md уже есть. Каталоги `.haratsan/` проверены. Отредактируй AGENTS.md или добавь `.haratsanrules` для правил Haratsan.',
 			});
 		} catch {
 			await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(stub));
 			this.append({
 				id: messageId(),
 				role: 'assistant',
-				content: 'Создан AGENTS.md и каталоги `.gen/` (agents, commands, plugins, skills, tools, references, plans). Заполни правила проекта для агента.',
+				content: 'Создан AGENTS.md и каталоги `.haratsan/` (agents, commands, plugins, skills, tools, references, plans). Заполни правила проекта для агента.',
 			});
 			await vscode.window.showTextDocument(uri);
 		}
@@ -3432,7 +3432,7 @@ export class ChatSession {
 		});
 	}
 
-	// Единая точка «Add to Gen» из editor / terminal / notebook
+	// Единая точка «Add to Haratsan» из editor / terminal / notebook
 	async addToChat(params: {
 		text: string;
 		label?: string;
@@ -3493,7 +3493,7 @@ export class ChatSession {
 			return;
 		}
 
-		// VS Code не всегда отдаёт selection API; берём буфер терминала
+		// VSCode не всегда отдаёт selection API; берём буфер терминала
 		const { getTerminalBuffers, ensureTerminalBufferListener } = await import('./terminalBuffer');
 		ensureTerminalBufferListener();
 		const buffers = getTerminalBuffers();

@@ -279,7 +279,7 @@ function pickChunksForRemote(manifestChunks: Record<string, IndexChunk>): IndexC
 }
 
 /**
- * Стабильный remote search: кэш векторов по content-hash в `.gen/index/vectors.json`.
+ * Стабильный remote search: кэш векторов по content-hash в workspace storage vectors.json.
  * Query эмбеддится каждый раз; документы - из кэша или доэмбеддятся батчами.
  */
 async function remoteSemanticSearchWorkspace(
@@ -304,7 +304,7 @@ async function remoteSemanticSearchWorkspace(
 		const maxFiles = opts?.maxFiles ?? 40;
 		const uris = await vscode.workspace.findFiles(
 			new vscode.RelativePattern(folder, '**/*.{ts,tsx,js,jsx,py,go,rs,md}'),
-			'**/{node_modules,.git,.gen,dist,out}/**',
+			'**/{node_modules,.git,.haratsan,dist,out}/**',
 			maxFiles,
 		);
 		chunks = [];

@@ -93,7 +93,7 @@ export function collectOpenEditorHits(): ContextHit[] {
 		}
 
 		const relative = vscode.workspace.asRelativePath(doc.uri, false).replace(/\\/g, '/');
-		if (!relative || relative.startsWith('.gen/')) {
+		if (!relative || relative.startsWith('.haratsan/')) {
 			continue;
 		}
 
@@ -145,7 +145,7 @@ export async function collectFolderHits(relativeFolder: string): Promise<Context
 	const pattern = relativeFolder.replace(/\/?$/, '/') + '**/*';
 	const uris = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(folder, pattern),
-		'**/{.gen,node_modules,.git}/**',
+		'**/{.haratsan,node_modules,.git}/**',
 		MAX_FOLDER_FILES,
 	);
 

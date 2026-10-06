@@ -24,7 +24,7 @@ function normalizeUrl(raw: string): string | undefined {
 
 export const openBrowserTool: ToolDefinition = {
 	name: 'open_browser',
-	description: 'Открыть URL во встроенном Simple Browser VS Code. Для Design Mode: показать UI пользователю.',
+	description: 'Открыть URL во встроенном Simple Browser VSCode. Для Design Mode: показать UI пользователю.',
 	parameters: {
 		type: 'object',
 		properties: {

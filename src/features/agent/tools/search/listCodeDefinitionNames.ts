@@ -51,7 +51,7 @@ async function entriesForPath(
 
 export const listCodeDefinitionNamesTool: ToolDefinition = {
 	name: 'list_code_definition_names',
-	description: 'Список top-level определений (классы, функции, типы...) для файла или каталога по outline-индексу `.gen/index/outline.json`. Удобно для обзора модуля перед правками.',
+	description: 'Список top-level определений (классы, функции, типы...) для файла или каталога по outline-индексу (workspace storage). Удобно для обзора модуля перед правками.',
 	parameters: {
 		type: 'object',
 		properties: {

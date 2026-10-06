@@ -1,10 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { GEN_DIR_RELATIVE } from '../project/config';
+import { HARATSAN_DIR_RELATIVE } from '../project/config';
 import { defaultWorkspaceCwd } from './shellSession';
 
-export const REPORTS_DIR_RELATIVE = path.join(GEN_DIR_RELATIVE, 'reports');
+export const REPORTS_DIR_RELATIVE = path.join(HARATSAN_DIR_RELATIVE, 'reports');
 
 function slugify(raw: string): string {
 	const base = raw
@@ -17,7 +17,7 @@ function slugify(raw: string): string {
 }
 
 /**
- * Записать synthesize-отчёт project/team-lead в `.gen/reports/<slug>.md`.
+ * Записать synthesize-отчёт project/team-lead в `.haratsan/reports/<slug>.md`.
  * Не перезаписывает чужие файлы с тем же именем - добавляет суффикс.
  */
 export async function writeProjectSynthesizeReport(params: {
@@ -58,7 +58,7 @@ export async function writeProjectSynthesizeReport(params: {
 		}
 
 		await fs.writeFile(file, text, 'utf8');
-		const relative = path.posix.join(GEN_DIR_RELATIVE, 'reports', `${slug}.md`);
+		const relative = path.posix.join(HARATSAN_DIR_RELATIVE, 'reports', `${slug}.md`);
 		return {
 			ok: true,
 			relative,

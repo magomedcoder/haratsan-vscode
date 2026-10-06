@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode, type SubmitEvent } from 'react';
 import type { AdminPolicyInfo, IndexEngineStatus, PersonaOption, ResearchJobUi } from '../../features/chat/protocol';
-import type { GenSettings } from '../../core/config/types';
+import type { HaratsanSettings } from '../../core/config/types';
 import { DEFAULT_SETTINGS } from '../../core/config/types';
 import type { LlmModelOption } from '../../core/llm/types';
 import { t } from '../i18n';
@@ -22,7 +22,7 @@ import { AgentBehaviorPage } from './settings/AgentBehaviorPage';
 import { AgentsPage, type AgentsPageData } from './settings/AgentsPage';
 
 interface SettingsScreenProps {
-	settings: GenSettings;
+	settings: HaratsanSettings;
 	personas?: PersonaOption[];
 	// Admin policy: locked keys баннер
 	adminPolicy?: AdminPolicyInfo;
@@ -44,7 +44,7 @@ interface SettingsScreenProps {
 	agents?: AgentsPageData;
 	agentsStatus?: string;
 	rulesSkills?: RulesSkillsPageData;
-	onSave: (settings: GenSettings, api?: {
+	onSave: (settings: HaratsanSettings, api?: {
 		apiKey?: string;
 		clearApiKey?: boolean;
 		webSearchApiKey?: string;
@@ -137,7 +137,7 @@ export function SettingsScreen({
 	researchJobs,
 }: SettingsScreenProps) {
 	const [page, setPage] = useState<SettingsPageId>('connection');
-	const [draft, setDraft] = useState<GenSettings>(settings);
+	const [draft, setDraft] = useState<HaratsanSettings>(settings);
 	const [apiKeyDraft, setApiKeyDraft] = useState('');
 	const [clearApiKey, setClearApiKey] = useState(false);
 	const [webSearchApiKeyDraft, setWebSearchApiKeyDraft] = useState('');
@@ -179,7 +179,7 @@ export function SettingsScreen({
 		});
 	}, [models]);
 
-	const setField = <K extends keyof GenSettings>(key: K, value: GenSettings[K]) => {
+	const setField = <K extends keyof HaratsanSettings>(key: K, value: HaratsanSettings[K]) => {
 		// Locked admin keys - только чтение
 		if (lockedKeySet.has(key)) {
 			return;
@@ -188,7 +188,7 @@ export function SettingsScreen({
 	};
 
 	const onReset = () => {
-		const next: GenSettings = {
+		const next: HaratsanSettings = {
 			...DEFAULT_SETTINGS,
 			deniedPaths: [...DEFAULT_SETTINGS.deniedPaths],
 			sensitivePathPatterns: [...DEFAULT_SETTINGS.sensitivePathPatterns],
@@ -198,7 +198,7 @@ export function SettingsScreen({
 		// Admin-forced значения остаются из effective settings
 		for (const key of lockedKeySet) {
 			if (key in settings) {
-				(next as unknown as Record<string, unknown>)[key] = settings[key as keyof GenSettings];
+				(next as unknown as Record<string, unknown>)[key] = settings[key as keyof HaratsanSettings];
 			}
 		}
 		

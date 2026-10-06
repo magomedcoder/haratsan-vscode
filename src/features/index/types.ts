@@ -1,6 +1,4 @@
 export const INDEX_MANIFEST_VERSION = 1;
-export const INDEX_DIR_RELATIVE = '.gen/index';
-export const INDEX_MANIFEST_RELATIVE = '.gen/index/manifest.json';
 
 export interface IndexChunk {
 	id: string;

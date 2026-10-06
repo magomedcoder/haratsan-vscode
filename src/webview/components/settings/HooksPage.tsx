@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { t } from '../../i18n';
 import { SettingsSection } from './SettingsSection';
 
-const EXAMPLE_BEFORE_SUBMIT = ['echo "beforeSubmit: $GEN_HOOK_TEXT"'];
-const EXAMPLE_BEFORE_SHELL = ['echo "beforeShell: $GEN_HOOK_COMMAND"'];
-const EXAMPLE_SESSION_DIFF = ['echo "session.diff: $GEN_HOOK_TURN_ID" && echo "$GEN_HOOK_PATHS"'];
+const EXAMPLE_BEFORE_SUBMIT = ['echo "beforeSubmit: $HARATSAN_HOOK_TEXT"'];
+const EXAMPLE_BEFORE_SHELL = ['echo "beforeShell: $HARATSAN_HOOK_COMMAND"'];
+const EXAMPLE_SESSION_DIFF = ['echo "session.diff: $HARATSAN_HOOK_TURN_ID" && echo "$HARATSAN_HOOK_PATHS"'];
 const EXAMPLE_SESSION_COMPACTING = ['echo "session.compacting"'];
-const EXAMPLE_SHELL_ENV = ['echo \'{"env":{"GEN_EXAMPLE":"1","GEN_HOOK_CWD_ECHO":"\'"$GEN_HOOK_CWD"\'"}}\''];
-const EXAMPLE_FILE_WATCHER = ['echo "file.watcher: $GEN_HOOK_FILE_EVENT $GEN_HOOK_PATH"'];
+const EXAMPLE_SHELL_ENV = ['echo \'{"env":{"HARATSAN_EXAMPLE":"1","HARATSAN_HOOK_CWD_ECHO":"\'"$HARATSAN_HOOK_CWD"\'"}}\''];
+const EXAMPLE_FILE_WATCHER = ['echo "file.watcher: $HARATSAN_HOOK_FILE_EVENT $HARATSAN_HOOK_PATH"'];
 
 export interface HooksPageData {
 	beforeSubmit: string[];

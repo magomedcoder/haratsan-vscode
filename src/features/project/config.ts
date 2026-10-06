@@ -2,20 +2,20 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-export const GEN_DIR_RELATIVE = '.gen';
-export const GEN_CONFIG_RELATIVE = '.gen/config.json';
-export const GEN_CONFIG_VERSION = 1;
+export const HARATSAN_DIR_RELATIVE = '.haratsan';
+export const HARATSAN_CONFIG_RELATIVE = '.haratsan/config.json';
+export const HARATSAN_CONFIG_VERSION = 1;
 
 /**
- * Каталоги MVP под `.gen/` - создаются при enable проекта и `/init`.
+ * Каталоги MVP под `.haratsan/` - создаются при enable проекта и `/init`.
  * `references.json` пишется по требованию (не здесь).
  */
-export const GEN_SCAFFOLD_DIRS = ['agents', 'commands', 'plugins', 'skills', 'tools', 'references', 'plans', 'map', 'scratch'] as const;
+export const HARATSAN_SCAFFOLD_DIRS = ['agents', 'commands', 'plugins', 'skills', 'tools', 'references', 'plans', 'scratch'] as const;
 
-// Краткое описание layout `.gen/` (RU + EN); не перезаписываем, если уже есть
-const GEN_README_CONTENT = `# \`.gen/\` - Gen Agent
+// Краткое описание layout `.haratsan/` (RU + EN); не перезаписываем, если уже есть
+const HARATSAN_README_CONTENT = `# \`.haratsan/\` - Haratsan
 
-Project files for Gen / файлы проекта Gen.
+Project files for Haratsan / файлы проекта Haratsan.
 
 | Dir | EN | RU |
 | --- | --- | --- |
@@ -26,24 +26,25 @@ Project files for Gen / файлы проекта Gen.
 | \`tools/\` | \`*.md\` or \`*/TOOL.md\` | Локальные tools |
 | \`references/\` | Per-alias reference JSON | JSON ссылок по alias |
 | \`plans/\` | Multi-file plans | Планы агента |
-| \`map/\` | Project module map cache (\`project.json\`) | Кэш карты модулей |
 | \`scratch/\` | Ephemeral scripts (\`run_scratch\`) | Одноразовые скрипты |
 
-Also: \`config.json\` (opt-in), \`hooks.json\`, \`shell.json\` (env profiles), \`references.json\` (on demand), \`index/\`, \`plan.md\`.
+Also: \`config.json\` (opt-in), \`hooks.json\`, \`shell.json\` (env profiles), \`references.json\` (on demand), \`plan.md\`.
+
+Index / project map caches live in VS Code workspace storage (\`storageUri\`), not under \`.haratsan/\`.
 `;
 
 /**
- * Project `.gen/config.json`: маркер opt-in + опциональный overlay GenSettings.
+ * Project `.haratsan/config.json`: маркер opt-in + опциональный overlay HaratsanSettings.
  * Известные ключи мержатся в effective config (см. `src/config/layers.ts`, FILE_LAYER_KEYS).
  */
-export interface GenProjectConfig {
+export interface HaratsanProjectConfig {
 	version: number;
 	createdAt: string;
 	// Путь к hooks.json (относительно workspace или абсолютный)
 	hooksPath?: string;
 	// Inline-хуки (как в hooks.json)
 	hooks?: Record<string, unknown>;
-	// Прочие известные ключи GenSettings
+	// Прочие известные ключи HaratsanSettings
 	[key: string]: unknown;
 }
 
@@ -61,27 +62,27 @@ async function writeIfMissing(filePath: string, content: string): Promise<void> 
 }
 
 /**
- * Создать каталоги `.gen/{agents,commands,...}` + `.gitkeep` и краткий README.
+ * Создать каталоги `.haratsan/{agents,commands,...}` + `.gitkeep` и краткий README.
  * Идемпотентно: существующие файлы не трогаем.
  */
-export async function ensureGenScaffold(folderPath?: string): Promise<void> {
+export async function ensureHaratsanScaffold(folderPath?: string): Promise<void> {
 	const root = folderFsPath(folderPath);
 	if (!root) {
 		return;
 	}
 
-	const genRoot = path.join(root, GEN_DIR_RELATIVE);
-	await fs.mkdir(genRoot, { recursive: true });
-	await writeIfMissing(path.join(genRoot, 'README.md'), GEN_README_CONTENT);
+	const haratsanRoot = path.join(root, HARATSAN_DIR_RELATIVE);
+	await fs.mkdir(haratsanRoot, { recursive: true });
+	await writeIfMissing(path.join(haratsanRoot, 'README.md'), HARATSAN_README_CONTENT);
 
-	for (const dir of GEN_SCAFFOLD_DIRS) {
-		const dirPath = path.join(genRoot, dir);
+	for (const dir of HARATSAN_SCAFFOLD_DIRS) {
+		const dirPath = path.join(haratsanRoot, dir);
 		await fs.mkdir(dirPath, { recursive: true });
 		await writeIfMissing(path.join(dirPath, '.gitkeep'), '');
 	}
 }
 
-// Маркер согласия: файл `.gen/config.json` должен существовать
+// Маркер согласия: файл `.haratsan/config.json` должен существовать
 export async function isProjectEnabled(folderPath?: string): Promise<boolean> {
 	const root = folderFsPath(folderPath);
 	if (!root) {
@@ -89,7 +90,7 @@ export async function isProjectEnabled(folderPath?: string): Promise<boolean> {
 	}
 
 	try {
-		await fs.access(path.join(root, GEN_CONFIG_RELATIVE));
+		await fs.access(path.join(root, HARATSAN_CONFIG_RELATIVE));
 		return true;
 	} catch {
 		return false;
@@ -106,14 +107,14 @@ export async function enableProject(folderPath?: string): Promise<vscode.Workspa
 	}
 
 	const root = folder.uri.fsPath;
-	await ensureGenScaffold(root);
+	await ensureHaratsanScaffold(root);
 
-	const configPath = path.join(root, GEN_CONFIG_RELATIVE);
+	const configPath = path.join(root, HARATSAN_CONFIG_RELATIVE);
 	try {
 		await fs.access(configPath);
 	} catch {
-		const config: GenProjectConfig = {
-			version: GEN_CONFIG_VERSION,
+		const config: HaratsanProjectConfig = {
+			version: HARATSAN_CONFIG_VERSION,
 			createdAt: new Date().toISOString(),
 		};
 		await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');

@@ -8,17 +8,17 @@ import { applyAdminPolicy, stripAdminLockedForStorage } from './adminPolicy';
 import { deepMerge, getFileSettingsOverlay, initConfigLayers, onConfigLayersChanged, pickNonDefaultSettings } from './layers';
 import { clearCachedNCtx } from '../llm/contextBudget';
 import { DEFAULT_SETTINGS } from './types';
-import type { ChatMode, ChatTextSize, ChatViewLocation, GenSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
-export type { ChatMode, ChatTextSize, ChatViewLocation, CommentStyle, GenSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
+import type { ChatMode, ChatTextSize, ChatViewLocation, HaratsanSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
+export type { ChatMode, ChatTextSize, ChatViewLocation, CommentStyle, HaratsanSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
 export { DEFAULT_SETTINGS, EXAMPLE_DENIED_COMMANDS, EXAMPLE_DENIED_PATHS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS, isAgentLikeMode, resolveModeModel, resolveSmallModel } from './types';
 export { getApiKey, hasApiKey, initApiKeyStore, setApiKey, clearApiKey, getWebSearchApiKey, hasWebSearchApiKey, setWebSearchApiKey, clearWebSearchApiKey } from './apiKey';
 export { initSecretVault } from './secretVault';
-export type { GenSecretId } from './secretVault';
+export type { HaratsanSecretId } from './secretVault';
 export { FILE_LAYER_KEYS, getConfigLayersSnapshot, getEffectiveHooksInline, getEffectiveHooksPath, reloadConfigLayers } from './layers';
 export { ADMIN_POLICY_KEYS, getAdminPolicySnapshot, isAdminPolicyActive } from './adminPolicy';
 export type { AdminPolicyKey, AdminPolicySnapshot } from './adminPolicy';
-const STORAGE_KEY = 'gen.settings';
-const WEB_SEARCH_KEY_MIGRATED = 'gen.webSearchApiKey.migrated';
+const STORAGE_KEY = 'haratsan.settings';
+const WEB_SEARCH_KEY_MIGRATED = 'haratsan.webSearchApiKey.migrated';
 
 let store: Memento | undefined;
 let sessionModel = '';
@@ -91,7 +91,7 @@ function normalizeRevealOnEdit(raw: unknown): RevealOnEdit {
 	return 'never';
 }
 
-function normalizeShareMode(raw: Partial<GenSettings>): ShareMode {
+function normalizeShareMode(raw: Partial<HaratsanSettings>): ShareMode {
 	const mode = String(raw.shareMode ?? '');
 	if (mode === 'manual' || mode === 'auto' || mode === 'disabled') {
 		return mode;
@@ -121,7 +121,7 @@ function normalizeWebSearchBackend(raw: unknown): WebSearchBackend {
 	return 'duckduckgo';
 }
 
-function normalizeLocalEmbeddingsMode(raw: unknown): GenSettings['localEmbeddingsMode'] {
+function normalizeLocalEmbeddingsMode(raw: unknown): HaratsanSettings['localEmbeddingsMode'] {
 	const v = String(raw ?? '').trim().toLowerCase();
 	if (v === 'off') {
 		return 'off';
@@ -138,7 +138,7 @@ function normalizeProviderUsePolicy(raw: unknown): ProviderUsePolicy {
 	return raw === 'deny' ? 'deny' : 'allow';
 }
 
-function normalize(raw: Partial<GenSettings>): GenSettings {
+function normalize(raw: Partial<HaratsanSettings>): HaratsanSettings {
 	const commentStyle = raw.commentStyle === 'block' ? 'block' : 'inline';
 	const chatMode = normalizeChatMode(raw.chatMode);
 	const shareMode = normalizeShareMode(raw);
@@ -257,7 +257,7 @@ export function initSettings(context: ExtensionContext): void {
 	initApiKeyStore(context);
 	initAlwaysAllowStore(context);
 	sessionModel = '';
-	// JSON-слои: user (~/.config/gen) + project (.gen/config.json)
+	// JSON-слои: user (~/.config/haratsan) + project (.haratsan/config.json)
 	initConfigLayers(context);
 	void migrateWebSearchApiKeyToVault(context);
 	context.subscriptions.push(
@@ -268,28 +268,27 @@ export function initSettings(context: ExtensionContext): void {
 			void syncChatViewLocationToWorkspace(getSettings().chatViewLocation);
 		}),
 	);
-	// when-clause для views читает contributes.configuration - синхронизируем с GenSettings
 	void syncChatViewLocationToWorkspace(getSettings().chatViewLocation);
 }
 
-// Одноразовая миграция: plain `webSearchApiKey` из UI globalState / JSON-слоёв -> SecretStorage, затем очистка UI-хранилища. `${env:}` / `{file:}` в значении сохраняем как есть (resolve через interpolate).
+// Одноразовая миграция: plain `webSearchApiKey` из UI globalState / JSON-слоёв -> SecretStorage
 async function migrateWebSearchApiKeyToVault(context: ExtensionContext): Promise<void> {
 	if (context.globalState.get<boolean>(WEB_SEARCH_KEY_MIGRATED)) {
 		return;
 	}
 
 	try {
-		const stored = store?.get<Partial<GenSettings>>(STORAGE_KEY);
-		const legacy = String(stored?.webSearchApiKey ?? '').trim();
+		const stored = store?.get<Partial<HaratsanSettings>>(STORAGE_KEY);
+		const plain = String(stored?.webSearchApiKey ?? '').trim();
 		const existing = await getWebSearchApiKey();
-		if (!existing && legacy) {
-			await setWebSearchApiKey(legacy);
+		if (!existing && plain) {
+			await setWebSearchApiKey(plain);
 		}
 
 		if (stored && String(stored.webSearchApiKey ?? '').trim()) {
 			await store?.update(STORAGE_KEY, {
 				...stored,
-				webSearchApiKey: ''
+				webSearchApiKey: '',
 			});
 		}
 	} finally {
@@ -297,9 +296,8 @@ async function migrateWebSearchApiKeyToVault(context: ExtensionContext): Promise
 	}
 }
 
-// Прописать gen.chatViewLocation в VS Code config (для view `when`)
 async function syncChatViewLocationToWorkspace(location: ChatViewLocation): Promise<void> {
-	const config = vscode.workspace.getConfiguration('gen');
+	const config = vscode.workspace.getConfiguration('haratsan');
 	const current = config.get<string>('chatViewLocation');
 	if (current === location) {
 		return;
@@ -316,18 +314,16 @@ export function setSessionModel(model: string): void {
 }
 
 /**
- * Эффективные GenSettings.
+ * Эффективные HaratsanSettings.
  *
  * Слои (низкий * высокий): defaults * user JSON * UI (non-default) * project JSON * admin policy.
- * Подробнее: docs/settings*.md и src/config/layers.ts / adminPolicy.ts.
  */
-export function getSettings(): GenSettings {
-	const stored = store?.get<Partial<GenSettings>>(STORAGE_KEY);
+export function getSettings(): HaratsanSettings {
+	const stored = store?.get<Partial<HaratsanSettings>>(STORAGE_KEY);
 	const { user, project } = getFileSettingsOverlay();
 	const uiOverlay = pickNonDefaultSettings(stored);
-	// project перекрывает UI и user; admin - поверх всех для locked keys
 	const merged = applyAdminPolicy(
-		deepMerge({}, user, uiOverlay, project) as Partial<GenSettings>,
+		deepMerge({}, user, uiOverlay, project) as Partial<HaratsanSettings>,
 	);
 	const settings = normalize({
 		...merged,
@@ -339,7 +335,7 @@ export function getSettings(): GenSettings {
 	};
 }
 
-export async function updateSettings(next: GenSettings): Promise<GenSettings> {
+export async function updateSettings(next: HaratsanSettings): Promise<HaratsanSettings> {
 	if (!store) {
 		throw new Error(vscode.l10n.t('config.settingsNotInit'));
 	}

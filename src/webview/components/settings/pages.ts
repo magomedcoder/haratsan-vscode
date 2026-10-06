@@ -1,11 +1,11 @@
-import type { GenSettings } from '../../../core/config/types';
+import type { HaratsanSettings } from '../../../core/config/types';
 
 export type SettingsPageId = | 'connection' | 'chat' | 'agent' | 'security' | 'project' | 'journal';
 
-export type SetSettingsField = <K extends keyof GenSettings>(key: K, value: GenSettings[K]) => void;
+export type SetSettingsField = <K extends keyof HaratsanSettings>(key: K, value: HaratsanSettings[K]) => void;
 
 export interface SettingsPageProps {
-	draft: GenSettings;
+	draft: HaratsanSettings;
 	setField: SetSettingsField;
 }
 

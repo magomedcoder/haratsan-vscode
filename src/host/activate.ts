@@ -4,7 +4,7 @@ import { initSettings } from '../core/config/settings';
 import { initIndexManager } from '../features/index/IndexManager';
 import { initLogger } from '../core/log/logger';
 import { initFileWatcherHooks } from '../features/project/fileWatcherHooks';
-import { initGenRulesManager } from '../features/project/genrules';
+import { initHaratsanRulesManager } from '../features/project/haratsanRules';
 import { initActivityStore } from '../core/stores/activityStore';
 import { initUsageStore } from '../core/stores/usageStore';
 import { registerHostCommands } from './commands';
@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	initSettings(context);
 	initLogger(context);
 	initIndexManager(context);
-	initGenRulesManager(context);
+	initHaratsanRulesManager(context);
 	initFileWatcherHooks(context);
 	initUsageStore(context);
 	initActivityStore(context);

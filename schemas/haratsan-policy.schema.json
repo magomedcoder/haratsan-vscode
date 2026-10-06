@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft-07/schema#",
-	"$id": "https://raw.githubusercontent.com/magomedcoder/gen-agent-vscode/main/schemas/gen-policy.schema.json",
-	"title": "Gen Agent admin policy",
-	"description": "Managed / admin policy (MDM-style MVP). Loaded from GEN_ADMIN_POLICY, /etc/gen/policy.json (Unix), or %ProgramData%/gen/policy.json (Windows). Keys present here lock and force effective GenSettings; project/UI cannot override them.",
+	"$id": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-policy.schema.json",
+	"title": "Haratsan admin policy",
+	"description": "Managed / admin policy (MDM-style MVP). Loaded from HARATSAN_ADMIN_POLICY, /etc/haratsan/policy.json (Unix), or %ProgramData%/haratsan/policy.json (Windows). Keys present here lock and force effective HaratsanSettings; project/UI cannot override them.",
 	"type": "object",
 	"properties": {
 		"$schema": {

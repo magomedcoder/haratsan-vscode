@@ -5,7 +5,7 @@ import { confirmAlwaysOrSkip } from '../confirm';
 
 export const generateAgentTool: ToolDefinition = {
 	name: 'generate_agent',
-	description: 'Создать stub кастомного агента в `.gen/agents/{name}.md` по описанию. Builtin presets: docs-researcher, code-reviewer - можно материализовать по имени. Затем доступен через tool task.',
+	description: 'Создать stub кастомного агента в `.haratsan/agents/{name}.md` по описанию. Builtin presets: docs-researcher, code-reviewer - можно материализовать по имени. Затем доступен через tool task.',
 	parameters: {
 		type: 'object',
 		properties: {

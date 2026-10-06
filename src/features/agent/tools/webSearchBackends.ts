@@ -1,4 +1,4 @@
-import type { GenSettings, WebSearchBackend } from '../../../core/config/types';
+import type { HaratsanSettings, WebSearchBackend } from '../../../core/config/types';
 import { getWebSearchApiKey } from '../../../core/config/apiKey';
 import { interpolateConfigString } from '../../../core/config/interpolate';
 
@@ -111,7 +111,7 @@ async function postJsonSearch(
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
-			'User-Agent': 'GenAgentVSCode/0.2',
+			'User-Agent': 'HaratsanAgentVSCode/0.2',
 			...headers,
 		},
 		body: JSON.stringify(body),
@@ -137,7 +137,7 @@ export async function searchDuckDuckGo(
 	const res = await fetch(url, {
 		signal,
 		headers: {
-			'User-Agent': 'GenAgentVSCode/0.2',
+			'User-Agent': 'HaratsanAgentVSCode/0.2',
 		},
 	});
 	if (!res.ok) {
@@ -170,7 +170,7 @@ export async function searchExa(
 	query: string,
 	cap: number,
 	signal: AbortSignal | undefined,
-	_settings?: Pick<GenSettings, 'webSearchApiKey'>,
+	_settings?: Pick<HaratsanSettings, 'webSearchApiKey'>,
 ): Promise<WebSearchHit[]> {
 	const apiKey = await resolveWebSearchApiKey('exa');
 	const data = await postJsonSearch(
@@ -199,7 +199,7 @@ export async function searchParallel(
 	query: string,
 	cap: number,
 	signal: AbortSignal | undefined,
-	_settings?: Pick<GenSettings, 'webSearchApiKey'>,
+	_settings?: Pick<HaratsanSettings, 'webSearchApiKey'>,
 ): Promise<WebSearchHit[]> {
 	const apiKey = await resolveWebSearchApiKey('parallel');
 	const data = await postJsonSearch(
@@ -229,7 +229,7 @@ export async function searchHttpJson(
 	query: string,
 	cap: number,
 	signal: AbortSignal | undefined,
-	settings: Pick<GenSettings, 'webSearchHttpUrl' | 'webSearchHttpHeader' | 'webSearchApiKey'>,
+	settings: Pick<HaratsanSettings, 'webSearchHttpUrl' | 'webSearchHttpHeader' | 'webSearchApiKey'>,
 ): Promise<WebSearchHit[]> {
 	const url = buildWebSearchHttpUrl(settings.webSearchHttpUrl, query);
 	if (!url) {
@@ -238,7 +238,7 @@ export async function searchHttpJson(
 
 	const headers: Record<string, string> = {
 		Accept: 'application/json',
-		'User-Agent': 'GenAgentVSCode/0.2',
+		'User-Agent': 'HaratsanAgentVSCode/0.2',
 	};
 	const apiKey = interpolateConfigString(await getWebSearchApiKey()).trim();
 	const headerName = (settings.webSearchHttpHeader || 'Authorization').trim();
@@ -267,7 +267,7 @@ export async function runWebSearch(
 	query: string,
 	cap: number,
 	signal: AbortSignal | undefined,
-	settings: Pick<GenSettings, 'webSearchHttpUrl' | 'webSearchHttpHeader' | 'webSearchApiKey'>,
+	settings: Pick<HaratsanSettings, 'webSearchHttpUrl' | 'webSearchHttpHeader' | 'webSearchApiKey'>,
 ): Promise<WebSearchHit[]> {
 	switch (backend) {
 		case 'exa':

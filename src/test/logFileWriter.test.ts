@@ -43,7 +43,7 @@ suite('LogFileWriter', () => {
 		};
 		const writer = new LogFileWriter(fs);
 
-		writer.enqueue('/tmp/gen.log', 'line-1');
+		writer.enqueue('/tmp/haratsan.log', 'line-1');
 		assert.strictEqual(finished, false);
 
 		gate.resolve();
@@ -61,26 +61,26 @@ suite('LogFileWriter', () => {
 			rename: async () => undefined,
 		};
 		const writer = new LogFileWriter(fs);
-		writer.enqueue('/tmp/gen.log', 'line-1');
+		writer.enqueue('/tmp/haratsan.log', 'line-1');
 		await writer.idle();
 	});
 
 	test('строки дописываются пачкой', async () => {
 		const fs = memoryFs();
 		const writer = new LogFileWriter(fs);
-		writer.enqueue('/tmp/gen.log', 'a');
-		writer.enqueue('/tmp/gen.log', 'b');
+		writer.enqueue('/tmp/haratsan.log', 'a');
+		writer.enqueue('/tmp/haratsan.log', 'b');
 		await writer.idle();
-		assert.strictEqual(fs.files.get('/tmp/gen.log'), 'a\nb\n');
+		assert.strictEqual(fs.files.get('/tmp/haratsan.log'), 'a\nb\n');
 	});
 
 	test('ротация при превышении размера', async () => {
 		const fs = memoryFs();
-		fs.files.set('/tmp/gen.log', 'old');
+		fs.files.set('/tmp/haratsan.log', 'old');
 		const writer = new LogFileWriter(fs, 500, 2);
-		writer.enqueue('/tmp/gen.log', 'new');
+		writer.enqueue('/tmp/haratsan.log', 'new');
 		await writer.idle();
-		assert.strictEqual(fs.files.get('/tmp/gen.log.1'), 'old');
-		assert.strictEqual(fs.files.get('/tmp/gen.log'), 'new\n');
+		assert.strictEqual(fs.files.get('/tmp/haratsan.log.1'), 'old');
+		assert.strictEqual(fs.files.get('/tmp/haratsan.log'), 'new\n');
 	});
 });

@@ -1,4 +1,4 @@
-import type { GenSettings } from '../config/types';
+import type { HaratsanSettings } from '../config/types';
 
 // Запас поверх completion + compactReserved
 export const CONTEXT_SAFETY_MARGIN = 256;
@@ -56,7 +56,7 @@ export function clearCachedNCtx(baseUrl?: string, model?: string): void {
 }
 
 // Эффективный budget промпта: min(maxContextTokens, n_ctx?) − maxTokens(completion) − compactReserved − safety
-export function getEffectiveContextBudget(settings: GenSettings, nCtx?: number): number {
+export function getEffectiveContextBudget(settings: HaratsanSettings, nCtx?: number): number {
 	const windowSize = Math.min(
 		settings.maxContextTokens,
 		nCtx ?? settings.maxContextTokens,

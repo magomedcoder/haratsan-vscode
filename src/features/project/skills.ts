@@ -12,7 +12,7 @@ export interface SkillInfo {
 const MAX_SKILL_CHARS = 16_000;
 const MAX_SKILL_URLS = 12;
 const BUILTIN_SKILL_GLOBS = [
-	'.gen/skills/*/SKILL.md',
+	'.haratsan/skills/*/SKILL.md',
 	'.agents/skills/*/SKILL.md',
 ];
 

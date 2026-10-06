@@ -171,7 +171,7 @@ export const askQuestionTool: ToolDefinition = {
 
 export const skillTool: ToolDefinition = {
 	name: 'skill',
-	description: 'Загрузить SKILL.md по имени в контекст (из .gen/skills, .agents/skills).',
+	description: 'Загрузить SKILL.md по имени в контекст (из .haratsan/skills, .agents/skills).',
 	parameters: {
 		type: 'object',
 		properties: {

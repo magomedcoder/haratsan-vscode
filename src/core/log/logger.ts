@@ -18,8 +18,8 @@ export function initLogger(context: vscode.ExtensionContext): void {
 	ready = true;
 	logsDir = join(context.globalStorageUri.fsPath, 'logs');
 	writer = new LogFileWriter(nodeLogFs);
-	channels.llm = vscode.window.createOutputChannel('Gen LLM');
-	channels.agent = vscode.window.createOutputChannel('Gen Agent');
+	channels.llm = vscode.window.createOutputChannel('Haratsan LLM');
+	channels.agent = vscode.window.createOutputChannel('Haratsan Agent');
 	context.subscriptions.push(channels.llm, channels.agent);
 }
 

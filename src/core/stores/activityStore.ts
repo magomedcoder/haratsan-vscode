@@ -19,7 +19,7 @@ export interface ActivityEntry {
 	status?: string;
 }
 
-const STORAGE_KEY = 'gen.activity.entries';
+const STORAGE_KEY = 'haratsan.activity.entries';
 const MAX_ENTRIES = 200;
 
 const SHELL_TOOLS = new Set(['run_command', 'run_tests', 'await_shell', 'run_scratch']);

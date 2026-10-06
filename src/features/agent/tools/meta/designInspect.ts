@@ -51,7 +51,7 @@ async function fetchHtml(href: string, signal?: AbortSignal): Promise<{
 			redirect: 'follow',
 			headers: {
 				Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1',
-				'User-Agent': 'Gen-VSCode-Agent/0.2',
+				'User-Agent': 'Haratsan-VSCode-Agent/0.2',
 			},
 		});
 		const buf = await res.arrayBuffer();
@@ -82,7 +82,7 @@ async function guessSourceFiles(tokens: string[], signal?: AbortSignal): Promise
 
 	const uris = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(folder, '**/*.{ts,tsx,js,jsx,css,scss,html,vue,svelte}'),
-		'**/{node_modules,.git,.gen,dist,out}/**',
+		'**/{node_modules,.git,.haratsan,dist,out}/**',
 		80,
 	);
 

@@ -21,7 +21,7 @@ export function setConfirmHost(next: ConfirmHost | undefined): void {
 	host = next;
 }
 
-// Единая точка подтверждения: карточка в панели Gen (не отдельная вкладка)
+// Единая точка подтверждения: карточка в панели Haratsan (не отдельная вкладка)
 export async function showConfirmDialog(options: ConfirmDialogOptions): Promise<ConfirmChoice> {
 	if (!host) {
 		throw new Error(vscode.l10n.t('ui.confirmHostMissing'));

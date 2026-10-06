@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type 
 import type { ChatMode, MentionSuggestion } from '../../features/chat/protocol';
 import { activeSlashQuery, filterSlashCommands } from '../../features/chat/slashCommands';
 import type { SlashCommand } from '../../features/chat/slashCommands';
-import type { GenSettings } from '../../core/config/types';
+import type { HaratsanSettings } from '../../core/config/types';
 import { t } from '../i18n';
 import { vscodeApi } from '../vscodeApi';
 
@@ -19,7 +19,7 @@ interface ComposerProps {
 	// Chips (insert-строки) с хоста
 	composerChips?: string[];
 	// Лимиты resize картинок (из settings)
-	imageResize?: Pick<GenSettings, 'attachmentImageAutoResize' | 'attachmentImageMaxWidth' | 'attachmentImageMaxHeight'>;
+	imageResize?: Pick<HaratsanSettings, 'attachmentImageAutoResize' | 'attachmentImageMaxWidth' | 'attachmentImageMaxHeight'>;
 }
 
 interface ContextChip {

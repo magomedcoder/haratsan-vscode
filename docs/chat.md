@@ -2,7 +2,7 @@
 
 [Русская версия](chat-ru.md)
 
-Chat lives in the bottom **Gen** panel.
+Chat lives in the bottom **Haratsan** panel.
 
 ## Modes
 
@@ -45,10 +45,10 @@ If a task touches **more than one file**:
 
 1. The agent calls `propose_plan` (title + steps with path).
 2. You approve the plan.
-3. The plan is written to **`.gen/plan.md`** and shown as a card above the input; it is injected into following turns.
+3. The plan is written to **`.haratsan/plan.md`** and shown as a card above the input; it is injected into following turns.
 4. Further edits on plan paths skip repeated `propose_plan`; progress via `update_plan` or automatically by path.
-5. You can edit `.gen/plan.md` by hand (“Open” on the card) - on the next turn the agent sees the diff and treats the file as canonical.
-6. Reset the plan by deleting `.gen/plan.md` or `update_plan clear`. **Clear** chat history does **not** clear the plan.
+5. You can edit `.haratsan/plan.md` by hand (“Open” on the card) - on the next turn the agent sees the diff and treats the file as canonical.
+6. Reset the plan by deleting `.haratsan/plan.md` or `update_plan clear`. **Clear** chat history does **not** clear the plan.
 
 A single file can be edited without a plan.
 
@@ -66,29 +66,29 @@ In Ask and Agent, the active file / selection may be included. The agent can als
 
 In the input, type `@` and choose:
 
-| Mention                         | What is injected                                                              |
-| ------------------------------- | ----------------------------------------------------------------------------- |
-| `@file path`                    | File contents                                                                 |
-| `@folder path`                  | Files from a folder (capped)                                                  |
-| `@code`                         | Editor selection or symbol near the cursor                                    |
-| `@Docs` / `@Docs query`         | Ranked `docs/` / markdown hits (token quota)                                  |
-| `@terminals`                    | Ranked terminal buffer tails (token quota; uses message text as query)        |
-| `@past` / `@past title`         | Ranked past chats / messages (token quota)                                    |
-| `@agent name`                   | Body of `.gen/agents/{name}.md`                                               |
-| `@codebase` / `@codebase query` | Fragments from the local index + open editors                                 |
-| `@map`                          | Project map outline (`.gen/map`)                                              |
-| `@symbols` / `@symbols query`   | Symbol index summary or query (`.gen/index/symbols.json`)                     |
-| `@git` / `@git SHA`             | Recent commits or `git show` for a SHA                                        |
-| `@branch_diff`                  | `git status` + `diff --stat`                                                  |
-| `@rules`                        | AGENTS.md / `.genrules`                                                       |
-| `@link url`                     | Fetched page text (capped)                                                    |
-| `@alias name` / `@ref:name`     | Reference from `.gen/references.json` (cached under `.gen/cache/references/`) |
+| Mention                         | What is injected                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `@file path`                    | File contents                                                                           |
+| `@folder path`                  | Files from a folder (capped)                                                            |
+| `@code`                         | Editor selection or symbol near the cursor                                              |
+| `@Docs` / `@Docs query`         | Ranked `docs/` / markdown hits (token quota)                                            |
+| `@terminals`                    | Ranked terminal buffer tails (token quota; uses message text as query)                  |
+| `@past` / `@past title`         | Ranked past chats / messages (token quota)                                              |
+| `@agent name`                   | Body of `.haratsan/agents/{name}.md`                                                    |
+| `@codebase` / `@codebase query` | Fragments from the local index + open editors                                           |
+| `@map`                          | Project map outline (workspace storage map cache)                                       |
+| `@symbols` / `@symbols query`   | Symbol index summary or query (workspace storage `symbols.json`)                        |
+| `@git` / `@git SHA`             | Recent commits or `git show` for a SHA                                                  |
+| `@branch_diff`                  | `git status` + `diff --stat`                                                            |
+| `@rules`                        | AGENTS.md / `.haratsanrules`                                                            |
+| `@link url`                     | Fetched page text (capped)                                                              |
+| `@alias name` / `@ref:name`     | Reference from `.haratsan/references.json` (cached under `.haratsan/cache/references/`) |
 
 Autocomplete: arrows / Tab / Enter.
 
 ### References (`@alias`)
 
-Named pointers to a local path or git repo. Manifest: `.gen/references.json` (or per-alias `.gen/references/<alias>.json`):
+Named pointers to a local path or git repo. Manifest: `.haratsan/references.json` (or per-alias `.haratsan/references/<alias>.json`):
 
 ```json
 {
@@ -100,9 +100,9 @@ Named pointers to a local path or git repo. Manifest: `.gen/references.json` (or
 }
 ```
 
-On first `@alias sdk` / `@ref:sdk`, content is copied (path) or shallow-cloned (git) into `.gen/cache/references/<alias>/`, then injected like `@folder` / `@file`.
+On first `@alias sdk` / `@ref:sdk`, content is copied (path) or shallow-cloned (git) into `.haratsan/cache/references/<alias>/`, then injected like `@folder` / `@file`.
 
-Images: paste or drag-and-drop into Composer -> saved under `.gen/attachments/` with an `[image path]` marker in the message. If **visionEnabled** is on, the model also receives `image_url` parts (capped by `attachmentImageMaxBase64`).
+Images: paste or drag-and-drop into Composer -> saved under `.haratsan/attachments/` with an `[image path]` marker in the message. If **visionEnabled** is on, the model also receives `image_url` parts (capped by `attachmentImageMaxBase64`).
 
 More on the index: [codebase-index.md](codebase-index.md).
 

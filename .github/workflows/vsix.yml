@@ -36,13 +36,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gen-agent-vsix
-          path: gen-agent-*.vsix
+          name: haratsan-vsix
+          path: haratsan-*.vsix
           if-no-files-found: error
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: gen-agent-*.vsix
+          files: haratsan-*.vsix
           generate_release_notes: true

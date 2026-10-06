@@ -9,10 +9,10 @@ import { formatCommandLine } from '../../commandPolicy';
 import { confirmAlwaysOrSkip } from '../confirm';
 import { pathIsInside } from '../../policy';
 
-// Список локальных `.gen/tools` / `.gen/plugins` и npm-каталога (без require)
+// Список локальных `.haratsan/tools` / `.haratsan/plugins` и npm-каталога (без require)
 export const listPluginsTool: ToolDefinition = {
 	name: 'list_plugins',
-	description: 'Список локальных plugins/tools из `.gen/plugins`, `.gen/tools` и npm-каталога (package.json gen/genAgent, `.gen/npm-plugins.json`). Манифесты; npm с command/args/bin можно запустить через run_plugin (spawn).',
+	description: 'Список локальных plugins/tools из `.haratsan/plugins`, `.haratsan/tools` и npm-каталога (package.json haratsan/haratsanAgent, `.haratsan/npm-plugins.json`). Манифесты; npm с command/args/bin можно запустить через run_plugin (spawn).',
 	parameters: {
 		type: 'object',
 		properties: {},
@@ -41,7 +41,7 @@ export const listPluginsTool: ToolDefinition = {
 // Загрузить инструкции локального plugin/tool по имени в контекст
 export const pluginTool: ToolDefinition = {
 	name: 'plugin',
-	description: 'Загрузить описание локального plugin/tool по имени (из `.gen/plugins` / `.gen/tools` / npm catalog). JS не require в host; для spawn npm см. run_plugin.',
+	description: 'Загрузить описание локального plugin/tool по имени (из `.haratsan/plugins` / `.haratsan/tools` / npm catalog). JS не require в host; для spawn npm см. run_plugin.',
 	parameters: {
 		type: 'object',
 		properties: {
@@ -77,7 +77,7 @@ export const pluginTool: ToolDefinition = {
 		const runNote = hit.executable
 			? `\nRunnable: yes (run_plugin). command=${hit.executable.command}`
 			: hit.kind === 'npm'
-				? '\nRunnable: no (declare command/args or bin in gen/genAgent or .gen/npm-plugins.json)'
+				? '\nRunnable: no (declare command/args or bin in haratsan/haratsanAgent or .haratsan/npm-plugins.json)'
 				: '';
 		return {
 			ok: true,
@@ -115,7 +115,7 @@ function extraArgsFromJson(raw: unknown): string[] {
  */
 export const runPluginTool: ToolDefinition = {
 	name: 'run_plugin',
-	description: 'Запустить объявленную команду npm-плагина (package.json gen/genAgent или `.gen/npm-plugins.json`: command/args или bin). Spawn с cwd=workspace, timeout, stdout; без require() в host. Пути вне workspace запрещены.',
+	description: 'Запустить объявленную команду npm-плагина (package.json haratsan/haratsanAgent или `.haratsan/npm-plugins.json`: command/args или bin). Spawn с cwd=workspace, timeout, stdout; без require() в host. Пути вне workspace запрещены.',
 	parameters: {
 		type: 'object',
 		properties: {

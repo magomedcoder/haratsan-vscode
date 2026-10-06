@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-const PERSONAS_GLOB = '.gen/personas/*.md';
+const PERSONAS_GLOB = '.haratsan/personas/*.md';
 const MAX_BODY_CHARS = 8_000;
 
 export type PersonaSource = 'builtin' | 'custom';
@@ -60,7 +60,7 @@ function listBuiltinPersonas(): PersonaInfo[] {
 	}));
 }
 
-// Найти персоны в `.gen/personas/*.md` (frontmatter name/description)
+// Найти персоны в `.haratsan/personas/*.md` (frontmatter name/description)
 export async function discoverCustomPersonas(): Promise<PersonaInfo[]> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	if (!folder) {
@@ -103,7 +103,7 @@ export async function discoverCustomPersonas(): Promise<PersonaInfo[]> {
 	return out.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 }
 
-// Builtin (если есть) + кастомные из `.gen/personas/*.md` (кастом перекрывает тот же id)
+// Builtin (если есть) + кастомные из `.haratsan/personas/*.md` (кастом перекрывает тот же id)
 export async function discoverPersonas(): Promise<PersonaInfo[]> {
 	const byId = new Map<string, PersonaInfo>();
 	for (const p of listBuiltinPersonas()) {

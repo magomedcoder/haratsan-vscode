@@ -9,7 +9,7 @@ export interface IncomingImage {
 }
 
 export interface ImageAttachment {
-	// Относительный путь в workspace, например `.gen/attachments/...`
+	// Относительный путь в workspace, например `.haratsan/attachments/...`
 	path: string;
 	mimeType: string;
 }
@@ -40,14 +40,14 @@ function extForMime(mime: string): string {
 	return 'png';
 }
 
-// Сохранить картинки в `.gen/attachments/` и вернуть метаданные
+// Сохранить картинки в `.haratsan/attachments/` и вернуть метаданные
 export async function saveImageAttachments(images: readonly IncomingImage[]): Promise<ImageAttachment[]> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	if (!folder || images.length === 0) {
 		return [];
 	}
 
-	const dir = vscode.Uri.joinPath(folder.uri, '.gen', 'attachments');
+	const dir = vscode.Uri.joinPath(folder.uri, '.haratsan', 'attachments');
 	try {
 		await vscode.workspace.fs.stat(dir);
 	} catch {
@@ -67,7 +67,7 @@ export async function saveImageAttachments(images: readonly IncomingImage[]): Pr
 		const raw = Buffer.from(img.base64, 'base64');
 		await vscode.workspace.fs.writeFile(uri, raw);
 		out.push({
-			path: `.gen/attachments/${fileName}`,
+			path: `.haratsan/attachments/${fileName}`,
 			mimeType: mime,
 		});
 	}

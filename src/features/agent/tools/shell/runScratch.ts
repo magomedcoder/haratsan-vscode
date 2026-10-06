@@ -8,11 +8,11 @@ import { toPosixRelative } from '../../policy';
 import { resolveScriptRunner, supportedScratchExtensions } from '../../scriptRunner';
 import { getShellProfileEnv } from '../../../project/shellProfiles';
 
-const SCRATCH_PREFIX = '.gen/scratch/';
+const SCRATCH_PREFIX = '.haratsan/scratch/';
 
 function isUnderScratch(relative: string): boolean {
 	const norm = toPosixRelative(relative).replace(/^\.\//, '');
-	return norm === '.gen/scratch' || norm.startsWith(SCRATCH_PREFIX);
+	return norm === '.haratsan/scratch' || norm.startsWith(SCRATCH_PREFIX);
 }
 
 function isBinaryMissing(resultContent: string, command: string): boolean {
@@ -20,16 +20,16 @@ function isBinaryMissing(resultContent: string, command: string): boolean {
 	return (lower.includes('enoent') || lower.includes('not found') || lower.includes(`'${command.toLowerCase()}'`) || lower.includes(`"${command.toLowerCase()}"`));
 }
 
-// Запуск одноразового скрипта только из `.gen/scratch/**` (не eval произвольного JS)
+// Запуск одноразового скрипта только из `.haratsan/scratch/**` (не eval произвольного JS)
 export const runScratchTool: ToolDefinition = {
 	name: 'run_scratch',
-	description: 'Запустить файл из `.gen/scratch/` (node/python/bash/pwsh по расширению, включая .ps1). Только пути под `.gen/scratch/**`; с подтверждением.',
+	description: 'Запустить файл из `.haratsan/scratch/` (node/python/bash/pwsh по расширению, включая .ps1). Только пути под `.haratsan/scratch/**`; с подтверждением.',
 	parameters: {
 		type: 'object',
 		properties: {
 			path: {
 				type: 'string',
-				description: 'Путь относительно workspace, обязан быть под `.gen/scratch/`',
+				description: 'Путь относительно workspace, обязан быть под `.haratsan/scratch/`',
 			},
 			args: {
 				type: 'array',
@@ -42,7 +42,7 @@ export const runScratchTool: ToolDefinition = {
 			},
 			profile: {
 				type: 'string',
-				description: 'Имя профиля из `.gen/shell.json`',
+				description: 'Имя профиля из `.haratsan/shell.json`',
 			},
 		},
 		required: ['path'],

@@ -4,13 +4,13 @@ import type { ImageAttachment } from './attachments';
 import { buildUserContentWithImages } from './attachments';
 
 const SYSTEM_PROMPT_BASE = [
-	'Ты Gen - помощник программиста в VS Code.',
+	'Ты Haratsan - помощник программиста в VSCode.',
 	'Отвечай по делу, на языке пользователя.',
 	'Если в запросе есть контекст редактора (файл, выделение), опирайся на него.',
 ].join(' ');
 
-function buildAskSystemPrompt(genRulesAppendix?: string): string {
-	const appendix = genRulesAppendix?.trim();
+function buildAskSystemPrompt(haratsanRulesAppendix?: string): string {
+	const appendix = haratsanRulesAppendix?.trim();
 	if (!appendix) {
 		return SYSTEM_PROMPT_BASE;
 	}
@@ -22,7 +22,7 @@ export async function buildChatCompletionMessages(
 	messages: ChatUiMessage[],
 	latestUserText: string,
 	editorContext?: string,
-	genRulesAppendix?: string,
+	haratsanRulesAppendix?: string,
 	attachments?: readonly ImageAttachment[],
 ): Promise<ChatMessage[]> {
 	const prior = messages.filter((m): m is ChatUiMessage & { role: 'user' | 'assistant' } => (m.role === 'user' || m.role === 'assistant') && !m.toolCalls?.length && Boolean(m.content))
@@ -38,7 +38,7 @@ export async function buildChatCompletionMessages(
 	return [
 		{
 			role: 'system',
-			content: buildAskSystemPrompt(genRulesAppendix),
+			content: buildAskSystemPrompt(haratsanRulesAppendix),
 		},
 		...prior,
 		{

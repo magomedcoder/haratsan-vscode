@@ -1,16 +1,14 @@
 /**
- * Персистентный векторный индекс в `.gen/index/vectors.json`.
+ * Персистентный векторный индекс в workspace storage (`.../index/<key>/vectors.json`).
  * Ключ: content hash чанка + model id (remote или local-hash).
  */
 
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import { INDEX_DIR_RELATIVE } from './types';
+import { INDEX_VECTORS_FILE, indexDirForFolder, indexFilePath } from './indexStorage';
 import type { IndexChunk, IndexManifest } from './types';
 import { LOCAL_HASH_DIMS, LOCAL_HASH_MODEL_ID, localHashEmbed } from './localHashEmbed';
 
-export const VECTORS_FILE = 'vectors.json';
-export const VECTORS_VERSION = 1;
+const VECTORS_VERSION = 1;
 
 export type VectorSource = 'remote' | 'local-hash';
 
@@ -32,8 +30,8 @@ export interface VectorIndexFile {
 	entries: Record<string, VectorEntry>;
 }
 
-export function vectorsPathForFolder(folderFsPath: string): string {
-	return path.join(folderFsPath, INDEX_DIR_RELATIVE, VECTORS_FILE);
+function vectorsPathForFolder(folderFsPath: string): string | undefined {
+	return indexFilePath(folderFsPath, INDEX_VECTORS_FILE);
 }
 
 export function vectorEntryKey(contentHash: string, model: string, chunkId: string): string {
@@ -49,13 +47,18 @@ export function emptyVectorIndex(): VectorIndexFile {
 }
 
 export async function loadVectorIndex(folderFsPath: string): Promise<VectorIndexFile> {
+	const file = vectorsPathForFolder(folderFsPath);
+	if (!file) {
+		return emptyVectorIndex();
+	}
+
 	try {
-		const raw = await fs.readFile(vectorsPathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		const parsed = JSON.parse(raw) as VectorIndexFile;
 		if (!parsed || typeof parsed !== 'object' || parsed.version !== VECTORS_VERSION) {
 			return emptyVectorIndex();
 		}
-		
+
 		if (!parsed.entries || typeof parsed.entries !== 'object') {
 			return emptyVectorIndex();
 		}
@@ -67,11 +70,15 @@ export async function loadVectorIndex(folderFsPath: string): Promise<VectorIndex
 }
 
 export async function saveVectorIndex(folderFsPath: string, index: VectorIndexFile): Promise<void> {
-	const dir = path.join(folderFsPath, INDEX_DIR_RELATIVE);
+	const dir = indexDirForFolder(folderFsPath);
+	const file = vectorsPathForFolder(folderFsPath);
+	if (!dir || !file) {
+		throw new Error('Index storage unavailable (no workspace storageUri)');
+	}
+
 	await fs.mkdir(dir, { recursive: true });
 	index.updatedAt = new Date().toISOString();
 	index.version = VECTORS_VERSION;
-	const file = vectorsPathForFolder(folderFsPath);
 	const tmp = `${file}.tmp`;
 	await fs.writeFile(tmp, JSON.stringify(index), 'utf8');
 	await fs.rename(tmp, file);

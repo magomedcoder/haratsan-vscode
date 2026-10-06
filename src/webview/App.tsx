@@ -8,11 +8,11 @@ import { ResearchJobsPanel } from './components/ResearchJobsPanel';
 import { SettingsScreen } from './components/SettingsScreen';
 import { TodoPanel } from './components/TodoPanel';
 import { t } from './i18n';
-import { useGenBridge } from './useGenBridge';
+import { useHaratsanBridge } from './useHaratsanBridge';
 import { vscodeApi } from './vscodeApi';
 
-const TOOL_DETAILS_STORAGE_KEY = 'gen.toolDetailsExpanded';
-const THINKING_DISPLAY_STORAGE_KEY = 'gen.thinkingDisplay';
+const TOOL_DETAILS_STORAGE_KEY = 'haratsan.toolDetailsExpanded';
+const THINKING_DISPLAY_STORAGE_KEY = 'haratsan.thinkingDisplay';
 
 function readToolDetailsExpanded(): boolean {
 	try {
@@ -20,7 +20,6 @@ function readToolDetailsExpanded(): boolean {
 		if (raw === null) {
 			return true;
 		}
-
 		return raw === '1' || raw === 'true';
 	} catch {
 		return true;
@@ -48,7 +47,6 @@ function readThinkingDisplay(fallback: ThinkingDisplay): ThinkingDisplay {
 		if (raw === null) {
 			return fallback;
 		}
-
 		return normalizeThinkingDisplay(raw);
 	} catch {
 		return fallback;
@@ -98,7 +96,7 @@ export function App() {
 		loadRulesSkills,
 		loadPersonas,
 		openProjectPath,
-	} = useGenBridge();
+	} = useHaratsanBridge();
 
 	const [toolDetailsExpanded, setToolDetailsExpanded] = useState(readToolDetailsExpanded);
 	const setToolDetailsExpandedPersist = useCallback((expanded: boolean) => {

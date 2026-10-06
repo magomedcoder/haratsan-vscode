@@ -3,7 +3,7 @@ import type { ToolContext, ToolDefinition, ToolResult } from '../../types';
 
 export const getWorkspaceInfoTool: ToolDefinition = {
 	name: 'get_workspace_info',
-	description: 'Возвращает сведения о текущем VS Code workspace: папки, имя, число открытых текстовых документов.',
+	description: 'Возвращает сведения о текущем VSCode workspace: папки, имя, число открытых текстовых документов.',
 	parameters: {
 		type: 'object',
 		properties: {},

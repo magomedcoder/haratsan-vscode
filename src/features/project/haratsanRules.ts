@@ -1,39 +1,39 @@
 import * as vscode from 'vscode';
 
-export const GENRULES_RELATIVE = '.genrules';
-export const MAX_GENRULES_CHARS = 12_000;
+export const HARATSAN_RULES_RELATIVE = '.haratsanrules';
+export const MAX_HARATSAN_RULES_CHARS = 12_000;
 
-export function normalizeGenRulesText(raw: string): string | undefined {
+export function normalizeHaratsanRulesText(raw: string): string | undefined {
 	const trimmed = raw.trim();
 	if (!trimmed) {
 		return undefined;
 	}
 
-	if (trimmed.length <= MAX_GENRULES_CHARS) {
+	if (trimmed.length <= MAX_HARATSAN_RULES_CHARS) {
 		return trimmed;
 	}
 
-	return `${trimmed.slice(0, MAX_GENRULES_CHARS)}\n\n[Gen: .genrules обрезан до ${MAX_GENRULES_CHARS} символов]`;
+	return `${trimmed.slice(0, MAX_HARATSAN_RULES_CHARS)}\n\n[Haratsan: .haratsanrules обрезан до ${MAX_HARATSAN_RULES_CHARS} символов]`;
 }
 
-export function formatGenRulesForPrompt(text: string): string {
-	return `Правила проекта (файл .genrules в корне workspace):\n${text}`;
+export function formatHaratsanRulesForPrompt(text: string): string {
+	return `Правила проекта (файл .haratsanrules в корне workspace):\n${text}`;
 }
 
-let manager: GenRulesManager | undefined;
+let manager: HaratsanRulesManager | undefined;
 
-export function initGenRulesManager(context: vscode.ExtensionContext): GenRulesManager {
-	manager = new GenRulesManager();
+export function initHaratsanRulesManager(context: vscode.ExtensionContext): HaratsanRulesManager {
+	manager = new HaratsanRulesManager();
 	context.subscriptions.push(manager);
 	return manager;
 }
 
-export function getGenRulesManager(): GenRulesManager | undefined {
+export function getHaratsanRulesManager(): HaratsanRulesManager | undefined {
 	return manager;
 }
 
-// Файл `.genrules` в корне workspace: стиль, архитектура, ограничения команды
-export class GenRulesManager implements vscode.Disposable {
+// Файл `.haratsanrules` в корне workspace: стиль, архитектура, ограничения команды
+export class HaratsanRulesManager implements vscode.Disposable {
 	private text: string | undefined;
 	private ready = false;
 	private readonly disposables: vscode.Disposable[] = [];
@@ -62,7 +62,7 @@ export class GenRulesManager implements vscode.Disposable {
 
 	getPromptAppendix(): string | undefined {
 		const text = this.text;
-		return text ? formatGenRulesForPrompt(text) : undefined;
+		return text ? formatHaratsanRulesForPrompt(text) : undefined;
 	}
 
 	async reload(): Promise<void> {
@@ -73,11 +73,11 @@ export class GenRulesManager implements vscode.Disposable {
 			return;
 		}
 
-		const uri = vscode.Uri.joinPath(folder.uri, GENRULES_RELATIVE);
+		const uri = vscode.Uri.joinPath(folder.uri, HARATSAN_RULES_RELATIVE);
 		try {
 			const bytes = await vscode.workspace.fs.readFile(uri);
 			const raw = new TextDecoder().decode(bytes);
-			this.text = normalizeGenRulesText(raw);
+			this.text = normalizeHaratsanRulesText(raw);
 		} catch {
 			this.text = undefined;
 		}
@@ -95,9 +95,7 @@ export class GenRulesManager implements vscode.Disposable {
 			return;
 		}
 
-		const watcher = vscode.workspace.createFileSystemWatcher(
-			new vscode.RelativePattern(folder, GENRULES_RELATIVE),
-		);
+		const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, HARATSAN_RULES_RELATIVE));
 		const notify = () => {
 			void this.reload();
 		};

@@ -77,7 +77,7 @@ export function collectPendingHunksForDocument(
 }
 
 /**
- * CodeLens Accept/Reject (Keep/Undo) по pending-хункам Gen agent.
+ * CodeLens Accept/Reject (Keep/Undo) по pending-хункам Haratsan.
  * Делегирует в ChatSession.reviewHunk - тот же путь, что и кнопки в чате.
  */
 export function registerHunkCodeLens(session: ChatSession): vscode.Disposable {
@@ -105,13 +105,13 @@ export function registerHunkCodeLens(session: ChatSession): vscode.Disposable {
 				lenses.push(new vscode.CodeLens(range, {
 					title: vscode.l10n.t('chat.hunk.keep'),
 					tooltip: vscode.l10n.t('chat.hunk.accept'),
-					command: 'gen.hunk.accept',
+					command: 'haratsan.hunk.accept',
 					arguments: [target],
 				}));
 				lenses.push(new vscode.CodeLens(range, {
 					title: vscode.l10n.t('chat.hunk.undo'),
 					tooltip: vscode.l10n.t('chat.hunk.reject'),
-					command: 'gen.hunk.reject',
+					command: 'haratsan.hunk.reject',
 					arguments: [target],
 				}));
 			}
@@ -128,18 +128,18 @@ export function registerHunkCodeLens(session: ChatSession): vscode.Disposable {
 		changeEmitter,
 		sessionSub,
 		vscode.languages.registerCodeLensProvider({ scheme: 'file' }, provider),
-		vscode.commands.registerCommand('gen.hunk.accept', async (target?: HunkCodeLensTarget) => {
+		vscode.commands.registerCommand('haratsan.hunk.accept', async (target?: HunkCodeLensTarget) => {
 			if (!target?.toolCallId || !target?.hunkId) {
 				return;
 			}
 
 			await session.reviewHunk(target.toolCallId, target.hunkId, 'accept');
 		}),
-		vscode.commands.registerCommand('gen.hunk.reject', async (target?: HunkCodeLensTarget) => {
+		vscode.commands.registerCommand('haratsan.hunk.reject', async (target?: HunkCodeLensTarget) => {
 			if (!target?.toolCallId || !target?.hunkId) {
 				return;
 			}
-			
+
 			await session.reviewHunk(target.toolCallId, target.hunkId, 'reject');
 		}),
 	);

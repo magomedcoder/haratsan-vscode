@@ -1,6 +1,6 @@
 import type { CommentStyle } from '../../core/config/settings';
 import type { ChatMessage } from '../../core/llm/types';
-import { getGenRulesManager } from '../project/genrules';
+import { getHaratsanRulesManager } from '../project/haratsanRules';
 import { formatFewShotUser, pickFewShot } from './commentFewShot';
 
 export interface CommentPromptInput {
@@ -32,9 +32,9 @@ function buildSystemPrompt(input: CommentPromptInput): string {
 		parts.push(input.commentSystemPrompt.trim());
 	}
 
-	const genRules = getGenRulesManager()?.getPromptAppendix();
-	if (genRules) {
-		parts.push(genRules);
+	const haratsanRules = getHaratsanRulesManager()?.getPromptAppendix();
+	if (haratsanRules) {
+		parts.push(haratsanRules);
 	}
 
 	return parts.join(' ');

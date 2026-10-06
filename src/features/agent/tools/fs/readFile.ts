@@ -256,7 +256,7 @@ async function readPdfText(
 	};
 }
 
-// Прочитать картинку * `.gen/attachments` + attachments для vision-цикла агента
+// Прочитать картинку * `.haratsan/attachments` + attachments для vision-цикла агента
 async function readImageFile(
 	resolved: {
 		uri: vscode.Uri;

@@ -3,7 +3,7 @@ import { formatMiniDiff } from './diff';
 import { AGENT_LIMITS } from './policy';
 import type { PlanStepStatus, StickyPlan, StickyPlanSnapshot, StickyPlanStep } from './plan';
 
-export const DEFAULT_PLAN_RELATIVE = '.gen/plan.md';
+export const DEFAULT_PLAN_RELATIVE = '.haratsan/plan.md';
 
 export class PlanFileError extends Error {
 	constructor(message: string) {
@@ -41,7 +41,7 @@ export function serializePlanMarkdown(snap: StickyPlanSnapshot): string {
 	const lines = [
 		`# ${snap.title.trim() || 'План'}`,
 		'',
-		'<!-- План Gen: [ ] ожидает | [~] в работе | [x] готово | [-] пропуск -->',
+		'<!-- План Haratsan: [ ] ожидает | [~] в работе | [x] готово | [-] пропуск -->',
 		'<!-- Формат шага: - [ ] Заголовок | `path` | action -->',
 		'',
 	];

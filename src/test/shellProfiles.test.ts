@@ -31,7 +31,7 @@ suite('shellProfiles', () => {
 		assert.deepEqual(cfg!.profiles.default?.pathAppend, ['tools']);
 	});
 
-	test('resolve picks explicit > GEN_SHELL_PROFILE > defaultProfile', () => {
+	test('resolve picks explicit > HARATSAN_SHELL_PROFILE > defaultProfile', () => {
 		const config = parseShellProfilesJson({
 			defaultProfile: 'dev',
 			profiles: {

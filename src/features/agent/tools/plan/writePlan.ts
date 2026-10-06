@@ -31,7 +31,7 @@ function toSnapshot(args: Record<string, unknown>): StickyPlanSnapshot {
 
 export const writePlanTool: ToolDefinition = {
 	name: 'write_plan',
-	description: 'Записать план в `.gen/plans/<slug>.md` (multi-plan). Sticky `.gen/plan.md` не меняется - для сессии по-прежнему propose_plan.',
+	description: 'Записать план в `.haratsan/plans/<slug>.md` (multi-plan). Sticky `.haratsan/plan.md` не меняется - для сессии по-прежнему propose_plan.',
 	parameters: {
 		type: 'object',
 		properties: {
@@ -100,7 +100,7 @@ export const writePlanTool: ToolDefinition = {
 
 export const listPlansTool: ToolDefinition = {
 	name: 'list_plans',
-	description: 'Список планов в `.gen/plans/*.md` (multi-plan артефакты). Sticky план - `.gen/plan.md`.',
+	description: 'Список планов в `.haratsan/plans/*.md` (multi-plan артефакты). Sticky план - `.haratsan/plan.md`.',
 	parameters: {
 		type: 'object',
 		properties: {},
@@ -112,7 +112,7 @@ export const listPlansTool: ToolDefinition = {
 		if (plans.length === 0) {
 			return {
 				ok: true,
-				content: 'В `.gen/plans/` пока нет файлов. Sticky план: `.gen/plan.md`.',
+				content: 'В `.haratsan/plans/` пока нет файлов. Sticky план: `.haratsan/plan.md`.',
 			};
 		}
 

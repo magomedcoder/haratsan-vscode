@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { serializePlanMarkdown } from './planFile';
 import type { StickyPlanSnapshot } from './plan';
 
-export const PLANS_DIR_RELATIVE = '.gen/plans';
+export const PLANS_DIR_RELATIVE = '.haratsan/plans';
 
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
 
-// Нормализовать slug для `.gen/plans/<slug>.md`
+// Нормализовать slug для `.haratsan/plans/<slug>.md`
 export function normalizePlanSlug(raw: string): string | undefined {
 	const slug = raw.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_-]/g, '');
 	if (!slug || !SLUG_RE.test(slug)) {
@@ -49,7 +49,7 @@ async function ensurePlansDir(): Promise<vscode.Uri | undefined> {
 	return dir;
 }
 
-// Записать снимок плана в `.gen/plans/<slug>.md` (не трогает sticky `.gen/plan.md`)
+// Записать снимок плана в `.haratsan/plans/<slug>.md` (не трогает sticky `.haratsan/plan.md`)
 export async function writeNamedPlan(slug: string, snap: StickyPlanSnapshot): Promise<{ relativePath: string }> {
 	const normalized = normalizePlanSlug(slug);
 	if (!normalized) {
@@ -67,7 +67,7 @@ export async function writeNamedPlan(slug: string, snap: StickyPlanSnapshot): Pr
 	return { relativePath: planSlugRelativePath(normalized) };
 }
 
-// Список файлов `.gen/plans/*.md`
+// Список файлов `.haratsan/plans/*.md`
 export async function listNamedPlans(): Promise<Array<{ slug: string; relativePath: string }>> {
 	const root = workspaceRoot();
 	if (!root) {

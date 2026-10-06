@@ -9,7 +9,7 @@ The main option is local **llama.cpp** with an OpenAI-compatible API. The same p
 In **General**:
 
 1. **Base URL** - for llama.cpp the default is `http://127.0.0.1:8080`. For the cloud, use the provider URL (for example `https://api.openai.com`).
-2. **API key** - stored in VS Code `SecretStorage` (not in settings.json). For local llama.cpp it is usually not needed - leave it empty.
+2. **API key** - stored in VSCode `SecretStorage` (not in settings.json). For local llama.cpp it is usually not needed - leave it empty.
 3. **Model** - pick from the list (loaded from the URL) or type it manually (model name/alias on the server).
 4. If needed, set the key **header** and **scheme** (defaults: `Authorization` + `Bearer`).
 

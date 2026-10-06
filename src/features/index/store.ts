@@ -1,23 +1,32 @@
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import { INDEX_MANIFEST_FILE, indexDirForFolder, indexFilePath, isIndexStorageAvailable } from './indexStorage';
 import { needsManifestRepair, parseManifestJson, repairManifestInMemory } from './manifestParse';
 import type { ManifestRepairReason } from './manifestParse';
-import { emptyManifest, INDEX_DIR_RELATIVE, INDEX_MANIFEST_RELATIVE } from './types';
+import { emptyManifest } from './types';
 import type { IndexManifest } from './types';
 
-export function manifestPathForFolder(folderFsPath: string): string {
-	return path.join(folderFsPath, INDEX_MANIFEST_RELATIVE);
+function manifestPathForFolder(folderFsPath: string): string | undefined {
+	return indexFilePath(folderFsPath, INDEX_MANIFEST_FILE);
 }
 
-export async function ensureIndexDir(folderFsPath: string): Promise<void> {
-	await fs.mkdir(path.join(folderFsPath, INDEX_DIR_RELATIVE), {
-		recursive: true,
-	});
+async function ensureIndexDir(folderFsPath: string): Promise<boolean> {
+	const dir = indexDirForFolder(folderFsPath);
+	if (!dir) {
+		return false;
+	}
+	
+	await fs.mkdir(dir, { recursive: true });
+	return true;
 }
 
 export async function loadManifest(folderFsPath: string): Promise<IndexManifest> {
+	const file = manifestPathForFolder(folderFsPath);
+	if (!file) {
+		return emptyManifest();
+	}
+
 	try {
-		const raw = await fs.readFile(manifestPathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		const parsed = parseManifestJson(raw);
 		if (!parsed.ok) {
 			return emptyManifest();
@@ -37,9 +46,31 @@ export async function inspectManifest(folderFsPath: string): Promise<{
 	missingDirDigests: boolean;
 	repairReason?: ManifestRepairReason;
 	manifest: IndexManifest;
+	storageAvailable: boolean;
 }> {
+	if (!isIndexStorageAvailable()) {
+		return {
+			exists: false,
+			corrupt: false,
+			missingDirDigests: false,
+			manifest: emptyManifest(),
+			storageAvailable: false,
+		};
+	}
+
+	const file = manifestPathForFolder(folderFsPath);
+	if (!file) {
+		return {
+			exists: false,
+			corrupt: false,
+			missingDirDigests: false,
+			manifest: emptyManifest(),
+			storageAvailable: false,
+		};
+	}
+
 	try {
-		const raw = await fs.readFile(manifestPathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		const parsed = parseManifestJson(raw);
 		if (!parsed.ok) {
 			return {
@@ -48,6 +79,7 @@ export async function inspectManifest(folderFsPath: string): Promise<{
 				missingDirDigests: false,
 				repairReason: parsed.reason,
 				manifest: emptyManifest(),
+				storageAvailable: true,
 			};
 		}
 
@@ -57,6 +89,7 @@ export async function inspectManifest(folderFsPath: string): Promise<{
 			missingDirDigests: parsed.missingDirDigests,
 			repairReason: parsed.missingDirDigests ? 'missing_dir_digests' : undefined,
 			manifest: parsed.manifest,
+			storageAvailable: true,
 		};
 	} catch (err) {
 		const code = (err as { code?: string }).code;
@@ -66,6 +99,7 @@ export async function inspectManifest(folderFsPath: string): Promise<{
 				corrupt: false,
 				missingDirDigests: false,
 				manifest: emptyManifest(),
+				storageAvailable: true,
 			};
 		}
 
@@ -75,6 +109,7 @@ export async function inspectManifest(folderFsPath: string): Promise<{
 			missingDirDigests: false,
 			repairReason: 'invalid_json',
 			manifest: emptyManifest(),
+			storageAvailable: true,
 		};
 	}
 }
@@ -85,11 +120,28 @@ export async function inspectManifest(folderFsPath: string): Promise<{
  */
 export async function repairManifestFile(folderFsPath: string): Promise<{
 	repaired: boolean;
-	reason: ManifestRepairReason | 'ok' | 'missing';
+	reason: ManifestRepairReason | 'ok' | 'missing' | 'no_storage';
 	manifest: IndexManifest;
 }> {
+	if (!isIndexStorageAvailable()) {
+		return {
+			repaired: false,
+			reason: 'no_storage',
+			manifest: emptyManifest(),
+		};
+	}
+
+	const file = manifestPathForFolder(folderFsPath);
+	if (!file) {
+		return {
+			repaired: false,
+			reason: 'no_storage',
+			manifest: emptyManifest(),
+		};
+	}
+
 	try {
-		const raw = await fs.readFile(manifestPathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		const parsed = parseManifestJson(raw);
 		if (!needsManifestRepair(parsed)) {
 			return {
@@ -104,7 +156,7 @@ export async function repairManifestFile(folderFsPath: string): Promise<{
 		return {
 			repaired: true,
 			reason,
-			manifest
+			manifest,
 		};
 	} catch (err) {
 		const code = (err as { code?: string }).code;
@@ -114,7 +166,7 @@ export async function repairManifestFile(folderFsPath: string): Promise<{
 			return {
 				repaired: true,
 				reason: 'missing',
-				manifest
+				manifest,
 			};
 		}
 
@@ -123,13 +175,18 @@ export async function repairManifestFile(folderFsPath: string): Promise<{
 		return {
 			repaired: true,
 			reason: 'invalid_json',
-			manifest
+			manifest,
 		};
 	}
 }
 
 export async function saveManifest(folderFsPath: string, manifest: IndexManifest): Promise<void> {
-	await ensureIndexDir(folderFsPath);
+	const ok = await ensureIndexDir(folderFsPath);
+	const file = manifestPathForFolder(folderFsPath);
+	if (!ok || !file) {
+		throw new Error('Index storage unavailable (no workspace storageUri)');
+	}
+
 	manifest.updatedAt = new Date().toISOString();
-	await fs.writeFile(manifestPathForFolder(folderFsPath), JSON.stringify(manifest, null, 2), 'utf8');
+	await fs.writeFile(file, JSON.stringify(manifest, null, 2), 'utf8');
 }

@@ -20,7 +20,7 @@ export const PLAN_ENTER_REMINDER = [
 ].join(' ');
 
 // Напоминание модели при выходе Plan * Agent
-export const PLAN_EXIT_REMINDER = 'Режим Agent включён. Можно править файлы и запускать команды в рамках политики подтверждений. Следуй активному плану в `.gen/plan.md`, если он есть.';
+export const PLAN_EXIT_REMINDER = 'Режим Agent включён. Можно править файлы и запускать команды в рамках политики подтверждений. Следуй активному плану в `.haratsan/plan.md`, если он есть.';
 
 function asChatMode(raw: string): ChatMode | undefined {
 	const v = raw.trim().toLowerCase() as ChatMode;

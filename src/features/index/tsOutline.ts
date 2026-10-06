@@ -1,10 +1,9 @@
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getSettings } from '../../core/config/settings';
 import { isProjectEnabled } from '../project/config';
+import { INDEX_OUTLINE_FILE, indexDirForFolder, indexFilePath } from './indexStorage';
 import { listIndexableFiles, readIndexableText } from './scanner';
-import { INDEX_DIR_RELATIVE } from './types';
 import {
 	isJsLikeOutlinePath,
 	isRegexOutlineFallbackPath,
@@ -40,8 +39,6 @@ export {
 	applyOutlinePathUpdate,
 } from './tsOutlineParse';
 
-export const OUTLINE_INDEX_RELATIVE = '.gen/index/outline.json';
-
 export const OUTLINE_INDEX_LIMITS = {
 	maxFiles: 400,
 	maxEntries: 12_000,
@@ -49,13 +46,18 @@ export const OUTLINE_INDEX_LIMITS = {
 	lspThrottleMs: 40,
 } as const;
 
-export function outlinePathForFolder(folderFsPath: string): string {
-	return path.join(folderFsPath, OUTLINE_INDEX_RELATIVE);
+function outlinePathForFolder(folderFsPath: string): string | undefined {
+	return indexFilePath(folderFsPath, INDEX_OUTLINE_FILE);
 }
 
 export async function loadOutlineIndex(folderFsPath: string): Promise<OutlineDocument | undefined> {
+	const file = outlinePathForFolder(folderFsPath);
+	if (!file) {
+		return undefined;
+	}
+
 	try {
-		const raw = await fs.readFile(outlinePathForFolder(folderFsPath), 'utf8');
+		const raw = await fs.readFile(file, 'utf8');
 		return parseOutlineDocumentJson(raw);
 	} catch {
 		return undefined;
@@ -63,8 +65,14 @@ export async function loadOutlineIndex(folderFsPath: string): Promise<OutlineDoc
 }
 
 export async function saveOutlineIndex(folderFsPath: string, doc: OutlineDocument): Promise<void> {
-	await fs.mkdir(path.join(folderFsPath, INDEX_DIR_RELATIVE), { recursive: true });
-	await fs.writeFile(outlinePathForFolder(folderFsPath), JSON.stringify(doc, null, 2), 'utf8');
+	const dir = indexDirForFolder(folderFsPath);
+	const file = outlinePathForFolder(folderFsPath);
+	if (!dir || !file) {
+		return;
+	}
+	
+	await fs.mkdir(dir, { recursive: true });
+	await fs.writeFile(file, JSON.stringify(doc, null, 2), 'utf8');
 }
 
 /** Sync-extract: TS/JS через createSourceFile; остальные языки - только regex fallback. */
@@ -138,7 +146,7 @@ function clipText(text: string): string {
 		: text;
 }
 
-// Пересобрать `.gen/index/outline.json`: TS/JS createSourceFile; non-JS LSP (+ regex fallback)
+// Пересобрать outline.json в workspace storage: TS/JS createSourceFile; non-JS LSP (+ regex fallback)
 export async function rebuildOutlineIndex(folder: vscode.WorkspaceFolder): Promise<OutlineDocument> {
 	const files = await listIndexableFiles(folder);
 	const entries: OutlineEntry[] = [];

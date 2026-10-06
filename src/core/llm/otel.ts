@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type { GenSettings } from '../config/types';
+import type { HaratsanSettings } from '../config/types';
 import { appendLogLine } from '../log/logger';
 import type { TokenUsage } from './usage';
 
@@ -57,30 +57,30 @@ function otlpIntAttr(key: string, value: number): { key: string; value: { intVal
 // Собирает OTLP/JSON ExportTraceServiceRequest с одним span
 function buildOtlpJsonPayload(attrs: LlmSpanEndAttrs, startNs: bigint, endNs: bigint): string {
 	const attributes = [
-		otlpStringAttr('gen.llm.model', attrs.model || 'unknown'),
-		otlpStringAttr('gen.llm.status', attrs.status),
-		otlpIntAttr('gen.llm.duration_ms', attrs.durationMs),
+		otlpStringAttr('haratsan.llm.model', attrs.model || 'unknown'),
+		otlpStringAttr('haratsan.llm.status', attrs.status),
+		otlpIntAttr('haratsan.llm.duration_ms', attrs.durationMs),
 	];
 	if (attrs.providerHost) {
-		attributes.push(otlpStringAttr('gen.llm.provider_host', attrs.providerHost));
+		attributes.push(otlpStringAttr('haratsan.llm.provider_host', attrs.providerHost));
 	}
 
 	if (attrs.usage) {
-		attributes.push(otlpIntAttr('gen.llm.tokens.input', attrs.usage.promptTokens));
-		attributes.push(otlpIntAttr('gen.llm.tokens.output', attrs.usage.completionTokens));
-		attributes.push(otlpIntAttr('gen.llm.tokens.total', attrs.usage.totalTokens));
+		attributes.push(otlpIntAttr('haratsan.llm.tokens.input', attrs.usage.promptTokens));
+		attributes.push(otlpIntAttr('haratsan.llm.tokens.output', attrs.usage.completionTokens));
+		attributes.push(otlpIntAttr('haratsan.llm.tokens.total', attrs.usage.totalTokens));
 	}
 
 	const body = {
 		resourceSpans: [
 			{
 				resource: {
-					attributes: [otlpStringAttr('service.name', 'gen-agent-vscode')],
+					attributes: [otlpStringAttr('service.name', 'haratsan-vscode')],
 				},
 				scopeSpans: [
 					{
 						scope: {
-							name: 'gen.llm',
+							name: 'haratsan.llm',
 							version: '0.1.0',
 						},
 						spans: [
@@ -128,10 +128,10 @@ async function postOtlp(endpoint: string, payload: string): Promise<void> {
 
 /**
  * Opt-in span вокруг HttpLlmClient.complete.
- * otelEnabled=false * no-op; без endpoint * строка в Gen LLM Output; с endpoint * OTLP/JSON HTTP.
+ * otelEnabled=false * no-op; без endpoint * строка в Haratsan LLM Output; с endpoint * OTLP/JSON HTTP.
  */
 export function beginLlmCompleteSpan(
-	settings: Pick<GenSettings, 'otelEnabled' | 'otelEndpoint' | 'baseUrl'>,
+	settings: Pick<HaratsanSettings, 'otelEnabled' | 'otelEndpoint' | 'baseUrl'>,
 ): LlmSpanHandle | undefined {
 	if (!settings.otelEnabled) {
 		return undefined;

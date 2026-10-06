@@ -13,10 +13,10 @@ export function buildAgentSystemPrompt(options?: {
 	userEditsAppendix?: string;
 	planAppendix?: string;
 	planEditsAppendix?: string;
-	genRulesAppendix?: string;
+	haratsanRulesAppendix?: string;
 	// Каталог skills (имена/пути) - модель должна звать tool skill
 	skillsAppendix?: string;
-	// Каталог локальных plugins/tools (`.gen/plugins`, `.gen/tools`)
+	// Каталог локальных plugins/tools (`.haratsan/plugins`, `.haratsan/tools`)
 	pluginsAppendix?: string;
 	planWriteToFile?: boolean;
 	// Shell в Plan: ask | deny
@@ -30,7 +30,7 @@ export function buildAgentSystemPrompt(options?: {
 	includeApplyPatch?: boolean;
 	// Глубина субагента: >0 - без тяжёлых catalogs
 	subagentDepth?: number;
-	// Каталог `.gen/scratch/` (имена файлов)
+	// Каталог `.haratsan/scratch/` (имена файлов)
 	scratchAppendix?: string;
 	// Короткий live-снимок активного редактора (mid-turn)
 	liveEditorAppendix?: string;
@@ -59,16 +59,16 @@ export function buildAgentSystemPrompt(options?: {
 
 	const lines = [
 		mode === 'debug'
-			? 'Ты Gen в режиме Debug - разбираешь ошибки и логи приложения в VS Code.'
+			? 'Ты Haratsan в режиме Debug - разбираешь ошибки и логи приложения в VSCode.'
 			: mode === 'design'
-				? 'Ты Gen в режиме Design - помогаешь с UI/UX: смотришь страницы через Simple Browser и fetch_page.'
+				? 'Ты Haratsan в режиме Design - помогаешь с UI/UX: смотришь страницы через Simple Browser и fetch_page.'
 				: mode === 'plan'
-					? 'Ты Gen в режиме Plan - анализ и план без правок файлов. Shell только с подтверждением (или недоступен - см. planShellPolicy).'
+					? 'Ты Haratsan в режиме Plan - анализ и план без правок файлов. Shell только с подтверждением (или недоступен - см. planShellPolicy).'
 					: mode === 'multitask'
-						? 'Ты Gen в режиме Multitask - координатор. Не правь файлы сам: делегируй через tool task.'
+						? 'Ты Haratsan в режиме Multitask - координатор. Не правь файлы сам: делегируй через tool task.'
 						: mode === 'project'
-							? 'Ты Gen в режиме Project - тимлид команды. Не правь файлы сам: делегируй подзадачи через tool task и синтезируй отчёты.'
-							: 'Ты Gen - агент-помощник программиста в VS Code.',
+							? 'Ты Haratsan в режиме Project - тимлид команды. Не правь файлы сам: делегируй подзадачи через tool task и синтезируй отчёты.'
+							: 'Ты Haratsan - агент-помощник программиста в VSCode.',
 		'Отвечай на языке пользователя, кратко и по делу.',
 		'Работай только в рамках текущего workspace; не предлагай действия вне проекта.',
 		'Если дан контекст редактора (файл, выделение), опирайся на него.',
@@ -98,14 +98,14 @@ export function buildAgentSystemPrompt(options?: {
 		);
 	} else if (mode === 'multitask') {
 		lines.push(
-			'Режим Multitask: ты координатор. Мутирующие tools недоступны - поручай подзадачи через task (explore / general / scout / docs-researcher / code-reviewer / кастомные агенты из `.gen/agents/`).',
+			'Режим Multitask: ты координатор. Мутирующие tools недоступны - поручай подзадачи через task (explore / general / scout / docs-researcher / code-reviewer / кастомные агенты из `.haratsan/agents/`).',
 			'Fan-out: независимые read-only подзадачи - task с prompts[] (+ max_parallel). Долгие jobs - background. Параллельный general - только с allow_mutating_parallel (отдельные worktree).',
 			'Сам читай код, строй план (propose_plan / write_plan), собирай отчёты субагентов и давай итоговый ответ.',
 		);
 	} else if (mode === 'project') {
 		lines.push(
-			'Режим Project (teams): ты тимлид команды агентов. Мутирующие tools недоступны - делегируй работу через tool task (explore / general / scout / docs-researcher / code-reviewer / кастомные агенты из `.gen/agents/`).',
-			'Алгоритм тимлида: 1) уточни цель и разбей на подзадачи; 2) выбери подходящего субагента под каждую; 3) parallel где независимо (prompts[] / max_parallel; background для долгих; allow_mutating_parallel для parallel general); 4) после каждого task - синтезируй отчёт в общий план/итог (synthesize -> `.gen/reports/`); 5) не оставляй сырые отчёты субагентов без сводки для пользователя.',
+			'Режим Project (teams): ты тимлид команды агентов. Мутирующие tools недоступны - делегируй работу через tool task (explore / general / scout / docs-researcher / code-reviewer / кастомные агенты из `.haratsan/agents/`).',
+			'Алгоритм тимлида: 1) уточни цель и разбей на подзадачи; 2) выбери подходящего субагента под каждую; 3) parallel где независимо (prompts[] / max_parallel; background для долгих; allow_mutating_parallel для parallel general); 4) после каждого task - синтезируй отчёт в общий план/итог (synthesize -> `.haratsan/reports/`); 5) не оставляй сырые отчёты субагентов без сводки для пользователя.',
 			'Сам: читай код, координируй, держи propose_plan / write_plan / update_plan, дай итоговый ответ. Не правь файлы сам - только через делегирование general (или выход в /agent).',
 			'Слэш: /project включает режим; /agent или /ask - выход. Подсказка: после возврата task всегда синтезируй результат команды.',
 		);
@@ -115,7 +115,7 @@ export function buildAgentSystemPrompt(options?: {
 		lines.push(
 			'У тебя есть инструменты. Вызывай их, когда нужны факты о файлах или правки.',
 			'Не выдумывай содержимое файлов - перед любой записью заново read_file / get_active_editor; не опирайся на старый снимок из истории tools.',
-			'Одноразовый анализатор/мигратор: напиши скрипт в `.gen/scratch/` (write_file / edit_file), затем `run_scratch` или `run_command`/`await_shell`. Не eval JS из `.gen/tools`.',
+			'Одноразовый анализатор/мигратор: напиши скрипт в `.haratsan/scratch/` (write_file / edit_file), затем `run_scratch` или `run_command`/`await_shell`. Не eval JS из `.haratsan/tools`.',
 			`Правки пользователя важнее: не откатывай их, если задача явно не требует. Если файл расходится со снимком агента - полный write_file запрещён, только ${targetedEditHint} по актуальному тексту.`,
 			includeApplyPatch
 				? 'Для нового файла: write_file только если файл короткий. Большой файл: короткая заготовка write_file, дальше apply_patch небольшими фрагментами. Несколько файлов сразу: apply_workspace_edit. Не клади весь большой файл в один write_file: JSON аргументов обрежется.'
@@ -127,14 +127,14 @@ export function buildAgentSystemPrompt(options?: {
 			'После правок проверяй get_diagnostics. git_status - только чтение, без commit/push.',
 			'Логи: find_logs, read_log_tail. UI: open_browser, fetch_page.',
 			'Тесты: run_tests (если в проекте находится команда test) или run_command. Команды без allowlist языков; запрещены rm, curl, install, git push, eval (-e / -c с кодом). Подтверждения - по approvalPolicy / autoApprove в настройках Безопасность.',
-			'Режимы: plan_enter / plan_exit / switch_mode (ask|agent|debug|design|plan|multitask|project). Субагенты: task (prompts[] = fan-out research; background; allow_mutating_parallel для parallel general; synthesize -> `.gen/reports/`). Handoff: new_task. Обзор модуля: list_code_definition_names. Deep planning: /deep-planning. Кастомные агенты: generate_agent -> `.gen/agents/`.',
+			'Режимы: plan_enter / plan_exit / switch_mode (ask|agent|debug|design|plan|multitask|project). Субагенты: task (prompts[] = fan-out research; background; allow_mutating_parallel для parallel general; synthesize -> `.haratsan/reports/`). Handoff: new_task. Обзор модуля: list_code_definition_names. Deep planning: /deep-planning. Кастомные агенты: generate_agent -> `.haratsan/agents/`.',
 			planWriteToFile
-				? 'Если задача трогает больше одного файла или это составная цель: propose_plan (шаги с path) - план пишется в `.gen/plan.md`. Опциональный slug - ещё `.gen/plans/<slug>.md`. write_plan / list_plans для multi-plan. Прогресс: update_plan. Один файл можно править без плана.'
-				: 'Если задача трогает больше одного файла или это составная цель: propose_plan (шаги с path) - план только в памяти на текущую сессию (запись sticky файла отключена). write_plan всё ещё пишет в `.gen/plans/`. Прогресс: update_plan. Один файл можно править без плана.',
+				? 'Если задача трогает больше одного файла или это составная цель: propose_plan (шаги с path) - план пишется в `.haratsan/plan.md`. Опциональный slug - ещё `.haratsan/plans/<slug>.md`. write_plan / list_plans для multi-plan. Прогресс: update_plan. Один файл можно править без плана.'
+				: 'Если задача трогает больше одного файла или это составная цель: propose_plan (шаги с path) - план только в памяти на текущую сессию (запись sticky файла отключена). write_plan всё ещё пишет в `.haratsan/plans/`. Прогресс: update_plan. Один файл можно править без плана.',
 			planWriteToFile
-				? 'Пока активен план - следуй ему и файлу `.gen/plan.md` (пользователь может править файл; при перезапуске VS Code план загружается только из файла). Новая задача: update_plan replace/clear или удаление `.gen/plan.md`.'
-				: 'Пока активен план - следуй ему в текущей сессии. Если есть `.gen/plan.md`, он подхватывается при старте и перед ходом. Новая задача: update_plan replace/clear.',
-			'Пути - относительно корня workspace. Можно писать `/workspace/...` как портативный корень (то же, что `.` / путь от первой папки). Учитывай `.gitignore` и `.genignore` в корне: игнорируемые файлы недоступны для tools.',
+				? 'Пока активен план - следуй ему и файлу `.haratsan/plan.md` (пользователь может править файл; при перезапуске VSCode план загружается только из файла). Новая задача: update_plan replace/clear или удаление `.haratsan/plan.md`.'
+				: 'Пока активен план - следуй ему в текущей сессии. Если есть `.haratsan/plan.md`, он подхватывается при старте и перед ходом. Новая задача: update_plan replace/clear.',
+			'Пути - относительно корня workspace. Можно писать `/workspace/...` как портативный корень (то же, что `.` / путь от первой папки). Учитывай `.gitignore` и `.haratsanignore` в корне: игнорируемые файлы недоступны для tools.',
 			deniedPaths.length > 0
 				? `Также не трогай файлы по шаблонам из настроек: ${deniedPaths.join(', ')}.`
 				: 'Дополнительные запреты путей задаются в настройках (deniedPaths).',
@@ -183,9 +183,9 @@ export function buildAgentSystemPrompt(options?: {
 		lines.push(planEditsAppendix);
 	}
 
-	const genRulesAppendix = options?.genRulesAppendix?.trim();
-	if (genRulesAppendix) {
-		lines.push(genRulesAppendix);
+	const haratsanRulesAppendix = options?.haratsanRulesAppendix?.trim();
+	if (haratsanRulesAppendix) {
+		lines.push(haratsanRulesAppendix);
 	}
 
 	let appendix = options?.userEditsAppendix?.trim() ?? '';

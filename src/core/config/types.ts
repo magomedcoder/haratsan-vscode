@@ -36,14 +36,14 @@ export function isAgentLikeMode(mode: ChatMode): boolean {
 }
 
 // Модель для title / compact / summary; пусто - undefined (fallback на основную в client)
-export function resolveSmallModel(settings: Pick<GenSettings, 'smallModel'>): string | undefined {
+export function resolveSmallModel(settings: Pick<HaratsanSettings, 'smallModel'>): string | undefined {
 	const m = settings.smallModel.trim();
 	return m || undefined;
 }
 
 // Модель для текущего режима: planModel в Plan, actModel в agent-like, иначе model
 export function resolveModeModel(
-	settings: Pick<GenSettings, 'model' | 'planModel' | 'actModel' | 'chatMode'>,
+	settings: Pick<HaratsanSettings, 'model' | 'planModel' | 'actModel' | 'chatMode'>,
 ): string {
 	if (settings.chatMode === 'plan') {
 		const p = settings.planModel.trim();
@@ -60,7 +60,7 @@ export function resolveModeModel(
 	return settings.model.trim();
 }
 
-export interface GenSettings {
+export interface HaratsanSettings {
 	baseUrl: string;
 	model: string;
 	/**
@@ -185,8 +185,8 @@ export interface GenSettings {
 	 */
 	webSearchHttpHeader: string;
 	/**
-	 * Deprecated in JSON: ключ только в SecretStorage (`gen.webSearchApiKey`).
-	 * Поле в GenSettings всегда пустое в effective settings (совместимость типов).
+	 * Deprecated in JSON: ключ только в SecretStorage (`haratsan.webSearchApiKey`).
+	 * Поле в HaratsanSettings всегда пустое в effective settings (совместимость типов).
 	 */
 	webSearchApiKey: string;
 	/**
@@ -315,7 +315,7 @@ export interface GenSettings {
 	 */
 	authScheme: string;
 	/**
-	 * Писать план агента в `.gen/plan.md` в workspace.
+	 * Писать план агента в `.haratsan/plan.md` в workspace.
 	 * Выключено - план только в памяти сессии.
 	 */
 	planWriteToFile: boolean;
@@ -340,7 +340,7 @@ export interface GenSettings {
 	 */
 	otelEnabled: boolean;
 	/**
-	 * OTLP HTTP URL (JSON). Пусто - без экспорта: spans в Output «Gen LLM».
+	 * OTLP HTTP URL (JSON). Пусто - без экспорта: spans в Output Haratsan LLM».
 	 * Не передавать API-ключи в URL.
 	 */
 	otelEndpoint: string;
@@ -359,7 +359,7 @@ export interface GenSettings {
 	 */
 	subagentDepth: number;
 	/**
-	 * Git worktrees для субагентов (`task`): по умолчанию создавать worktree под `.gen/worktrees/`.
+	 * Git worktrees для субагентов (`task`): по умолчанию создавать worktree под `.haratsan/worktrees/`.
 	 * Переопределяется аргументом `use_worktree` у tool `task`.
 	 * default - false
 	 */
@@ -371,7 +371,7 @@ export interface GenSettings {
 	worktreeStartCommand: string;
 	/**
 	 * Доп. каталоги skills (относительно workspace или абсолютные).
-	 * Базовые: `.gen/skills`, `.agents/skills`.
+	 * Базовые: `.haratsan/skills`, `.agents/skills`.
 	 */
 	skillsPaths: string[];
 	/**
@@ -383,7 +383,7 @@ export interface GenSettings {
 	 */
 	instructionUrls: string[];
 	/**
-	 * Id персоны из `.gen/personas/*.md` (пусто - без персоны).
+	 * Id персоны из `.haratsan/personas/*.md` (пусто - без персоны).
 	 */
 	personaId: string;
 	/**
@@ -488,7 +488,7 @@ export interface GenSettings {
 	 */
 	thinkingDisplay: ThinkingDisplay;
 	/**
-	 * Где показывать Gen chat: нижняя панель / боковая панель (activity bar) / оба.
+	 * Где показывать Haratsan chat: нижняя панель / боковая панель (activity bar) / оба.
 	 * default - 'both'
 	 */
 	chatViewLocation: ChatViewLocation;
@@ -525,7 +525,7 @@ export const EXAMPLE_SECRET_PATTERNS: string[] = [
 	String.raw`\bBearer\s+[A-Za-z0-9\-._~+/]+=*`,
 ];
 
-export const DEFAULT_SETTINGS: GenSettings = {
+export const DEFAULT_SETTINGS: HaratsanSettings = {
 	baseUrl: '',
 	model: '',
 	smallModel: '',

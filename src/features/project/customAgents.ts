@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { SubagentDef } from '../agent/subagents';
 
-const AGENTS_GLOB = '.gen/agents/*.md';
+const AGENTS_GLOB = '.haratsan/agents/*.md';
 const MAX_BODY_CHARS = 12_000;
 
 export interface BuiltinAgentPreset {
@@ -119,7 +119,7 @@ export function resolveBuiltinPresetSubagent(id: string): SubagentDef | undefine
 	return preset ? presetToSubagent(preset) : undefined;
 }
 
-// Разобрать markdown кастомного агента из `.gen/agents/`
+// Разобрать markdown кастомного агента из `.haratsan/agents/`
 export async function discoverCustomAgents(): Promise<SubagentDef[]> {
 	const folder = vscode.workspace.workspaceFolders?.[0];
 	if (!folder) {
@@ -167,7 +167,7 @@ export async function discoverCustomAgents(): Promise<SubagentDef[]> {
 	return out;
 }
 
-// Создать stub `.gen/agents/{name}.md` из описания (Agent.generate MVP) или builtin preset
+// Создать stub `.haratsan/agents/{name}.md` из описания (Agent.generate MVP) или builtin preset
 export async function generateAgentStub(params: {
 	name: string;
 	description: string;
@@ -184,7 +184,7 @@ export async function generateAgentStub(params: {
 
 	const preset = getBuiltinPreset(params.name);
 	const id = slugifyAgentName(preset?.name ?? params.name);
-	const dir = vscode.Uri.joinPath(folder.uri, '.gen', 'agents');
+	const dir = vscode.Uri.joinPath(folder.uri, '.haratsan', 'agents');
 	try {
 		await vscode.workspace.fs.stat(dir);
 	} catch {
@@ -239,7 +239,7 @@ export async function generateAgentStub(params: {
 	};
 }
 
-// Клонировать builtin preset в `.gen/agents/{name}.md`
+// Клонировать builtin preset в `.haratsan/agents/{name}.md`
 export async function cloneBuiltinPreset(id: string): Promise<{
 	relativePath: string;
 	created: boolean;

@@ -63,7 +63,7 @@ export const fileSearchTool: ToolDefinition = {
 			};
 		}
 		const cap = Math.min(Math.max(1, asOptionalInt(args, 'max_results') ?? 20), 40);
-		const uris = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,.gen}/**', 8000);
+		const uris = await vscode.workspace.findFiles('**/*', '**/{node_modules,.git,.haratsan}/**', 8000);
 		const scored: Array<{ path: string; score: number }> = [];
 		for (const uri of uris) {
 			throwIfAborted(ctx.signal);

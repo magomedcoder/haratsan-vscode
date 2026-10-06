@@ -23,25 +23,25 @@ suite('interpolateConfigString', () => {
 	});
 
 	test('${env:NAME} и {env:NAME} подставляют значение', () => {
-		process.env.GEN_INTERP_TEST = 'secret-value';
+		process.env.HARATSAN_INTERP_TEST = 'secret-value';
 		assert.strictEqual(
-			interpolateConfigString('token=${env:GEN_INTERP_TEST}', { cwd: os.tmpdir() }),
+			interpolateConfigString('token=${env:HARATSAN_INTERP_TEST}', { cwd: os.tmpdir() }),
 			'token=secret-value',
 		);
 		assert.strictEqual(
-			interpolateConfigString('token={env:GEN_INTERP_TEST}', { cwd: os.tmpdir() }),
+			interpolateConfigString('token={env:HARATSAN_INTERP_TEST}', { cwd: os.tmpdir() }),
 			'token=secret-value',
 		);
 	});
 
 	test('отсутствующий env даёт пустую строку без throw', () => {
-		delete process.env.GEN_INTERP_MISSING;
+		delete process.env.HARATSAN_INTERP_MISSING;
 		assert.strictEqual(
-			interpolateConfigString('x=${env:GEN_INTERP_MISSING}-y', { cwd: os.tmpdir() }),
+			interpolateConfigString('x=${env:HARATSAN_INTERP_MISSING}-y', { cwd: os.tmpdir() }),
 			'x=-y',
 		);
 		assert.strictEqual(
-			interpolateConfigString('x={env:GEN_INTERP_MISSING}-y', { cwd: os.tmpdir() }),
+			interpolateConfigString('x={env:HARATSAN_INTERP_MISSING}-y', { cwd: os.tmpdir() }),
 			'x=-y',
 		);
 	});

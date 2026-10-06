@@ -1,4 +1,4 @@
-import type { GenSettings } from '../../core/config/types';
+import type { HaratsanSettings } from '../../core/config/types';
 import { getCachedNCtx, getEffectiveContextBudget, isNearContextBudget, isOverContextBudget, setCachedNCtx } from '../../core/llm/contextBudget';
 import { ContextBudgetExceededError, formatContextOverflowUserMessage, parseContextOverflow } from '../../core/llm/contextOverflow';
 import type { ContextOverflowInfo } from '../../core/llm/contextOverflow';
@@ -215,7 +215,7 @@ function cloneMessages(messages: readonly ChatMessage[]): ChatMessage[] {
 }
 
 // N последних tool: compactTailTurns (default 4), иначе DEFAULT_RECENT_TOOL_KEEP
-export function recentToolKeepCount(settings: GenSettings): number {
+export function recentToolKeepCount(settings: HaratsanSettings): number {
 	const n = settings.compactTailTurns;
 	if (typeof n === 'number' && Number.isFinite(n) && n >= 1) {
 		return Math.min(40, Math.max(1, Math.floor(n)));
@@ -398,7 +398,7 @@ export function dedupToolResults(messages: readonly ChatMessage[]): ShrinkResult
 // Soft mid-loop compact без LLM: system + digest старых ходов + последние N ходов
 export function softCompactApiMessages(
 	messages: readonly ChatMessage[],
-	settings: GenSettings,
+	settings: HaratsanSettings,
 ): ShrinkResult {
 	const keepTurns = recentToolKeepCount(settings);
 	const current = cloneMessages(messages);
@@ -458,7 +458,7 @@ export function softCompactApiMessages(
 export function shrinkApiMessages(
 	messages: readonly ChatMessage[],
 	budget: number,
-	settings: GenSettings,
+	settings: HaratsanSettings,
 ): ShrinkResult {
 	let stats = emptyShrinkStats();
 	const dropped = dropSupersededReminders(messages);
@@ -635,14 +635,14 @@ export function shrinkApiMessages(
 	return { messages: current, changed, ...stats };
 }
 
-export function resolveContextBudget(settings: GenSettings): number {
+export function resolveContextBudget(settings: HaratsanSettings): number {
 	return getEffectiveContextBudget(
 		settings,
 		getCachedNCtx(settings.baseUrl, settings.model),
 	);
 }
 
-export function rememberOverflowNCtx(settings: GenSettings, info: ContextOverflowInfo): void {
+export function rememberOverflowNCtx(settings: HaratsanSettings, info: ContextOverflowInfo): void {
 	if (info.nCtx) {
 		setCachedNCtx(settings.baseUrl, settings.model, info.nCtx);
 	}
@@ -658,7 +658,7 @@ export function throwPreflightOverflow(estimated: number, budget: number, nCtx?:
 
 export interface CompleteWithContextGuardOptions {
 	client: LlmClient;
-	settings: GenSettings;
+	settings: HaratsanSettings;
 	getMessages: () => ChatMessage[];
 	setMessages: (messages: ChatMessage[]) => void;
 	complete: (messages: ChatMessage[]) => Promise<CompleteResult>;

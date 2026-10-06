@@ -5,7 +5,7 @@ import { throwIfAborted } from '../../workspacePath';
 
 export const projectMapTool: ToolDefinition = {
 	name: 'project_map',
-	description: 'Дерево модулей проекта с краткими summary файлов/папок (+ TS outline exports из `.gen/index/outline.json`). Кэш в `.gen/map/project.json` (источник: индекс или scan с gitignore/.genignore).',
+	description: 'Дерево модулей проекта с краткими summary файлов/папок (+ TS outline exports). Кэш в VS Code workspace storage (источник: индекс или scan с gitignore/.haratsanignore).',
 	parameters: {
 		type: 'object',
 		properties: {

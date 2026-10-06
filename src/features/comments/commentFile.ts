@@ -4,7 +4,7 @@ import type { DiffContentProvider } from '../../host/preview/showDiff';
 import { runCommentPipeline } from './runCommentPipeline';
 
 export function registerCommentFile(diffProvider: DiffContentProvider): vscode.Disposable {
-	return vscode.commands.registerCommand('gen.commentFile', async () => {
+	return vscode.commands.registerCommand('haratsan.commentFile', async () => {
 		const editor = getActiveEditor();
 		if (!editor) {
 			void vscode.window.showErrorMessage(vscode.l10n.t('comment.noActiveEditor'));

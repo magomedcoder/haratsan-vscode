@@ -57,7 +57,7 @@ export function getBuiltinSubagent(id: string): SubagentDef | undefined {
 	return BUILTIN_SUBAGENTS.find((s) => s.id === id || s.name.toLowerCase() === id.toLowerCase());
 }
 
-// Builtin + кастомные `.gen/agents/*.md` + встроенные presets
+// Builtin + кастомные `.haratsan/agents/*.md` + встроенные presets
 export async function resolveSubagent(id: string): Promise<SubagentDef | undefined> {
 	const builtin = getBuiltinSubagent(id);
 	if (builtin) {

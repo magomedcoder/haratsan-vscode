@@ -7,7 +7,7 @@ export const INDEX_SCAN_LIMITS = {
 	maxFiles: 4_000,
 } as const;
 
-const INDEX_EXCLUDE_GLOBS = ['**/.gen/**'];
+const INDEX_EXCLUDE_GLOBS = ['**/.haratsan/**'];
 
 function buildExcludePattern(deniedPaths: readonly string[]): string {
 	const parts = [...INDEX_EXCLUDE_GLOBS];
@@ -38,7 +38,7 @@ export async function listIndexableFiles(folder: vscode.WorkspaceFolder): Promis
 
 	for (const uri of uris) {
 		const relative = toPosixRelative(vscode.workspace.asRelativePath(uri, false));
-		if (!relative || relative.startsWith('.gen/')) {
+		if (!relative || relative.startsWith('.haratsan/')) {
 			continue;
 		}
 

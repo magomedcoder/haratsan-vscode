@@ -208,7 +208,7 @@ export function ResearchJobsPanel({
 										{t('chat.research.cleanupWorktree')}
 									</button>
 								) : null}
-								{job.detail && /\.gen[/\\]reports[/\\]/.test(job.detail) ? (
+								{job.detail && /\.haratsan[/\\]reports[/\\]/.test(job.detail) ? (
 									<button
 										type="button"
 										className="btn btn--secondary"

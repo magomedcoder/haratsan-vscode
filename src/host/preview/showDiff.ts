@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { showConfirmDialog } from '../ui/confirmDialog';
 
-export const GEN_COMMENT_SCHEME = 'gen-comment';
+export const HARATSAN_COMMENT_SCHEME = 'haratsan-comment';
 
 let sharedDiffProvider: DiffContentProvider | undefined;
 
@@ -52,7 +52,7 @@ async function waitUntilDiffClosed(uris: vscode.Uri[]): Promise<void> {
 }
 
 async function applyVirtualDocumentLanguage(doc: vscode.TextDocument): Promise<void> {
-	if (doc.uri.scheme !== GEN_COMMENT_SCHEME) {
+	if (doc.uri.scheme !== HARATSAN_COMMENT_SCHEME) {
 		return;
 	}
 
@@ -108,7 +108,7 @@ export function registerDiffContentProvider(provider: DiffContentProvider): vsco
 	}
 
 	return vscode.Disposable.from(
-		vscode.workspace.registerTextDocumentContentProvider(GEN_COMMENT_SCHEME, provider),
+		vscode.workspace.registerTextDocumentContentProvider(HARATSAN_COMMENT_SCHEME, provider),
 		languageSub,
 		{ dispose: () => {
 			if (sharedDiffProvider === provider) {
@@ -120,7 +120,7 @@ export function registerDiffContentProvider(provider: DiffContentProvider): vsco
 
 function buildVirtualUri(side: 'original' | 'commented' | 'before', stamp: number, fileName: string, languageId: string): vscode.Uri {
 	return vscode.Uri.from({
-		scheme: GEN_COMMENT_SCHEME,
+		scheme: HARATSAN_COMMENT_SCHEME,
 		path: `/${side}/${stamp}/${fileName}`,
 		query: `lang=${encodeURIComponent(languageId)}`,
 	});

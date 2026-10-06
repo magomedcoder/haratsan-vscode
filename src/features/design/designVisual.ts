@@ -19,7 +19,7 @@ export interface DesignClickResult {
 	message: string;
 }
 
-export const DESIGN_CLICK_PROTOCOL = 'gen.design.click' as const;
+export const DESIGN_CLICK_PROTOCOL = 'haratsan.design.click' as const;
 
 // Заметка про инъекцию Simple Browser / preview (host-доки для будущей проводки)
 export const DESIGN_SIMPLE_BROWSER_NOTE =
