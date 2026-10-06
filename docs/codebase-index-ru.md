@@ -26,8 +26,13 @@
 
 | Режим               | Поведение                                                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `off`               | Только remote `/embeddings`                                                                                                    |
-| `trigram` (default) | Remote по возможности; при ошибке / отсутствии remote - fallback на триграммы IndexManager для `semantic_search` / `find_code` |
+| `off`               | Только remote `/embeddings` + **persistent cache** в `.gen/index/vectors.json` (ключ: content-hash + model)                   |
+| `trigram` (default) | Remote (+ cache); при сбое -> local vector если есть, иначе триграммы IndexManager                                              |
+| `vector`            | Offline **локальный dense index** (feature-hashing, без сети). Обновляется на fullIndex / reindex                              |
+
+**Стабильный remote:** документы эмбеддятся один раз на content-hash; query - каждый раз. Батчи + retry/timeout. Предпочтение чанкам IndexManager.
+
+**Local vector:** `.gen/index/vectors.json` - `local-hash` (256-d) и опционально кэш remote. Без ONNX / native deps.
 
 Call hierarchy / «кто вызывает Y»: tool `find_references` (LSP references + definition; multi-root через `folder`/`root`; paging `limit`/`offset`; cross-lang при наличии language server).
 
@@ -37,10 +42,11 @@ Call hierarchy / «кто вызывает Y»: tool `find_references` (LSP refe
 2. Нажать **Создать конфиг и индекс** (пишет `.gen/config.json`, scaffold-каталоги и строит `.gen/index/`). До этого при открытии папки `.gen/` не создаётся. То же scaffold делает slash `/init`.
 3. В режиме Agent вызвать `codebase_search` с `query` (символ, фраза, путь). Предпочтительнее `find_code` / `find_symbol` / `pack_context` / `similar_code`.
 4. Для точного grep по строке - `grep` (пути через `glob`).
+5. Семантика: `semantic_search` / `search_docs` (режимы выше).
 
 ### Eval / CI (retrieval)
 
-Offline gate качества (без remote embeddings): `src/test/eval/retrieval.eval.ts` + pure-метрики в `src/features/index/retrievalMetrics.ts` (precision@k, hit-rate, simpleScore). Smoke permissions/confirm: `src/test/eval/permissionsConfirm.eval.ts`.
+Offline gate качества (без remote embeddings): `src/test/eval/retrieval.eval.ts` + pure-метрики в `src/features/index/retrievalMetrics.ts` (precision@k, recall@k, hit-rate, simpleScore) - suites trigram + local-hash vector. Smoke permissions/confirm: `src/test/eval/permissionsConfirm.eval.ts`.
 
 ```bash
 npm run check-types

@@ -9,7 +9,7 @@ import type { IndexProgress } from './types';
  * Режим движка индекса / семантического поиска.
  * AST-outline через TypeScript `createSourceFile` -> `.gen/index/outline.json`.
  */
-export type IndexEngineMode = 'cpu-trigram' | 'remote';
+export type IndexEngineMode = 'cpu-trigram' | 'remote' | 'local-vector';
 
 export interface IndexEngineStatus {
 	mode: IndexEngineMode;
@@ -28,11 +28,19 @@ export interface IndexEngineStatus {
 	missingDirDigests?: boolean;
 }
 
-// Приоритет: remote (embeddingsBaseUrl)  иначе CPU trigram
+/**
+ * Приоритет: localEmbeddingsMode=vector -> local-vector;
+ * иначе remote если есть embeddingsBaseUrl|baseUrl;
+ * иначе CPU trigram.
+ */
 export function resolveIndexEngineMode(
-	settings: Pick<GenSettings, 'embeddingsBaseUrl' | 'localEmbeddingsMode'>,
+	settings: Pick<GenSettings, 'embeddingsBaseUrl' | 'baseUrl' | 'localEmbeddingsMode'>,
 ): IndexEngineMode {
-	if (String(settings.embeddingsBaseUrl ?? '').trim()) {
+	if (settings.localEmbeddingsMode === 'vector') {
+		return 'local-vector';
+	}
+	const remote = String(settings.embeddingsBaseUrl ?? '').trim() || String(settings.baseUrl ?? '').trim();
+	if (remote) {
 		return 'remote';
 	}
 

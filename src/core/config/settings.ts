@@ -127,6 +127,10 @@ function normalizeLocalEmbeddingsMode(raw: unknown): GenSettings['localEmbedding
 		return 'off';
 	}
 
+	if (v === 'vector' || v === 'local' || v === 'local-hash') {
+		return 'vector';
+	}
+
 	return 'trigram';
 }
 

@@ -1,8 +1,10 @@
 import * as assert from 'assert';
 import { chunkFileContent } from '../../features/index/chunk.js';
-import { aggregateRetrievalMetrics, assertRetrievalGate, DEFAULT_RETRIEVAL_GATE, hitAtK, precisionAtK, reciprocalRank } from '../../features/index/retrievalMetrics.js';
+import { aggregateRetrievalMetrics, assertRetrievalGate, DEFAULT_RETRIEVAL_GATE, hitAtK, precisionAtK, recallAtK, reciprocalRank } from '../../features/index/retrievalMetrics.js';
 import type { IndexManifest } from '../../features/index/types.js';
 import { buildTrigramIndex, searchTrigrams } from '../../features/index/trigram.js';
+import { LOCAL_HASH_MODEL_ID, localHashEmbed } from '../../features/index/localHashEmbed.js';
+import { emptyVectorIndex, searchVectorIndex, syncLocalHashVectors } from '../../features/index/vectorStore.js';
 import { FIND_CODE_MAX_CHARS, mergeFindCodeHits, truncateFindCodeJson } from '../../features/agent/tools/search/findCodeMerge.js';
 import type { FindCodeRawHit } from '../../features/agent/tools/search/findCodeMerge.js';
 import { buildTreeFromPaths, formatOutline, heuristicFileSummary, isProjectMapStale } from '../../features/index/projectMap.js';
@@ -199,7 +201,7 @@ suite('eval/retrieval', () => {
 		assert.strictEqual(isProjectMapStale(cached, '2026-01-01T00:00:00.000Z'), false);
 	});
 
-	test('metrics: precision@k / hit@k / RR на известных ranked списках', () => {
+	test('metrics: precision@k / hit@k / RR / recall@k на известных ranked списках', () => {
 		const ranked = [
 			'src/auth/login.ts',
 			'src/ui/button.ts',
@@ -209,8 +211,11 @@ suite('eval/retrieval', () => {
 		assert.strictEqual(precisionAtK(ranked, relevant, 3), 1 / 3);
 		assert.strictEqual(hitAtK(ranked, relevant, 3), true);
 		assert.strictEqual(reciprocalRank(ranked, relevant), 1);
+		assert.strictEqual(recallAtK(ranked, relevant, 3), 1);
 		assert.strictEqual(hitAtK(['src/ui/button.ts'], relevant, 1), false);
 		assert.strictEqual(reciprocalRank(['src/ui/button.ts', 'src/auth/login.ts'], relevant), 0.5);
+		assert.strictEqual(recallAtK(ranked, ['src/auth/login.ts', 'src/db/query.ts'], 3), 1);
+		assert.strictEqual(recallAtK(ranked, ['src/auth/login.ts', 'missing.ts'], 1), 0.5);
 	});
 
 	test('quality gate: offline trigram corpus проходит CI пороги (без embeddings)', () => {
@@ -237,6 +242,17 @@ suite('eval/retrieval', () => {
 				rankedPaths: rankedPathsFromTrigram(manifest, 'approval policy confirm denylist', k),
 				relevant: ['docs/permissions.md'],
 			},
+			// Парафразы / более «жёсткие» запросы (токены всё ещё пересекаются с корпусом)
+			{
+				query: 'verify token authenticate',
+				rankedPaths: rankedPathsFromTrigram(manifest, 'verify token authenticate', k),
+				relevant: ['src/auth/login.ts'],
+			},
+			{
+				query: 'sql query execute',
+				rankedPaths: rankedPathsFromTrigram(manifest, 'sql query execute', k),
+				relevant: ['src/db/query.ts'],
+			},
 		];
 
 		for (const c of cases) {
@@ -251,6 +267,52 @@ suite('eval/retrieval', () => {
 		assert.ok(metrics.hitRate >= DEFAULT_RETRIEVAL_GATE.minHitRate);
 		assert.ok(metrics.meanPrecisionAtK >= DEFAULT_RETRIEVAL_GATE.minMeanPrecisionAtK);
 		assert.ok(metrics.simpleScore >= DEFAULT_RETRIEVAL_GATE.minSimpleScore);
+	});
+
+	test('quality gate: local-hash vector index на offline корпусе', () => {
+		const manifest = buildOfflineTrigramCorpus();
+		const index = syncLocalHashVectors(manifest, emptyVectorIndex());
+		const k = DEFAULT_RETRIEVAL_GATE.k;
+		const rank = (query: string) =>
+			searchVectorIndex(index, localHashEmbed(query), {
+				maxResults: k,
+				model: LOCAL_HASH_MODEL_ID,
+				source: 'local-hash',
+			}).map((h) => h.path);
+
+		const cases = [
+			{
+				query: 'authenticate user token',
+				rankedPaths: rank('authenticate user token'),
+				relevant: ['src/auth/login.ts'],
+			},
+			{
+				query: 'create session manager',
+				rankedPaths: rank('create session manager'),
+				relevant: ['src/auth/session.ts'],
+			},
+			{
+				query: 'run sql query',
+				rankedPaths: rank('run sql query'),
+				relevant: ['src/db/query.ts'],
+			},
+			{
+				query: 'approval policy denylist',
+				rankedPaths: rank('approval policy denylist'),
+				relevant: ['docs/permissions.md'],
+			},
+		];
+
+		for (const c of cases) {
+			assert.ok(c.rankedPaths.length > 0, `vector пуст для «${c.query}»`);
+		}
+
+		const metrics = aggregateRetrievalMetrics(cases, k);
+		assertRetrievalGate(metrics, {
+			...DEFAULT_RETRIEVAL_GATE,
+			minMeanPrecisionAtK: 0.3,
+			minSimpleScore: 0.65,
+		});
 	});
 
 	test('quality gate: mergeFindCodeHits держит gold path в top-k (score gate)', () => {

@@ -26,8 +26,13 @@ The agent searches it via the `codebase_search` tool (trigrams), without sending
 
 | Mode                | Behavior                                                                                                           |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `off`               | Remote `/embeddings` only                                                                                          |
-| `trigram` (default) | Prefer remote; when remote is missing or fails, `semantic_search` / `find_code` fall back to IndexManager trigrams |
+| `off`               | Remote `/embeddings` only, with **persistent vector cache** in `.gen/index/vectors.json` (keyed by content hash + model) |
+| `trigram` (default) | Prefer remote (+ cache); on failure -> local vector if built, else IndexManager trigrams                            |
+| `vector`            | Offline **local dense index** (feature-hashing embeddings, no network). Built/updated on fullIndex / reindex       |
+
+**Stable remote:** documents are embedded once per content-hash and reused; only the query is re-embedded. Batched requests with retry/timeout. Prefer IndexManager chunks over an ad-hoc file sample.
+
+**Local vector index:** `.gen/index/vectors.json` stores `local-hash` vectors (256-d) and optional cached remote vectors. No ONNX / native deps.
 
 Call hierarchy / “who calls Y”: tool `find_references` (LSP reference + definition providers; multi-root via `folder`/`root`; `limit`/`offset` paging; cross-lang when a language server is available).
 
@@ -37,10 +42,11 @@ Call hierarchy / “who calls Y”: tool `find_references` (LSP reference + defi
 2. Click **Create config & index** (writes `.gen/config.json`, scaffold dirs, and builds `.gen/index/`). Until then Gen does not create `.gen/` on folder open. The same scaffold runs on slash `/init`.
 3. In Agent mode, call `codebase_search` with `query` (symbol, phrase, path). Prefer `find_code` / `find_symbol` / `pack_context` / `similar_code` for hybrid retrieval.
 4. For exact line grep - `grep` (paths via `glob`).
+5. For semantic: `semantic_search` / `search_docs` (modes above).
 
 ### Eval / CI (retrieval)
 
-Offline quality gate (no remote embeddings): `src/test/eval/retrieval.eval.ts` + pure metrics in `src/features/index/retrievalMetrics.ts` (precision@k, hit-rate, simpleScore). Permissions/confirm smoke: `src/test/eval/permissionsConfirm.eval.ts`.
+Offline quality gate (no remote embeddings): `src/test/eval/retrieval.eval.ts` + pure metrics in `src/features/index/retrievalMetrics.ts` (precision@k, recall@k, hit-rate, simpleScore) - trigram + local-hash vector suites. Permissions/confirm smoke: `src/test/eval/permissionsConfirm.eval.ts`.
 
 ```bash
 npm run check-types

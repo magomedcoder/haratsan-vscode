@@ -76,6 +76,28 @@ export function hitAtK(
 	return top.some((p) => isRelevantPath(p, rel));
 }
 
+// Recall@k: доля релевантных, попавших в top-k (0 если relevant пуст)
+export function recallAtK(
+	rankedPaths: readonly string[],
+	relevant: Iterable<string>,
+	k: number,
+): number {
+	const rel = toRelevantSet(relevant);
+	if (rel.size === 0 || k <= 0) {
+		return 0;
+	}
+	
+	const top = rankedPaths.slice(0, k);
+	let found = 0;
+	for (const r of rel) {
+		if (top.some((p) => isRelevantPath(p, new Set([r])))) {
+			found += 1;
+		}
+	}
+
+	return found / rel.size;
+}
+
 /**
  * Reciprocal rank: 1/rank первого релевантного (1-based), иначе 0.
  * Rank считается в пределах всего ranked-списка (не только k).

@@ -6,7 +6,7 @@ import { throwIfAborted } from '../../workspacePath';
 
 export const semanticSearchTool: ToolDefinition = {
 	name: 'semantic_search',
-	description: 'Семантический поиск: remote /embeddings или offline trigram (localEmbeddingsMode=trigram).',
+	description: 'Семантический поиск: remote /embeddings с persistent cache, local vector index (mode=vector) или offline trigram fallback.',
 	parameters: {
 		type: 'object',
 		properties: {

@@ -573,6 +573,15 @@ export class IndexManager implements vscode.Disposable {
 		rebuildManifestTrigrams(manifest);
 		applyDirDigests(manifest);
 		await saveManifest(folderFsPath, manifest);
+		// Локальный vector index (feature hashing) - рядом с trigrams
+		if (!cancelled) {
+			try {
+				const { rebuildLocalVectorIndex } = await import('./embeddings');
+				await rebuildLocalVectorIndex(folderFsPath);
+			} catch {
+				// soft-fail: semantic_search построит lazy при первом запросе
+			}
+		}
 
 		this.setProgress(folderFsPath, {
 			fileCount: Object.keys(manifest.files).length,
@@ -607,6 +616,12 @@ export class IndexManager implements vscode.Disposable {
 		}
 
 		await saveManifest(folderFsPath, manifest);
+		if (result === 'content') {
+			try {
+				const { rebuildLocalVectorIndex } = await import('./embeddings');
+				await rebuildLocalVectorIndex(folderFsPath);
+			} catch {}
+		}
 		this.setProgress(folderFsPath, {
 			state: 'ready',
 			fileCount: Object.keys(manifest.files).length,

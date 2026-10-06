@@ -421,10 +421,11 @@ export interface GenSettings {
 	embeddingsModel: string;
 	/**
 	 * Локальный offline semantic path:
-	 * - off: только remote embeddings
-	 * - trigram: при недоступном remote - IndexManager trigram (default)
+	 * - off: только remote embeddings (+ persistent vector cache)
+	 * - trigram: remote при наличии; fallback trigram / local-vector (default)
+	 * - vector: локальный dense index (feature hashing) без сети
 	 */
-	localEmbeddingsMode: 'off' | 'trigram';
+	localEmbeddingsMode: 'off' | 'trigram' | 'vector';
 	/**
 	 * Сколько последних ходов оставлять при /compact.
 	 * min - 1, max - 40, default - 4

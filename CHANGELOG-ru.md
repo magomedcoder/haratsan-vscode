@@ -2,6 +2,10 @@
 
 [English version](CHANGELOG.md)
 
+## dev (Версия в разработке)
+
+- **Index / semantic:** стабильные remote embeddings (batch+retry+timeout, кэш `.gen/index/vectors.json` по content-hash); `localEmbeddingsMode=vector` локальный dense hash index; offline eval + парафразы, `recallAtK`, local-vector gate
+
 ## 0.5.0 (30 сентября 2026)
 
 - **Secrets:** единый SecretStorage vault; `webSearchApiKey` больше не в JSON/слоях (migrate + clear в UI); LLM apiKey через тот же vault

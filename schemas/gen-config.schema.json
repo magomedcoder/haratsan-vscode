@@ -211,8 +211,8 @@
 		"embeddingsModel": { "type": "string" },
 		"localEmbeddingsMode": {
 			"type": "string",
-			"enum": ["off", "trigram"],
-			"description": "Local offline semantic path: off (remote only) | trigram (default offline fallback)"
+			"enum": ["off", "trigram", "vector"],
+			"description": "Semantic path: off (remote + cache) | trigram (remote->trigram/vector fallback) | vector (local dense hash index, offline)"
 		},
 		"compactTailTurns": {
 			"type": "integer",

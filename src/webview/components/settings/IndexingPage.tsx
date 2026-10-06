@@ -31,6 +31,8 @@ function indexEngineModeLabel(mode: IndexEngineStatus['mode']): string {
 	switch (mode) {
 		case 'remote':
 			return t('settings.indexEngine.remote');
+		case 'local-vector':
+			return t('settings.indexEngine.localVector');
 		case 'cpu-trigram':
 		default:
 			return t('settings.indexEngine.cpuTrigram');
@@ -161,6 +163,7 @@ export function IndexingPage({
 			>
 				<option value="off">{t('settings.localEmbeddingsMode.off')}</option>
 				<option value="trigram">{t('settings.localEmbeddingsMode.trigram')}</option>
+				<option value="vector">{t('settings.localEmbeddingsMode.vector')}</option>
 			</FieldSelect>
 			<FieldText
 				labelKey="settings.embeddingsBaseUrl.label"

@@ -328,7 +328,9 @@ async function runSemantic(query: string, cap: number, signal?: AbortSignal): Pr
 				source: 'semantic_search',
 				why: h.source === 'trigram'
 						? 'trigram fallback (localEmbeddingsMode)'
-						: 'семантическая близость',
+						: h.source === 'local-vector'
+							? 'local vector index (feature hashing)'
+							: 'семантическая близость (remote/cache)',
 			})),
 		};
 	} catch (err) {
