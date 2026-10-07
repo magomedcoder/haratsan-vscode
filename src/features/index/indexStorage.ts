@@ -14,6 +14,7 @@ export const INDEX_MANIFEST_FILE = 'manifest.json';
 export const INDEX_VECTORS_FILE = 'vectors.json';
 export const INDEX_SYMBOLS_FILE = 'symbols.json';
 export const INDEX_OUTLINE_FILE = 'outline.json';
+export const INDEX_MERKLE_FILE = 'merkle.json';
 const PROJECT_MAP_FILE = 'project.json';
 
 let storageRoot: string | undefined;

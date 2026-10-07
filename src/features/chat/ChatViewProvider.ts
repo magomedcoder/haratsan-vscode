@@ -10,7 +10,7 @@ import { getPersistedAlwaysAllow } from '../../core/stores/alwaysAllowStore';
 import { loadWebviewL10n } from '../../l10n/loadBundle';
 import { SettingsPanel } from './SettingsPanel';
 import type { ConfirmDialogOptions } from '../../host/ui/confirmDialog';
-import { enableProject, isProjectEnabled } from '../project/config';
+import { isProjectEnabled } from '../project/config';
 import { getIndexManager } from '../index/IndexManager';
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
@@ -127,7 +127,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 			hasWorkspace: true,
 			enabled,
 			indexing: progress?.state === 'indexing',
-			ready: enabled && progress?.state === 'ready',
+			ready: progress?.state === 'ready',
 			error: progress?.lastError,
 			fileCount: progress?.fileCount,
 			chunkCount: progress?.chunkCount,
@@ -219,8 +219,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 			case 'answerQuestion':
 				this.session.answerQuestion(msg.id, msg.answer);
 				return;
-			case 'enableProject': {
-				const folder = await enableProject();
+			case 'retryIndex': {
+				const folder = vscode.workspace.workspaceFolders?.[0];
 				if (folder) {
 					await getIndexManager()?.enableAndIndex(folder);
 				}

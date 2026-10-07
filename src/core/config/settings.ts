@@ -134,6 +134,24 @@ function normalizeLocalEmbeddingsMode(raw: unknown): HaratsanSettings['localEmbe
 	return 'trigram';
 }
 
+function normalizeOutlineEngine(raw: unknown): HaratsanSettings['outlineEngine'] {
+	const v = String(raw ?? '').trim().toLowerCase();
+	if (v === 'treesitter' || v === 'lsp' || v === 'typescript' || v === 'auto') {
+		return v;
+	}
+	
+	return 'auto';
+}
+
+function normalizeChunkEngine(raw: unknown): HaratsanSettings['chunkEngine'] {
+	const v = String(raw ?? '').trim().toLowerCase();
+	if (v === 'treesitter' || v === 'lines' || v === 'auto') {
+		return v;
+	}
+
+	return 'auto';
+}
+
 function normalizeProviderUsePolicy(raw: unknown): ProviderUsePolicy {
 	return raw === 'deny' ? 'deny' : 'allow';
 }
@@ -233,6 +251,8 @@ function normalize(raw: Partial<HaratsanSettings>): HaratsanSettings {
 		embeddingsBaseUrl: String(raw.embeddingsBaseUrl ?? '').trim(),
 		embeddingsModel: String(raw.embeddingsModel ?? DEFAULT_SETTINGS.embeddingsModel).trim() || DEFAULT_SETTINGS.embeddingsModel,
 		localEmbeddingsMode: normalizeLocalEmbeddingsMode(raw.localEmbeddingsMode),
+		outlineEngine: normalizeOutlineEngine(raw.outlineEngine),
+		chunkEngine: normalizeChunkEngine(raw.chunkEngine),
 		compactTailTurns: clamp(Math.floor(asNumber(raw.compactTailTurns, DEFAULT_SETTINGS.compactTailTurns)), 1, 40),
 		compactPruneToolResults: raw.compactPruneToolResults !== false,
 		compactReservedTokens: Math.max(0, Math.floor(asNumber(raw.compactReservedTokens, DEFAULT_SETTINGS.compactReservedTokens))),

@@ -8,7 +8,7 @@ import type { IndexProgress } from './types';
 
 /**
  * Режим движка индекса / семантического поиска.
- * AST-outline через TypeScript `createSourceFile` -> workspace storage outline.json.
+ * Outline: Tree-sitter wasm / TS API / LSP -> workspace storage outline.json.
  */
 export type IndexEngineMode = 'cpu-trigram' | 'remote' | 'local-vector';
 
@@ -67,7 +67,7 @@ export async function collectIndexEngineStatus(): Promise<IndexEngineStatus> {
 		try {
 			if (!isIndexStorageAvailable()) {
 				progressState = progressState && progressState !== 'idle' ? progressState : 'error';
-				lastError = lastError || 'Workspace storage unavailable (no storageUri)';
+				lastError = lastError || 'Хранилище индекса недоступно (нет storageUri)';
 			} else {
 				const probe = await inspectManifest(folderFs);
 				corrupt = probe.corrupt;

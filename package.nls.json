@@ -7,6 +7,7 @@
 	"command.openChat.title": "Open chat",
 	"command.openChatPanel.title": "Open chat (panel)",
 	"command.openChatSidebar.title": "Open chat (sidebar)",
+	"command.initProject.title": "Initialize project (.haratsan)",
 	"command.addSelectionToChat.title": "Add selection to chat",
 	"command.addToChat.title": "Add to chat",
 	"command.explainSelection.title": "Explain selection",

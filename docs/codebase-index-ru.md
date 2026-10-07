@@ -13,12 +13,15 @@
 
 ## Как устроено
 
-- Индекс пишется в workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests** Merkle-карта).
-- При обновлении пересчитываются digests предков; неизменённые каталоги пропускаются при совпадении путей + **content-hash** (size+mtime gate доверяет stored hash; одного size недостаточно).
-- LSP **symbol index** (кэш): workspace storage `symbols.json` через `vscode.executeDocumentSymbolProvider`. Tools: `find_symbol` / `find_code` intent `symbol`, mention `@symbols`.
-- **Outline** (без Tree-sitter / native deps - для non-JS **только LSP**): workspace storage `outline.json`. TS/JS через TypeScript `createSourceFile`; остальные языки через `vscode.executeDocumentSymbolProvider`, если провайдер есть; дешёвый regex fallback только если LSP пуст (`py`/`go`/`rs`/`java`/`kt`/`rb`). Также в `find_symbol` (`source: outline|all`).
-- `.haratsan/` не индексируется (как и `.git`, `node_modules` через ignore).
-- При изменении файла переиндексируется только он (сравнение content-hash); outline/symbols обновляются **per-file** (debounce), полный rebuild - только после full index.
+- Индекс: workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests**) + **`merkle.json`** (Merkle v2: узлы, chunk digests, symbol digests, метрики skip).
+- Неизменённые каталоги пропускаются (content-hash + size/mtime). Неизменённые AST-чанки сохраняют digest -> без лишнего re-trigram/re-embed.
+- LSP **symbol index**: `symbols.json`.
+- **Outline** (`outlineEngine`, default **auto**): Tree-sitter wasm -> иначе TS `createSourceFile` / LSP / regex. Значения: `auto` \| `treesitter` \| `lsp` \| `typescript`. В `outline.json` у записей поле `source` (`treesitter` \| `typescript` \| `lsp` \| `regex`).
+- **Chunking** (`chunkEngine`, default **auto**): AST через Tree-sitter (стабильные content-hash id чанков) или `lines`. Лимиты: ~400KB / ~2s parse; soft-fail.
+- Грамматики в `dist/tree-sitter/*.wasm` (whitelist MVP: typescript/tsx/javascript/python/go/rust/java/cpp/c_sharp/ruby/php/bash); lazy load.
+- Метрики skip Merkle -> Activity + опционально OTEL (`otelEnabled`) span `index.full`.
+- `.haratsan/` не индексируется.
+- При изменении файла - per-file reindex; outline/symbols с debounce.
 - Результаты `codebase_search` - фрагменты (path, строки, snippet, score).
 - В чате: `@file`, `@folder`, `@codebase`, `@map`, `@symbols` (см. [chat-ru.md](chat-ru.md)).
 
@@ -38,8 +41,8 @@ Call hierarchy / «кто вызывает Y»: tool `find_references` (LSP refe
 
 ## Использование
 
-1. Открыть workspace и чат Haratsan.
-2. Нажать **Создать конфиг и индекс** (пишет `.haratsan/config.json`, scaffold-каталоги и строит индекс в VS Code `storageUri`). До этого при открытии папки `.haratsan/` не создаётся. То же scaffold делает slash `/init`.
+1. Открыть workspace - Haratsan индексирует в фоне в VS Code `storageUri` (`.haratsan/` не нужен). Чат работает во время индексации.
+2. Опционально: команда **Haratsan: Инициализировать проект (.haratsan)** или slash `/init` создаёт `.haratsan/` (config, agents, skills, ...) для project overlay - не для индекса.
 3. В режиме Agent вызвать `codebase_search` с `query` (символ, фраза, путь). Предпочтительнее `find_code` / `find_symbol` / `pack_context` / `similar_code`.
 4. Для точного grep по строке - `grep` (пути через `glob`).
 5. Семантика: `semantic_search` / `search_docs` (режимы выше).
@@ -56,6 +59,6 @@ npm test -- --grep eval
 
 ### Каталоги `.haratsan/` (scaffold)
 
-При enable проекта или `/init` создаются (если ещё нет): `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` - плюс краткий `.haratsan/README.md` и `.gitkeep` в пустых каталогах. Существующие файлы не перезаписываются. `references.json` появляется по требованию, не при scaffold.
+При `haratsan.initProject` или `/init` создаются (если ещё нет): `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/`, `scratch/` - плюс краткий `.haratsan/README.md` и `.gitkeep` в пустых каталогах. Существующие файлы не перезаписываются. `references.json` появляется по требованию, не при scaffold.
 
 Подробнее про tools: [tools-ru.md](tools-ru.md).

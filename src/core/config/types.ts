@@ -23,6 +23,10 @@ export type WebSearchBackend = 'duckduckgo' | 'exa' | 'parallel' | 'http';
 export type PlanShellPolicy = 'deny' | 'ask';
 // При лимите вкладок: блокировать new / закрывать самые старые idle
 export type TabEvictionPolicy = 'block' | 'closeOldestIdle';
+// Движок outline: Tree-sitter wasm / LSP / TypeScript API / auto
+export type OutlineEngine = 'auto' | 'treesitter' | 'lsp' | 'typescript';
+// Нарезка чанков: AST через Tree-sitter / построчная эвристика / auto
+export type ChunkEngine = 'auto' | 'treesitter' | 'lines';
 /**
  * Политика `provider.use`:
  * - `allow` - allowlist (пустой список = всё разрешено; иначе нужен match)
@@ -427,6 +431,14 @@ export interface HaratsanSettings {
 	 */
 	localEmbeddingsMode: 'off' | 'trigram' | 'vector';
 	/**
+	 * Движок outline: auto (Tree-sitter если есть, иначе LSP/TS) | treesitter | lsp | typescript
+	 */
+	outlineEngine: OutlineEngine;
+	/**
+	 * Движок нарезки чанков: auto (AST Tree-sitter если есть) | treesitter | lines
+	 */
+	chunkEngine: ChunkEngine;
+	/**
 	 * Сколько последних ходов оставлять при /compact.
 	 * min - 1, max - 40, default - 4
 	 */
@@ -600,6 +612,8 @@ export const DEFAULT_SETTINGS: HaratsanSettings = {
 	embeddingsBaseUrl: '',
 	embeddingsModel: 'text-embedding-3-small',
 	localEmbeddingsMode: 'trigram',
+	outlineEngine: 'auto',
+	chunkEngine: 'auto',
 	compactTailTurns: 4,
 	compactPruneToolResults: true,
 	compactReservedTokens: 0,

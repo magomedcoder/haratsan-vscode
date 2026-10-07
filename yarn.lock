@@ -716,6 +716,11 @@
     ora "^8.1.0"
     semver "^7.6.2"
 
+"@vscode/tree-sitter-wasm@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@vscode/tree-sitter-wasm/-/tree-sitter-wasm-0.3.1.tgz#81d046fb37c09a1e950a20a1f233e8d868d76c77"
+  integrity sha512-RJFoomET6FajjG511fmQxeBQfU6M24a0aFZPqpid+ttIxanWf1VGytBG0UmsGjt07qmIPJS8U31D+aecuCucsQ==
+
 "@vscode/vsce-sign-alpine-arm64@2.0.6":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@vscode/vsce-sign-alpine-arm64/-/vsce-sign-alpine-arm64-2.0.6.tgz#2cd244caf5e8ec543f42fb91d4df3b933641c8fa"

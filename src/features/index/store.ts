@@ -184,7 +184,7 @@ export async function saveManifest(folderFsPath: string, manifest: IndexManifest
 	const ok = await ensureIndexDir(folderFsPath);
 	const file = manifestPathForFolder(folderFsPath);
 	if (!ok || !file) {
-		throw new Error('Index storage unavailable (no workspace storageUri)');
+		throw new Error('Хранилище индекса недоступно (нет workspace storageUri)');
 	}
 
 	manifest.updatedAt = new Date().toISOString();

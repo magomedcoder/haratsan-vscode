@@ -15,6 +15,8 @@ export type OutlineKind =
 	| 'import'
 	| 'variable';
 
+export type OutlineSource = 'treesitter' | 'typescript' | 'lsp' | 'regex';
+
 export interface OutlineEntry {
 	name: string;
 	kind: OutlineKind;
@@ -22,6 +24,8 @@ export interface OutlineEntry {
 	startLine: number;
 	endLine: number;
 	containerName?: string;
+	// Движок, породивший запись (outline.json)
+	source?: OutlineSource;
 }
 
 export interface OutlineDocument {
@@ -82,6 +86,7 @@ function pushEntry(
 		startLine: lineOf(sf, node.getStart(sf, false)),
 		endLine: lineOf(sf, node.end),
 		containerName,
+		source: 'typescript',
 	});
 }
 
@@ -298,6 +303,7 @@ function pushLspOutlineEntry(
 		startLine: startLine0 + 1,
 		endLine: endLine0 + 1,
 		containerName,
+		source: 'lsp',
 	});
 }
 
@@ -429,6 +435,7 @@ export function parseRegexOutlineFallback(relativePath: string, sourceText: stri
 					path: relativePath,
 					startLine: i + 1,
 					endLine: i + 1,
+					source: 'regex',
 				});
 				break;
 			}
@@ -542,7 +549,17 @@ export function parseOutlineDocumentJson(raw: string): OutlineDocument | undefin
 		return {
 			updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date(0).toISOString(),
 			fileCount: typeof parsed.fileCount === 'number' ? parsed.fileCount : 0,
-			entries: parsed.entries.filter((e) => e && typeof e.name === 'string' && typeof e.path === 'string'),
+			entries: parsed.entries
+				.filter((e) => e && typeof e.name === 'string' && typeof e.path === 'string')
+				.map((e) => ({
+					...e,
+					source: e.source === 'treesitter' ||
+							e.source === 'typescript' ||
+							e.source === 'lsp' ||
+							e.source === 'regex'
+								? e.source
+								: undefined,
+				})),
 		};
 	} catch {
 		return undefined;

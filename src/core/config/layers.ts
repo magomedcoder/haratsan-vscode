@@ -81,6 +81,8 @@ export const FILE_LAYER_KEYS = [
 	'embeddingsBaseUrl',
 	'embeddingsModel',
 	'localEmbeddingsMode',
+	'outlineEngine',
+	'chunkEngine',
 	'compactTailTurns',
 	'compactPruneToolResults',
 	'compactReservedTokens',

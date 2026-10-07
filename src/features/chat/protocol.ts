@@ -288,7 +288,7 @@ export type FromWebviewMessage = | { type: 'ready' }
 	| { type: 'confirmChoice'; id: string; choice: ConfirmChoice }
 	| { type: 'answerQuestion'; id: string; answer: string }
 	| { type: 'mentionSuggest'; requestId: number; query: string }
-	| { type: 'enableProject' }
+	| { type: 'retryIndex' }
 	| { type: 'editMessage'; id: string; content: string; revertFiles?: boolean }
 	| { type: 'reviewHunk'; toolCallId: string; hunkId: string; action: 'accept' | 'reject' }
 	| { type: 'reviewDiff'; toolCallId: string; action: 'acceptAll' | 'rejectAll' }

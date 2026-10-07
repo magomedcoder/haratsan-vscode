@@ -1,7 +1,45 @@
 const esbuild = require('esbuild');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
+
+const TREE_SITTER_COPY = new Set([
+	'tree-sitter.wasm',
+	'tree-sitter.js',
+	'web-tree-sitter.d.ts',
+	'tree-sitter-typescript.wasm',
+	'tree-sitter-tsx.wasm',
+	'tree-sitter-javascript.wasm',
+	'tree-sitter-python.wasm',
+	'tree-sitter-go.wasm',
+	'tree-sitter-rust.wasm',
+	'tree-sitter-java.wasm',
+	'tree-sitter-cpp.wasm',
+	'tree-sitter-c-sharp.wasm',
+	'tree-sitter-ruby.wasm',
+	'tree-sitter-php.wasm',
+	'tree-sitter-bash.wasm',
+]);
+
+function copyTreeSitterWasm() {
+	const srcDir = path.join(__dirname, 'node_modules', '@vscode', 'tree-sitter-wasm', 'wasm');
+	const destDir = path.join(__dirname, 'dist', 'tree-sitter');
+	if (!fs.existsSync(srcDir)) {
+		console.warn('[esbuild] @vscode/tree-sitter-wasm не найден; Tree-sitter будет отключён в runtime');
+		return;
+	}
+
+	fs.mkdirSync(destDir, { recursive: true });
+	for (const name of fs.readdirSync(srcDir)) {
+		if (!TREE_SITTER_COPY.has(name)) {
+			continue;
+		}
+
+		fs.copyFileSync(path.join(srcDir, name), path.join(destDir, name));
+	}
+}
 
 /**
  * @param {string} name
@@ -78,6 +116,8 @@ async function main() {
 		createWebviewContext(),
 	]);
 
+	copyTreeSitterWasm();
+
 	if (watch) {
 		await extensionCtx.watch();
 		await webviewCtx.watch();
@@ -85,6 +125,7 @@ async function main() {
 	}
 
 	await Promise.all([extensionCtx.rebuild(), webviewCtx.rebuild()]);
+	copyTreeSitterWasm();
 	await Promise.all([extensionCtx.dispose(), webviewCtx.dispose()]);
 }
 

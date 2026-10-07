@@ -214,6 +214,16 @@
 			"enum": ["off", "trigram", "vector"],
 			"description": "Semantic path: off (remote + cache) | trigram (remote->trigram/vector fallback) | vector (local dense hash index, offline)"
 		},
+		"outlineEngine": {
+			"type": "string",
+			"enum": ["auto", "treesitter", "lsp", "typescript"],
+			"description": "Outline: auto (Tree-sitter wasm -> TS/LSP) | treesitter | lsp | typescript"
+		},
+		"chunkEngine": {
+			"type": "string",
+			"enum": ["auto", "treesitter", "lines"],
+			"description": "Chunking: auto (AST Tree-sitter when available) | treesitter | lines"
+		},
 		"compactTailTurns": {
 			"type": "integer",
 			"minimum": 1,

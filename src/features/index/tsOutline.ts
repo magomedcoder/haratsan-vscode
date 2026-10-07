@@ -1,9 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 import { getSettings } from '../../core/config/settings';
-import { isProjectEnabled } from '../project/config';
+import { shouldUseTreeSitterOutline } from './indexEngines';
 import { INDEX_OUTLINE_FILE, indexDirForFolder, indexFilePath } from './indexStorage';
 import { listIndexableFiles, readIndexableText } from './scanner';
+import { extractOutlineViaTreeSitter } from './treeSitterOutline';
 import {
 	isJsLikeOutlinePath,
 	isRegexOutlineFallbackPath,
@@ -111,20 +112,45 @@ export async function extractOutlineFromLsp(
 	}
 }
 
-/**
- * Non-JS: сначала LSP; regex - last-resort, если LSP пуст и расширение поддерживает fallback.
- * JS-like: только createSourceFile (без LSP).
- */
+// Порядок: Tree-sitter (если engine позволяет) -> TS createSourceFile (JS-like) / LSP (non-JS) -> regex fallback
 export async function extractOutlineForFileAsync(
 	relativePath: string,
 	uri: vscode.Uri,
 	sourceText: string | undefined,
 ): Promise<OutlineEntry[]> {
+	const settings = getSettings();
+	const eng = settings.outlineEngine ?? 'auto';
+
+	if (sourceText && shouldUseTreeSitterOutline(settings, relativePath)) {
+		const tsOutline = await extractOutlineViaTreeSitter(relativePath, sourceText);
+		if (tsOutline && tsOutline.length > 0) {
+			return tsOutline;
+		}
+
+		if (eng === 'treesitter') {
+
+		}
+	}
+
+	if (eng === 'treesitter' && !isJsLikeOutlinePath(relativePath)) {
+
+	}
+
 	if (isJsLikeOutlinePath(relativePath)) {
 		if (!sourceText) {
 			return [];
 		}
+		if (eng === 'lsp') {
+			return extractOutlineFromLsp(relativePath, uri);
+		}
 		return parseTsOutline(relativePath, sourceText);
+	}
+
+	if (eng === 'typescript') {
+		if (sourceText && isRegexOutlineFallbackPath(relativePath)) {
+			return parseRegexOutlineFallback(relativePath, sourceText);
+		}
+		return [];
 	}
 
 	const remaining = OUTLINE_INDEX_LIMITS.maxEntries;
@@ -211,10 +237,6 @@ export async function maybeRefreshOutlineIndex(folder: vscode.WorkspaceFolder): 
 		return;
 	}
 
-	if (!(await isProjectEnabled(folder.uri.fsPath))) {
-		return;
-	}
-
 	try {
 		await rebuildOutlineIndex(folder);
 	} catch {}
@@ -239,10 +261,6 @@ export async function updateOutlineIndexForFile(
 	uri: vscode.Uri,
 ): Promise<void> {
 	if (getSettings().indexingEnabled === false) {
-		return;
-	}
-
-	if (!(await isProjectEnabled(folder.uri.fsPath))) {
 		return;
 	}
 

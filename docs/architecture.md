@@ -62,7 +62,7 @@ The agent loads body via `plugin` (by name) or `read_file` using the catalog pat
 ## Opt-in `.haratsan/` and scaffold
 
 - Opening a folder does **not** create `.haratsan/`. Opt-in: chat banner (enable + index) or `/init`.
-- `enableProject` / `ensureGenScaffold` (`src/features/project/config.ts`): `config.json` plus dirs `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` (`.gitkeep`, README; never overwrite).
+- `enableProject` / `ensureHaratsanScaffold` (`src/features/project/config.ts`, command `haratsan.initProject` / `/init`): `config.json` plus dirs `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` (`.gitkeep`, README; never overwrite). Indexing does not require this.
 - Details: [codebase-index.md](codebase-index.md).
 
 ## Codebase index

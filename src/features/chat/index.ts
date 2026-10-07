@@ -7,6 +7,7 @@ import { getSettings } from '../../core/config/settings';
 import { setConfirmHost } from '../../host/ui/confirmDialog';
 import { ensureTerminalBufferListener } from './terminalBuffer';
 import { listAgentWorktrees, removeAgentWorktree } from '../agent/worktree';
+import { enableProject } from '../project/config';
 
 export function registerChat(context: vscode.ExtensionContext): vscode.Disposable {
 	// Одна сессия / один provider на panel + sidebar
@@ -31,6 +32,17 @@ export function registerChat(context: vscode.ExtensionContext): vscode.Disposabl
 		}),
 		vscode.commands.registerCommand('haratsan.openChatSidebar', async () => {
 			await focusChatView('sidebar');
+		}),
+		vscode.commands.registerCommand('haratsan.initProject', async () => {
+			const folder = await enableProject();
+			if (!folder) {
+				void vscode.window.showWarningMessage(vscode.l10n.t('project.initNoWorkspace'));
+				return;
+			}
+			
+			void vscode.window.showInformationMessage(
+				vscode.l10n.t('project.initDone', folder.name),
+			);
 		}),
 		vscode.commands.registerCommand('haratsan.addSelectionToChat', async () => {
 			await provider.getSession().addSelectionToChat();

@@ -475,7 +475,7 @@ export async function getProjectMap(opts: GetProjectMapOptions = {}): Promise<Pr
 		: undefined) ?? vscode.workspace.workspaceFolders?.[0];
 
 	if (!folder) {
-		throw new Error('No workspace folder');
+		throw new Error('Нет папки workspace');
 	}
 
 	const maxDepth = Math.min(

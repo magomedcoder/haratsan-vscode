@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { getIndexManager } from '../../../index/IndexManager';
 import { packContext, type ContextHit } from '../../../index/contextEngine';
-import { isProjectEnabled } from '../../../project/config';
 import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { throwIfAborted } from '../../workspacePath';
@@ -129,26 +128,24 @@ export const packContextTool: ToolDefinition = {
 		}
 
 		// Дополнительно trigram index
-		if (await isProjectEnabled()) {
-			const manager = getIndexManager();
-			if (manager) {
-				try {
-					const ranked = await manager.search(query, Math.min(8, maxHits));
-					for (const h of ranked) {
-						rawHits.push({
-							source: 'codebase',
-							path: h.path,
-							startLine: h.startLine,
-							endLine: h.endLine,
-							score: h.score,
-							snippet: h.snippet.slice(0, 1_200),
-							tool: 'codebase_search',
-							reason: 'trigram index',
-						});
-					}
-				} catch (err) {
-					notes.push(`codebase: ${err instanceof Error ? err.message : String(err)}`);
+		const manager = getIndexManager();
+		if (manager) {
+			try {
+				const ranked = await manager.search(query, Math.min(8, maxHits));
+				for (const h of ranked) {
+					rawHits.push({
+						source: 'codebase',
+						path: h.path,
+						startLine: h.startLine,
+						endLine: h.endLine,
+						score: h.score,
+						snippet: h.snippet.slice(0, 1_200),
+						tool: 'codebase_search',
+						reason: 'trigram index',
+					});
 				}
+			} catch (err) {
+				notes.push(`codebase: ${err instanceof Error ? err.message : String(err)}`);
 			}
 		}
 

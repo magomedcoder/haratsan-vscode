@@ -4,6 +4,8 @@
 
 ## dev (Development version)
 
+- **Index / Tree-sitter + Merkle v2:** wasm Tree-sitter (`@vscode/tree-sitter-wasm`) for outline + AST chunking (`outlineEngine` / `chunkEngine`); `merkle.json` with nodes, chunk/symbol digests, skip metrics; chunk reuse across edits; Repair rebuilds merkle without dropping vector cache intent
+- **Index:** background indexing on workspace open (no setup banner / `.haratsan` opt-in); command `Haratsan: Initialize project (.haratsan)` for project scaffold only
 - **Index storage:** codebase index + project map moved to VS Code `storageUri` (no longer written under `.haratsan/index` / `.haratsan/map`; no migration of old project files)
 - **Rename:** product renamed from Gen to **Haratsan** (UI, commands, settings, config paths)
 - **Index / semantic:** stable remote embeddings (batch+retry+timeout, persistent `.haratsan/index/vectors.json` cache by content-hash); `localEmbeddingsMode=vector` local dense hash index; offline eval + paraphrases, `recallAtK`, local-vector gate

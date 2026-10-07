@@ -165,6 +165,27 @@ export function IndexingPage({
 				<option value="trigram">{t('settings.localEmbeddingsMode.trigram')}</option>
 				<option value="vector">{t('settings.localEmbeddingsMode.vector')}</option>
 			</FieldSelect>
+			<FieldSelect
+				labelKey="settings.outlineEngine.label"
+				hintKey="settings.outlineEngine.hint"
+				value={draft.outlineEngine}
+				onChange={(v) => setField('outlineEngine', v as typeof draft.outlineEngine)}
+			>
+				<option value="auto">{t('settings.outlineEngine.auto')}</option>
+				<option value="treesitter">{t('settings.outlineEngine.treesitter')}</option>
+				<option value="lsp">{t('settings.outlineEngine.lsp')}</option>
+				<option value="typescript">{t('settings.outlineEngine.typescript')}</option>
+			</FieldSelect>
+			<FieldSelect
+				labelKey="settings.chunkEngine.label"
+				hintKey="settings.chunkEngine.hint"
+				value={draft.chunkEngine}
+				onChange={(v) => setField('chunkEngine', v as typeof draft.chunkEngine)}
+			>
+				<option value="auto">{t('settings.chunkEngine.auto')}</option>
+				<option value="treesitter">{t('settings.chunkEngine.treesitter')}</option>
+				<option value="lines">{t('settings.chunkEngine.lines')}</option>
+			</FieldSelect>
 			<FieldText
 				labelKey="settings.embeddingsBaseUrl.label"
 				hintKey="settings.embeddingsBaseUrl.hint"

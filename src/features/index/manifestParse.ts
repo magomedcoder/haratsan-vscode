@@ -1,5 +1,5 @@
 import { applyDirDigests } from './dirDigests';
-import { emptyManifest, INDEX_MANIFEST_VERSION } from './types';
+import { emptyManifest, INDEX_MANIFEST_VERSION, INDEX_MANIFEST_VERSIONS_ACCEPTED } from './types';
 import type { IndexManifest } from './types';
 
 // Причина, по которой манифест нужно чинить
@@ -45,7 +45,7 @@ export function parseManifestJson(raw: string): ManifestParseResult {
 	}
 
 	const obj = parsed as Partial<IndexManifest>;
-	if (obj.version !== INDEX_MANIFEST_VERSION) {
+	if (typeof obj.version !== 'number' || !INDEX_MANIFEST_VERSIONS_ACCEPTED.has(obj.version)) {
 		return {
 			ok: false,
 			reason: 'bad_version'
@@ -75,9 +75,9 @@ export function parseManifestJson(raw: string): ManifestParseResult {
 			typeof obj.updatedAt === 'string' && obj.updatedAt
 				? obj.updatedAt
 				: new Date(0).toISOString(),
-		files,
-		chunks,
-		trigrams,
+		files: files as IndexManifest['files'],
+		chunks: chunks as IndexManifest['chunks'],
+		trigrams: trigrams as IndexManifest['trigrams'],
 		dirDigests,
 	};
 

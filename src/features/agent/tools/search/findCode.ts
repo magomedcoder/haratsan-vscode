@@ -5,7 +5,6 @@ import { getSettings } from '../../../../core/config/settings';
 import { semanticSearchWorkspace } from '../../../index/embeddings';
 import { getIndexManager } from '../../../index/IndexManager';
 import { findInSymbolIndex } from '../../../index/symbolIndex';
-import { isProjectEnabled } from '../../../project/config';
 import { AGENT_LIMITS, deniedDirectoryExcludeGlob } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { resolveWorkspacePath, throwIfAborted } from '../../workspacePath';
@@ -259,13 +258,6 @@ async function runCodebase(query: string, cap: number, signal?: AbortSignal): Pr
 		return { 
 			hits: [], 
 			note: 'codebase_search: IndexManager не инициализирован' 
-		};
-	}
-
-	if (!(await isProjectEnabled())) {
-		return { 
-			hits: [], 
-			note: 'codebase_search: индекс проекта выключен' 
 		};
 	}
 

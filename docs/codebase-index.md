@@ -13,12 +13,15 @@ The agent searches it via the `codebase_search` tool (trigrams), without sending
 
 ## How it works
 
-- The index is written to workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests** Merkle map).
-- On update, ancestor directory digests are recomputed; unchanged dirs skip re-read when paths + **content-hash** match (size+mtime gate trusts the stored hash; size alone is not enough).
-- LSP **symbol index** (optional cache): workspace storage `symbols.json` via `vscode.executeDocumentSymbolProvider`. Used by `find_symbol` / `find_code` intent `symbol` and `@symbols`.
-- **Outline** (no Tree-sitter / no native deps - **LSP-only** for non-JS): workspace storage `outline.json`. TS/JS via TypeScript `createSourceFile`; other languages via `vscode.executeDocumentSymbolProvider` when available; cheap regex fallback only if LSP returns empty (`py`/`go`/`rs`/`java`/`kt`/`rb`). Also exposed via `find_symbol` (`source: outline|all`).
+- The index is written to workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests**) plus companion **`merkle.json`** (Merkle v2 nodes, chunk digests, symbol leaf digests, skip metrics).
+- On update, ancestor digests are recomputed; unchanged dirs skip re-read when paths + **content-hash** match (size+mtime gate). Unchanged AST chunks keep digests -> skip re-trigram/re-embed work for those leaves.
+- LSP **symbol index** (optional cache): `symbols.json` via `vscode.executeDocumentSymbolProvider`.
+- **Outline** (`outlineEngine`): default **auto** - Tree-sitter wasm (`@vscode/tree-sitter-wasm`) when available, else TS `createSourceFile` (JS-like) / LSP / regex. Settings: `auto` \| `treesitter` \| `lsp` \| `typescript`. Entries in `outline.json` carry `source` (`treesitter` \| `typescript` \| `lsp` \| `regex`).
+- **Chunking** (`chunkEngine`): default **auto** - AST spans via Tree-sitter (stable content-hash chunk ids), else line/heuristic windows (`lines`). Caps: ~400KB / ~2s parse; soft-fail -> previous engines.
+- Grammars shipped in `dist/tree-sitter/*.wasm` (MVP whitelist: typescript/tsx/javascript/python/go/rust/java/cpp/c_sharp/ruby/php/bash); lazy load per language.
+- Skip metrics from Merkle fullIndex -> Activity + optional OTEL (`otelEnabled`) span `index.full`.
 - `.haratsan/` is not indexed (same for `.git`, `node_modules` via ignore).
-- On file change, only that file is reindexed (content-hash compare); outline/symbols update **per-file** (debounced), full rebuild only after a complete index pass.
+- On file change, only that file is reindexed (content-hash compare); outline/symbols update **per-file** (debounced).
 - `codebase_search` results are fragments (path, lines, snippet, score).
 - In chat: `@file`, `@folder`, `@codebase`, `@map`, `@symbols` inject context (see [chat.md](chat.md)).
 
@@ -38,8 +41,8 @@ Call hierarchy / “who calls Y”: tool `find_references` (LSP reference + defi
 
 ## Usage
 
-1. Open a workspace and open Haratsan chat.
-2. Click **Create config & index** (writes `.haratsan/config.json`, scaffold dirs, and builds the index under VS Code `storageUri`). Until then Haratsan does not create `.haratsan/` on folder open. The same scaffold runs on slash `/init`.
+1. Open a workspace - Haratsan indexes in the background into VS Code `storageUri` (no `.haratsan/` required). Chat works while indexing runs.
+2. Optional: command **Haratsan: Initialize project (.haratsan)** or slash `/init` creates `.haratsan/` (config, agents, skills, ...) for project overlays - not for the index.
 3. In Agent mode, call `codebase_search` with `query` (symbol, phrase, path). Prefer `find_code` / `find_symbol` / `pack_context` / `similar_code` for hybrid retrieval.
 4. For exact line grep - `grep` (paths via `glob`).
 5. For semantic: `semantic_search` / `search_docs` (modes above).
@@ -56,6 +59,6 @@ npm test -- --grep eval
 
 ### `.haratsan/` directories (scaffold)
 
-On project enable or `/init`, these are created if missing: `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` - plus a short `.haratsan/README.md` and `.gitkeep` in empty dirs. Existing files are never overwritten. `references.json` is created on demand, not during scaffold.
+On `haratsan.initProject` or `/init`, these are created if missing: `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/`, `scratch/` - plus a short `.haratsan/README.md` and `.gitkeep` in empty dirs. Existing files are never overwritten. `references.json` is created on demand, not during scaffold.
 
 More on tools: [tools.md](tools.md).

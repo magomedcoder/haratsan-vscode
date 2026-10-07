@@ -7,7 +7,8 @@ export const HARATSAN_CONFIG_RELATIVE = '.haratsan/config.json';
 export const HARATSAN_CONFIG_VERSION = 1;
 
 /**
- * Каталоги MVP под `.haratsan/` - создаются при enable проекта и `/init`.
+ * Каталоги MVP под `.haratsan/` - создаются командой `haratsan.initProject` и `/init`.
+ * Индекс кодовой базы в workspace storage и не требует `.haratsan/`.
  * `references.json` пишется по требованию (не здесь).
  */
 export const HARATSAN_SCAFFOLD_DIRS = ['agents', 'commands', 'plugins', 'skills', 'tools', 'references', 'plans', 'scratch'] as const;
@@ -34,8 +35,9 @@ Index / project map caches live in VS Code workspace storage (\`storageUri\`), n
 `;
 
 /**
- * Project `.haratsan/config.json`: маркер opt-in + опциональный overlay HaratsanSettings.
+ * Project `.haratsan/config.json`: маркер наличия project-слоя + опциональный overlay HaratsanSettings.
  * Известные ключи мержатся в effective config (см. `src/config/layers.ts`, FILE_LAYER_KEYS).
+ * Не нужен для фоновой индексации.
  */
 export interface HaratsanProjectConfig {
 	version: number;
@@ -82,7 +84,7 @@ export async function ensureHaratsanScaffold(folderPath?: string): Promise<void>
 	}
 }
 
-// Маркер согласия: файл `.haratsan/config.json` должен существовать
+// Есть ли `.haratsan/config.json` (project overlay / hooks / agents scaffold)
 export async function isProjectEnabled(folderPath?: string): Promise<boolean> {
 	const root = folderFsPath(folderPath);
 	if (!root) {

@@ -62,7 +62,7 @@ Comment command
 ## Opt-in `.haratsan/` и scaffold
 
 - При открытии папки `.haratsan/` **не** создаётся. Opt-in: кнопка в чате (enable + индекс) или `/init`.
-- `enableProject` / `ensureGenScaffold` (`src/features/project/config.ts`): `config.json` + каталоги `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` (`.gitkeep`, README; без перезаписи).
+- `enableProject` / `ensureHaratsanScaffold` (`src/features/project/config.ts`, команда `haratsan.initProject` / `/init`): `config.json` + каталоги `agents/`, `commands/`, `plugins/`, `skills/`, `tools/`, `references/`, `plans/` (`.gitkeep`, README; без перезаписи). Для индексации не требуется.
 - Подробнее: [codebase-index-ru.md](codebase-index-ru.md).
 
 ## Индекс кодовой базы

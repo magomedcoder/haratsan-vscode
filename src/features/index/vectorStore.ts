@@ -73,7 +73,7 @@ export async function saveVectorIndex(folderFsPath: string, index: VectorIndexFi
 	const dir = indexDirForFolder(folderFsPath);
 	const file = vectorsPathForFolder(folderFsPath);
 	if (!dir || !file) {
-		throw new Error('Index storage unavailable (no workspace storageUri)');
+		throw new Error('Хранилище индекса недоступно (нет workspace storageUri)');
 	}
 
 	await fs.mkdir(dir, { recursive: true });

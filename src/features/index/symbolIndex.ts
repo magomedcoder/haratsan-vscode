@@ -1,7 +1,6 @@
 import * as fs from 'node:fs/promises';
 import type * as vscodeTypes from 'vscode';
 import { getSettings } from '../../core/config/settings';
-import { isProjectEnabled } from '../project/config';
 import { INDEX_SYMBOLS_FILE, indexDirForFolder, indexFilePath } from './indexStorage';
 import { loadManifest } from './store';
 import { parseSymbolIndexJson, applySymbolPathRemove, applySymbolPathUpdate, type SymbolIndexDocument, type SymbolIndexEntry } from './symbolIndexParse';
@@ -166,10 +165,6 @@ export async function maybeRefreshSymbolIndex(folder: vscodeTypes.WorkspaceFolde
 		return;
 	}
 
-	if (!(await isProjectEnabled(folder.uri.fsPath))) {
-		return;
-	}
-
 	if (building) {
 		return;
 	}
@@ -211,10 +206,6 @@ export async function updateSymbolIndexForFile(
 	uri: vscodeTypes.Uri,
 ): Promise<void> {
 	if (getSettings().indexingEnabled === false) {
-		return;
-	}
-
-	if (!(await isProjectEnabled(folder.uri.fsPath))) {
 		return;
 	}
 

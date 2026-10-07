@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { getIndexManager } from '../../../index/IndexManager';
 import { loadManifest } from '../../../index/store';
 import { tokenize } from '../../../index/trigram';
-import { isProjectEnabled } from '../../../project/config';
 import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { resolveWorkspacePath, throwIfAborted } from '../../workspacePath';
@@ -99,13 +98,6 @@ export const similarCodeTool: ToolDefinition = {
 			return {
 				ok: false,
 				content: 'similar_code: пустой seed (файл/range/query)',
-			};
-		}
-
-		if (!(await isProjectEnabled())) {
-			return {
-				ok: false,
-				content: 'similar_code: индекс проекта выключен',
 			};
 		}
 

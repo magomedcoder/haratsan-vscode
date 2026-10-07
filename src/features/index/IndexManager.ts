@@ -1,20 +1,24 @@
 import * as vscode from 'vscode';
 import { isIgnoredByGitIgnore, matchesWatcherIgnore } from '../agent/gitIgnore';
 import { getSettings } from '../../core/config/settings';
-import { isProjectEnabled } from '../project/config';
-import { chunkFileContent } from './chunk';
-import { applyDirDigests, canSkipDirRewalk, parentDir } from './dirDigests';
+import { emitIndexMerkleMetrics } from '../../core/llm/otel';
+import { chunkFileContent, chunkFileContentAst } from './chunk';
+import { canSkipDirRewalk, parentDir } from './dirDigests';
 import { contentHash } from './hash';
+import { shouldUseTreeSitterChunk } from './indexEngines';
+import { folderStorageKey, initIndexStorage, isIndexStorageAvailable } from './indexStorage';
 import { listIndexableFiles, readIndexableText } from './scanner';
 import { IndexAbortFlag, isIndexAbortError, summarizePartialErrors } from './manifestParse';
-import { initIndexStorage, isIndexStorageAvailable } from './indexStorage';
+import { buildMerkleDocument, digestsFromChunks, dropPathFromMerkle, emptyMerkleMetrics, loadMerkle, mergeChunksPreservingDigests, repairMerkleFromManifest, saveMerkle, syncManifestDirDigests } from './merkle';
+import type { MerkleMetrics } from './merkle';
 import { loadManifest, repairManifestFile, saveManifest } from './store';
 import { maybeRefreshSymbolIndex, removeSymbolIndexPath, updateSymbolIndexForFile } from './symbolIndex';
+import { initTreeSitter, parseWithTreeSitter } from './treeSitter';
 import { maybeRefreshOutlineIndex, removeOutlineIndexPath, updateOutlineIndexForFile } from './tsOutline';
 import { rebuildManifestTrigrams, searchTrigrams } from './trigram';
 import type { CodebaseSearchHit, IndexManifest, IndexProgress } from './types';
 
-const NO_STORAGE_ERROR = 'Workspace storage unavailable (no storageUri)';
+const NO_STORAGE_ERROR = 'Хранилище индекса недоступно (нет storageUri)';
 
 export class IndexManager implements vscode.Disposable {
 	private readonly disposables: vscode.Disposable[] = [];
@@ -30,6 +34,7 @@ export class IndexManager implements vscode.Disposable {
 
 	constructor(private readonly context: vscode.ExtensionContext) {
 		initIndexStorage(context);
+		initTreeSitter(context);
 		void this.bootstrapExisting();
 
 		this.disposables.push(
@@ -140,12 +145,17 @@ export class IndexManager implements vscode.Disposable {
 
 		try {
 			await repairManifestFile(key);
+			const manifest = await loadManifest(key);
+			const merkle = repairMerkleFromManifest(manifest, await loadMerkle(key));
+			syncManifestDirDigests(manifest, merkle);
+			await saveManifest(key, manifest);
+			await saveMerkle(key, merkle);
 			await this.scheduleFullIndex(target, true);
 		} catch (err) {
 			if (isIndexAbortError(err)) {
 				return;
 			}
-			
+
 			this.setProgress(key, {
 				state: 'error',
 				lastError: err instanceof Error ? err.message : String(err),
@@ -254,7 +264,7 @@ export class IndexManager implements vscode.Disposable {
 		};
 	}
 
-	// Создать индекс после того, как пользователь подтвердит свое согласие (запись в каталог `.haratsan/`)
+	// Принудительно (пере)построить индекс для папки
 	async enableAndIndex(folder: vscode.WorkspaceFolder): Promise<void> {
 		if (getSettings().indexingEnabled === false) {
 			return;
@@ -273,10 +283,6 @@ export class IndexManager implements vscode.Disposable {
 		}
 
 		const key = folder.uri.fsPath;
-		if (!(await isProjectEnabled(key))) {
-			return [];
-		}
-
 		if (!this.indexed.has(key) && !this.indexing.has(key)) {
 			void this.scheduleFullIndex(folder);
 		}
@@ -321,10 +327,6 @@ export class IndexManager implements vscode.Disposable {
 			return;
 		}
 
-		if (!(await isProjectEnabled(folder.uri.fsPath))) {
-			return;
-		}
-
 		void this.scheduleFullIndex(folder);
 	}
 
@@ -355,10 +357,6 @@ export class IndexManager implements vscode.Disposable {
 			return;
 		}
 
-		if (!(await isProjectEnabled(folder.uri.fsPath))) {
-			return;
-		}
-
 		const relative = vscode.workspace.asRelativePath(uri, false).replace(/\\/g, '/');
 		if (await this.shouldSkipWatcherPath(folder, relative)) {
 			return;
@@ -374,10 +372,6 @@ export class IndexManager implements vscode.Disposable {
 
 		const folder = vscode.workspace.getWorkspaceFolder(uri);
 		if (!folder) {
-			return;
-		}
-
-		if (!(await isProjectEnabled(folder.uri.fsPath))) {
 			return;
 		}
 
@@ -560,6 +554,24 @@ export class IndexManager implements vscode.Disposable {
 			}
 		}
 
+		const metrics = emptyMerkleMetrics();
+		metrics.filesTotal = withMeta.length;
+		metrics.filesSkipped = skipFiles.size;
+		metrics.dirsTotal = byParent.size;
+		let dirsSkipped = 0;
+		for (const [dir, group] of byParent) {
+			if (group.every((f) => skipFiles.has(f.relative))) {
+				dirsSkipped += 1;
+			}
+			void dir;
+		}
+		metrics.dirsSkipped = dirsSkipped;
+
+		const prevMerkle = await loadMerkle(folderFsPath);
+		let chunkDigests = { ...prevMerkle.chunkDigests };
+		let chunksSkipped = 0;
+		let chunksIndexed = 0;
+
 		let cancelled = false;
 		for (const file of withMeta) {
 			if (abort?.aborted) {
@@ -572,10 +584,17 @@ export class IndexManager implements vscode.Disposable {
 			}
 
 			try {
-				await this.indexOneFile(manifest, folderFsPath, file.relative, file.uri, {
+				const one = await this.indexOneFile(manifest, folderFsPath, file.relative, file.uri, {
 					save: false,
 					mtimeMs: file.mtimeMs,
+					chunkDigests,
 				});
+				chunkDigests = one.chunkDigests;
+				chunksSkipped += one.chunksSkipped;
+				chunksIndexed += one.chunksIndexed;
+				if (one.result === 'content') {
+					metrics.filesIndexed += 1;
+				}
 			} catch (err) {
 				if (isIndexAbortError(err)) {
 					cancelled = true;
@@ -590,14 +609,29 @@ export class IndexManager implements vscode.Disposable {
 		if (!cancelled) {
 			for (const relative of Object.keys(manifest.files)) {
 				if (!seen.has(relative)) {
+					const goneIds = manifest.files[relative]?.chunkIds ?? [];
 					this.dropFile(manifest, relative);
+					for (const id of goneIds) {
+						delete chunkDigests[id];
+					}
 				}
 			}
 		}
 
+		metrics.chunksSkipped = chunksSkipped;
+		metrics.chunksIndexed = chunksIndexed;
+
 		rebuildManifestTrigrams(manifest);
-		applyDirDigests(manifest);
+		const merkle = buildMerkleDocument(manifest.files, {
+			chunkDigests: digestsFromChunks(manifest.chunks),
+			symbolDigests: prevMerkle.symbolDigests,
+			metrics,
+		});
+		syncManifestDirDigests(manifest, merkle);
 		await saveManifest(folderFsPath, manifest);
+		await saveMerkle(folderFsPath, merkle);
+		this.logIndexMetrics(folderFsPath, metrics);
+
 		// Локальный vector index (feature hashing) - рядом с trigrams
 		if (!cancelled) {
 			try {
@@ -620,6 +654,7 @@ export class IndexManager implements vscode.Disposable {
 	private async reindexFile(folder: vscode.WorkspaceFolder, relative: string, uri: vscode.Uri): Promise<void> {
 		const folderFsPath = folder.uri.fsPath;
 		const manifest = await loadManifest(folderFsPath);
+		const prevMerkle = await loadMerkle(folderFsPath);
 		let mtimeMs: number | undefined;
 		try {
 			mtimeMs = (await vscode.workspace.fs.stat(uri)).mtime;
@@ -627,21 +662,35 @@ export class IndexManager implements vscode.Disposable {
 			mtimeMs = undefined;
 		}
 
-		const result = await this.indexOneFile(manifest, folderFsPath, relative, uri, {
+		const one = await this.indexOneFile(manifest, folderFsPath, relative, uri, {
 			save: false,
 			mtimeMs,
+			chunkDigests: { ...prevMerkle.chunkDigests },
 		});
-		if (result === 'none') {
+		if (one.result === 'none') {
 			return;
 		}
 
-		if (result === 'content') {
+		if (one.result === 'content') {
 			rebuildManifestTrigrams(manifest);
-			applyDirDigests(manifest);
 		}
 
+		const merkle = buildMerkleDocument(manifest.files, {
+			chunkDigests: digestsFromChunks(manifest.chunks),
+			symbolDigests: { ...prevMerkle.symbolDigests, ...one.symbolDigests },
+			metrics: {
+				...emptyMerkleMetrics(),
+				filesIndexed: one.result === 'content' ? 1 : 0,
+				chunksIndexed: one.chunksIndexed,
+				chunksSkipped: one.chunksSkipped,
+				filesTotal: 1,
+			},
+		});
+		syncManifestDirDigests(manifest, merkle);
 		await saveManifest(folderFsPath, manifest);
-		if (result === 'content') {
+		await saveMerkle(folderFsPath, merkle);
+
+		if (one.result === 'content') {
 			try {
 				const { rebuildLocalVectorIndex } = await import('./embeddings');
 				await rebuildLocalVectorIndex(folderFsPath);
@@ -653,7 +702,7 @@ export class IndexManager implements vscode.Disposable {
 			chunkCount: Object.keys(manifest.chunks).length,
 			updatedAt: manifest.updatedAt,
 		});
-		if (result === 'content') {
+		if (one.result === 'content') {
 			this.scheduleOutlineAndSymbolsRefresh(folder, relative);
 		}
 	}
@@ -664,10 +713,18 @@ export class IndexManager implements vscode.Disposable {
 			return;
 		}
 
+		const prevMerkle = await loadMerkle(folderFsPath);
+		const goneIds = manifest.files[relative]?.chunkIds ?? [];
 		this.dropFile(manifest, relative);
 		rebuildManifestTrigrams(manifest);
-		applyDirDigests(manifest);
+		const merkle = dropPathFromMerkle(prevMerkle, relative, goneIds);
+		const rebuilt = buildMerkleDocument(manifest.files, {
+			chunkDigests: digestsFromChunks(manifest.chunks),
+			symbolDigests: merkle.symbolDigests,
+		});
+		syncManifestDirDigests(manifest, rebuilt);
 		await saveManifest(folderFsPath, manifest);
+		await saveMerkle(folderFsPath, rebuilt);
 		const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folderFsPath));
 		if (folder) {
 			this.scheduleOutlineAndSymbolsRefresh(folder, relative, { deleted: true });
@@ -687,6 +744,30 @@ export class IndexManager implements vscode.Disposable {
 		delete manifest.files[relative];
 	}
 
+	private logIndexMetrics(folderFsPath: string, metrics: MerkleMetrics): void {
+		const line = `индекс merkle: файлы ${metrics.filesIndexed}/${metrics.filesTotal}` +
+			` (пропуск ${metrics.filesSkipped}), каталоги пропуск ${metrics.dirsSkipped}/${metrics.dirsTotal},` +
+			` чанки +${metrics.chunksIndexed}/reuse ${metrics.chunksSkipped}`;
+		console.info(`[Haratsan] ${line} @ ${folderFsPath}`);
+		try {
+			void import('../../core/stores/activityStore').then((mod) => {
+				mod.recordActivity({
+					kind: 'tool',
+					label: line,
+					toolName: 'index_full',
+					status: 'ok',
+					path: folderFsPath,
+				});
+			}).catch(() => {});
+		} catch {}
+		try {
+			emitIndexMerkleMetrics(getSettings(), {
+				...metrics,
+				folderKey: folderStorageKey(folderFsPath),
+			});
+		} catch {}
+	}
+
 	private async indexOneFile(
 		manifest: IndexManifest,
 		folderFsPath: string,
@@ -695,22 +776,36 @@ export class IndexManager implements vscode.Disposable {
 		opts: {
 			save: boolean;
 			mtimeMs?: number;
+			chunkDigests?: Record<string, string>;
 		},
-	): Promise<'content' | 'meta' | 'none'> {
+	): Promise<{
+		result: 'content' | 'meta' | 'none';
+		chunkDigests: Record<string, string>;
+		chunksSkipped: number;
+		chunksIndexed: number;
+		symbolDigests: Record<string, string>;
+	}> {
+		const empty = {
+			chunkDigests: opts.chunkDigests ?? {},
+			chunksSkipped: 0,
+			chunksIndexed: 0,
+			symbolDigests: {} as Record<string, string>,
+		};
+
 		const text = await readIndexableText(uri);
 		if (text === undefined) {
 			if (manifest.files[relative]) {
 				this.dropFile(manifest, relative);
 				if (opts.save) {
 					rebuildManifestTrigrams(manifest);
-					applyDirDigests(manifest);
+					const merkle = repairMerkleFromManifest(manifest, await loadMerkle(folderFsPath));
+					syncManifestDirDigests(manifest, merkle);
 					await saveManifest(folderFsPath, manifest);
+					await saveMerkle(folderFsPath, merkle);
 				}
-
-				return 'content';
+				return { ...empty, result: 'content' };
 			}
-
-			return 'none';
+			return { ...empty, result: 'none' };
 		}
 
 		const hash = contentHash(text);
@@ -720,7 +815,7 @@ export class IndexManager implements vscode.Disposable {
 		if (prev?.hash === hash) {
 			const metaChanged = prev.size !== size || (mtimeMs !== undefined && prev.mtimeMs !== mtimeMs);
 			if (!metaChanged) {
-				return 'none';
+				return { ...empty, result: 'none' };
 			}
 
 			manifest.files[relative] = {
@@ -731,35 +826,81 @@ export class IndexManager implements vscode.Disposable {
 			if (opts.save) {
 				await saveManifest(folderFsPath, manifest);
 			}
-
-			return 'meta';
+			return { ...empty, result: 'meta' };
 		}
 
+		const prevChunkMap: Record<string, import('./types').IndexChunk> = {};
+		const prevDigests: Record<string, string> = { 
+			...(opts.chunkDigests ?? {}) 
+		};
 		if (prev) {
+			for (const id of prev.chunkIds) {
+				const c = manifest.chunks[id];
+				if (c) {
+					prevChunkMap[id] = c;
+				}
+			}
 			this.dropFile(manifest, relative);
 		}
 
-		const chunks = chunkFileContent(relative, text);
-		const chunkIds: string[] = [];
-		for (const chunk of chunks) {
-			manifest.chunks[chunk.id] = chunk;
-			chunkIds.push(chunk.id);
+		const settings = getSettings();
+		let nextChunks = chunkFileContent(relative, text);
+		let symbolDigests: Record<string, string> = {};
+		if (shouldUseTreeSitterChunk(settings, relative)) {
+			const parsed = await parseWithTreeSitter(relative, text);
+			if (parsed && parsed.spans.length > 0) {
+				nextChunks = chunkFileContentAst(relative, text, parsed.spans);
+				for (const s of parsed.spans) {
+					const key = `${relative}#${s.startLine}-${s.endLine}:${s.name}`;
+					symbolDigests[key] = contentHash(text.slice(s.startIndex, s.endIndex));
+				}
+			}
+		}
+
+		const merged = mergeChunksPreservingDigests(prevChunkMap, prevDigests, nextChunks);
+		for (const id of Object.keys(prevChunkMap)) {
+			if (!merged.chunks[id]) {
+				delete manifest.chunks[id];
+			}
+		}
+		
+		for (const [id, chunk] of Object.entries(merged.chunks)) {
+			manifest.chunks[id] = chunk;
 		}
 
 		manifest.files[relative] = {
 			hash,
 			size,
-			chunkIds,
+			chunkIds: merged.chunkIds,
 			...(mtimeMs !== undefined ? { mtimeMs } : {}),
 		};
 
+		const chunkDigests = { ...prevDigests };
+		for (const id of Object.keys(prevChunkMap)) {
+			if (!merged.digests[id]) {
+				delete chunkDigests[id];
+			}
+		}
+		Object.assign(chunkDigests, merged.digests);
+
 		if (opts.save) {
 			rebuildManifestTrigrams(manifest);
-			applyDirDigests(manifest);
+			const merkle = buildMerkleDocument(manifest.files, {
+				chunkDigests: digestsFromChunks(manifest.chunks),
+				symbolDigests,
+			});
+			syncManifestDirDigests(manifest, merkle);
 			await saveManifest(folderFsPath, manifest);
+			await saveMerkle(folderFsPath, merkle);
 		}
 
-		return 'content';
+		return {
+			result: 'content',
+			chunkDigests,
+			chunksSkipped: merged.skippedIds.length,
+			chunksIndexed: merged.indexedIds.length,
+			symbolDigests,
+		};
 	}
 }
 
