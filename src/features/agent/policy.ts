@@ -1,6 +1,5 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { getSettings } from '../../core/config/settings';
 
 export const AGENT_LIMITS = {
 	maxReadBytes: 200_000,
@@ -199,10 +198,6 @@ export function assertAllowedPath(fsPath: string, folder: string): string {
 	}
 
 	const relative = toPosixRelative(path.relative(folder, fsPath));
-	if (isDeniedRelativePath(relative, getSettings().deniedPaths)) {
-		throw new PathPolicyError(vscode.l10n.t('policy.pathDenied', relative || '.'));
-	}
-
 	return relative || '.';
 }
 

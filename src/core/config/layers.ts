@@ -13,6 +13,7 @@ import { getHaratsanUserConfigPath } from './userPaths';
  * 1. `DEFAULT_SETTINGS`
  * 2. user: `~/.config/haratsan/config.json`
  * 3. Haratsan Settings UI (`globalState`) - только ключи, отличающиеся от defaults
+ *    (без `UI_LAYER_EXCLUDED_KEYS` - команды/redact только в user/project JSON)
  * 4. project: `<workspace>/.haratsan/config.json`
  * 5. admin policy (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json`) - locked-ключи
  *
@@ -20,7 +21,27 @@ import { getHaratsanUserConfigPath } from './userPaths';
  * UI Settings не ломаем: слои аддитивны; project перекрывает user и UI только по ключам, явно заданным в JSON; admin нельзя обойти.
  */
 
-/** Ключи HaratsanSettings, которые можно задать в JSON-слоях */
+/**
+ * Не из Settings UI / globalState - только user/project JSON.
+ * Ignore путей/папок - `.haratsanignore`, не эти ключи.
+ */
+export const UI_LAYER_EXCLUDED_KEYS = [
+	'sensitivePathPatterns',
+	'deniedCommands',
+	'secretPatterns',
+] as const satisfies readonly (keyof HaratsanSettings)[];
+
+// Убрать из blob ключи, которые UI-слой не хранит
+export function stripUiExcludedKeys<T extends Partial<HaratsanSettings>>(input: T): T {
+	const out = { ...input } as Record<string, unknown>;
+	for (const key of UI_LAYER_EXCLUDED_KEYS) {
+		delete out[key];
+	}
+
+	return out as T;
+}
+
+// Ключи HaratsanSettings, которые можно задать в JSON-слоях
 export const FILE_LAYER_KEYS = [
 	'systemPrompt',
 	'commentSystemPrompt',
@@ -37,12 +58,9 @@ export const FILE_LAYER_KEYS = [
 	'instructionUrls',
 	'personaId',
 	'usernameDisplay',
-	'deniedPaths',
 	'deniedCommands',
 	'sensitivePathPatterns',
 	'secretPatterns',
-	'providerUsePolicy',
-	'providerUsePatterns',
 	'allowExternalDirectory',
 	'enableTerminal',
 	'enableFileReading',
@@ -330,6 +348,9 @@ export function pickNonDefaultSettings(stored: Partial<HaratsanSettings> | undef
 
 	const out: Partial<HaratsanSettings> = {};
 	for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof HaratsanSettings)[]) {
+		if ((UI_LAYER_EXCLUDED_KEYS as readonly string[]).includes(key)) {
+			continue;
+		}
 		if (!(key in stored)) {
 			continue;
 		}

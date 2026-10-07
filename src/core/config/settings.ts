@@ -5,12 +5,12 @@ import type { ExtensionContext, Memento } from 'vscode';
 import { initApiKeyStore, getWebSearchApiKey, setWebSearchApiKey } from './apiKey';
 import { initAlwaysAllowStore } from '../stores/alwaysAllowStore';
 import { applyAdminPolicy, stripAdminLockedForStorage } from './adminPolicy';
-import { deepMerge, getFileSettingsOverlay, initConfigLayers, onConfigLayersChanged, pickNonDefaultSettings } from './layers';
+import { deepMerge, getFileSettingsOverlay, initConfigLayers, onConfigLayersChanged, pickNonDefaultSettings, stripUiExcludedKeys } from './layers';
 import { clearCachedNCtx } from '../llm/contextBudget';
 import { DEFAULT_SETTINGS } from './types';
-import type { ChatMode, ChatTextSize, ChatViewLocation, HaratsanSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
-export type { ChatMode, ChatTextSize, ChatViewLocation, CommentStyle, HaratsanSettings, ProviderUsePolicy, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
-export { DEFAULT_SETTINGS, EXAMPLE_DENIED_COMMANDS, EXAMPLE_DENIED_PATHS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS, isAgentLikeMode, resolveModeModel, resolveSmallModel } from './types';
+import type { ChatMode, ChatTextSize, ChatViewLocation, HaratsanSettings, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
+export type { ChatMode, ChatTextSize, ChatViewLocation, CommentStyle, HaratsanSettings, RevealOnEdit, ShareMode, TabEvictionPolicy, ThinkingDisplay, WebSearchBackend } from './types';
+export { DEFAULT_SETTINGS, EXAMPLE_DENIED_COMMANDS, DEFAULT_HARATSANIGNORE_PATTERNS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS, isAgentLikeMode, resolveModeModel, resolveSmallModel } from './types';
 export { getApiKey, hasApiKey, initApiKeyStore, setApiKey, clearApiKey, getWebSearchApiKey, hasWebSearchApiKey, setWebSearchApiKey, clearWebSearchApiKey } from './apiKey';
 export { initSecretVault } from './secretVault';
 export type { HaratsanSecretId } from './secretVault';
@@ -152,10 +152,6 @@ function normalizeChunkEngine(raw: unknown): HaratsanSettings['chunkEngine'] {
 	return 'auto';
 }
 
-function normalizeProviderUsePolicy(raw: unknown): ProviderUsePolicy {
-	return raw === 'deny' ? 'deny' : 'allow';
-}
-
 function normalize(raw: Partial<HaratsanSettings>): HaratsanSettings {
 	const commentStyle = raw.commentStyle === 'block' ? 'block' : 'inline';
 	const chatMode = normalizeChatMode(raw.chatMode);
@@ -215,7 +211,6 @@ function normalize(raw: Partial<HaratsanSettings>): HaratsanSettings {
 		commentStyle,
 		previewBeforeApply: Boolean(raw.previewBeforeApply ?? DEFAULT_SETTINGS.previewBeforeApply),
 		commentSystemPrompt: String(raw.commentSystemPrompt ?? DEFAULT_SETTINGS.commentSystemPrompt).trim(),
-		deniedPaths: normalizeStringList(raw.deniedPaths),
 		sensitivePathPatterns: 'sensitivePathPatterns' in raw
 			? normalizeStringList(raw.sensitivePathPatterns)
 			: [...DEFAULT_SETTINGS.sensitivePathPatterns],
@@ -224,8 +219,6 @@ function normalize(raw: Partial<HaratsanSettings>): HaratsanSettings {
 			? normalizeStringList(raw.deniedCommands).map((item) => item.toLowerCase())
 			: [...DEFAULT_SETTINGS.deniedCommands],
 		secretPatterns: normalizeStringList(raw.secretPatterns),
-		providerUsePolicy: normalizeProviderUsePolicy(raw.providerUsePolicy),
-		providerUsePatterns: normalizeStringList(raw.providerUsePatterns),
 		authHeader,
 		authScheme,
 		planWriteToFile: raw.planWriteToFile !== false,
@@ -370,10 +363,10 @@ export async function updateSettings(next: HaratsanSettings): Promise<HaratsanSe
 
 	const prev = getSettings();
 	sessionModel = String(next.model ?? '').trim();
-	const normalized = stripAdminLockedForStorage(normalize({
+	const normalized = stripUiExcludedKeys(stripAdminLockedForStorage(normalize({
 		...next,
 		model: ''
-	}));
+	})));
 	await store.update(STORAGE_KEY, normalized);
 	await syncChatViewLocationToWorkspace(getSettings().chatViewLocation);
 	const effective = getSettings();

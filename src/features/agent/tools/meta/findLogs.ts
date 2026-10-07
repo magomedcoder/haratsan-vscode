@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { getSettings } from '../../../../core/config/settings';
-import { AGENT_LIMITS, deniedDirectoryExcludeGlob } from '../../policy';
+import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { relativeFromUri, throwIfAborted } from '../../workspacePath';
+
+const FIND_EXCLUDE = '**/{.haratsan,node_modules,.git}/**';
 
 const DEFAULT_GLOBS = [
 	'**/*.log',
@@ -38,7 +39,7 @@ export const findLogsTool: ToolDefinition = {
 		);
 		const extra = asString(args, 'glob').trim();
 		const patterns = extra ? [extra, ...DEFAULT_GLOBS] : DEFAULT_GLOBS;
-		const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths);
+		const exclude = FIND_EXCLUDE;
 		const seen = new Set<string>();
 		const paths: string[] = [];
 

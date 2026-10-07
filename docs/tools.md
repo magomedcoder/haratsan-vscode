@@ -4,7 +4,7 @@
 
 **Agent** mode. Paths must stay inside the workspace. Models may use `/workspace/...` as a portable alias for the first workspace folder root.
 
-`.gitignore` and `.haratsanignore` at the workspace root are respected (together with `deniedPaths` from settings). The agent does **not** bypass ignore “to see everything”. Details: [security.md](security.md).
+`.gitignore` and `.haratsanignore` at the workspace root are respected. Path/folder ignore goes in `.haratsanignore` (not `config.json`). The agent does **not** bypass ignore “to see everything”. Details: [security.md](security.md).
 
 Confirmation follows **Settings -> Security**: `approvalPolicy` (`allow` / `ask` / `review` / `deny`) and `autoApprove` (asks -> allow; denies stay; **review** on edits still requires Accept + diff). Capability toggles can disable terminal / file / web entirely.
 

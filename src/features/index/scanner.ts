@@ -1,23 +1,12 @@
 import * as vscode from 'vscode';
-import { getSettings } from '../../core/config/settings';
 import { getFolderIgnoreMatcher, ignoresRelative } from '../agent/gitIgnore';
-import { AGENT_LIMITS, deniedDirectoryExcludeGlob, isDeniedRelativePath, looksBinary, toPosixRelative } from '../agent/policy';
+import { AGENT_LIMITS, looksBinary, toPosixRelative } from '../agent/policy';
 
 export const INDEX_SCAN_LIMITS = {
 	maxFiles: 4_000,
 } as const;
 
-const INDEX_EXCLUDE_GLOBS = ['**/.haratsan/**'];
-
-function buildExcludePattern(deniedPaths: readonly string[]): string {
-	const parts = [...INDEX_EXCLUDE_GLOBS];
-	const denied = deniedDirectoryExcludeGlob(deniedPaths);
-	if (denied) {
-		parts.push(denied);
-	}
-
-	return `{${parts.join(',')}}`;
-}
+const INDEX_EXCLUDE = '{**/.haratsan/**,**/.git/**,**/node_modules/**}';
 
 export interface ScannedFile {
 	uri: vscode.Uri;
@@ -25,11 +14,9 @@ export interface ScannedFile {
 }
 
 export async function listIndexableFiles(folder: vscode.WorkspaceFolder): Promise<ScannedFile[]> {
-	const settings = getSettings();
-	const exclude = buildExcludePattern(settings.deniedPaths);
 	const uris = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(folder, '**/*'),
-		exclude,
+		INDEX_EXCLUDE,
 		INDEX_SCAN_LIMITS.maxFiles,
 	);
 
@@ -43,10 +30,6 @@ export async function listIndexableFiles(folder: vscode.WorkspaceFolder): Promis
 		}
 
 		if (ignoresRelative(matcher, relative)) {
-			continue;
-		}
-
-		if (isDeniedRelativePath(relative, settings.deniedPaths)) {
 			continue;
 		}
 
@@ -68,7 +51,5 @@ export async function readIndexableText(uri: vscode.Uri): Promise<string | undef
 		return undefined;
 	}
 
-	return new TextDecoder('utf8', { 
-		fatal: false 
-	}).decode(raw);
+	return Buffer.from(raw).toString('utf8');
 }

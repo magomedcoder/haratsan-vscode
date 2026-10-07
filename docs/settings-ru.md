@@ -18,7 +18,7 @@ Effective `HaratsanSettings` собирается из нескольких сл
 
 1. Встроенные `DEFAULT_SETTINGS`
 2. User: `~/.config/haratsan/config.json`; override: `HARATSAN_CONFIG_DIR`
-3. Haratsan Settings UI (extension `globalState`) - только поля, **отличающиеся от defaults**
+3. Haratsan Settings UI (extension `globalState`) - только поля, **отличающиеся от defaults** (без `deniedCommands` / `sensitivePathPatterns` / `secretPatterns` - они не из UI)
 4. Project: `<workspace>/.haratsan/config.json` (только явно заданные ключи)
 5. **Admin policy** (наивысший): блокирует/форсирует security-subset - project/UI не могут переопределить
 
@@ -32,7 +32,7 @@ Effective `HaratsanSettings` собирается из нескольких сл
 2. Linux / macOS: `/etc/haratsan/policy.json`
 3. Windows: `%ProgramData%/haratsan/policy.json`
 
-Ключи из файла **блокируются** и форсируют effective settings. Lock-ключи: `approvalPolicy`, `autoApprove`, `continueLoopOnDeny`, `enableTerminal`, `enableFileReading`, `enableWorkspaceContext`, `webSearchEnabled`, `webFetchEnabled`, `allowExternalDirectory`, `otelEnabled`, `otelEndpoint`, `providerUsePolicy`, `providerUsePatterns`.
+Ключи из файла **блокируются** и форсируют effective settings. Lock-ключи: `approvalPolicy`, `autoApprove`, `continueLoopOnDeny`, `enableTerminal`, `enableFileReading`, `enableWorkspaceContext`, `webSearchEnabled`, `webFetchEnabled`, `allowExternalDirectory`, `otelEnabled`, `otelEndpoint`.
 
 Пример:
 
@@ -72,27 +72,27 @@ Shell-команды по событиям. Всегда есть `HARATSAN_HOOK
 
 Алиасы: `sessionDiff` / `session.diff`, `shellEnv` / `shell.env`, `fileWatcher` / `file.watcher`.
 
-Метаданные project-файла (`version`, `createdAt`, `$schema`) в settings не попадают. Массивы (например `deniedPaths`, `skillsPaths`) при merge **заменяются** целиком, не склеиваются.
+Метаданные project-файла (`version`, `createdAt`, `$schema`) в settings не попадают. Массивы (например `deniedCommands`, `skillsPaths`) при merge **заменяются** целиком, не склеиваются.
 
 ### JSON Schema
 
 С установленным расширением VSCode валидирует файлы через `contributes.jsonValidation` (`$schema` не обязателен):
 
-| Файл                                                             | Схема в расширении                   |
-| ---------------------------------------------------------------- | ------------------------------------ |
-| `**/.haratsan/config.json`, `**/gen/config.json` (user XDG)      | `schemas/gen-config.schema.json`     |
-| `**/.haratsan/hooks.json`                                        | `schemas/gen-hooks.schema.json`      |
-| `**/.haratsan/references.json`, `**/.haratsan/references/*.json` | `schemas/gen-references.schema.json` |
+| Файл                                                             | Схема в расширении                        |
+| ---------------------------------------------------------------- | ----------------------------------------- |
+| `**/.haratsan/config.json`, `**/haratsan/config.json` (user XDG) | `schemas/haratsan-config.schema.json`     |
+| `**/.haratsan/hooks.json`                                        | `schemas/haratsan-hooks.schema.json`      |
+| `**/.haratsan/references.json`, `**/.haratsan/references/*.json` | `schemas/haratsan-references.schema.json` |
 
 Опциональный `$schema` (редакторы без расширения или явное закрепление версии):
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/gen-config.schema.json"
+  "$schema": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-config.schema.json"
 }
 ```
 
-Аналогично для hooks / references - подставьте имя файла (`gen-hooks.schema.json`, `gen-references.schema.json`). Относительный путь, если схемы лежат в workspace: `"$schema": "./schemas/gen-config.schema.json"` (с поправкой на глубину).
+Аналогично для hooks / references - подставьте имя файла (`haratsan-hooks.schema.json`, `haratsan-references.schema.json`). Относительный путь, если схемы лежат в workspace: `"$schema": "./schemas/haratsan-config.schema.json"` (с поправкой на глубину).
 
 ## Основное
 
@@ -124,15 +124,26 @@ Shell-команды по событиям. Всегда есть `HARATSAN_HOOK
 | Таймаут (мс)            | `120000`     | min 1000                                  |
 | Макс. символов на входе | `8000`       | Лимит для фрагмента комментариев и т.п.   |
 
-## Безопасность
+## Безопасность (UI)
 
-| Поле                | По умолчанию        | Описание                                                                   |
-| ------------------- | ------------------- | -------------------------------------------------------------------------- |
-| Запрещённые пути    | пусто               | Glob’ы по одному на строку (`deniedPaths`)                                 |
-| Запрещённые команды | встроенный denylist | Имена бинарников для `run_command`, по одному на строку (`deniedCommands`) |
-| Шаблоны секретов    | пусто               | JS-regexp; совпадения -> `[REDACTED]`                                      |
+В Settings -> Безопасность остаются возможности агента и политика подтверждений (пресеты / Always / allow ask review deny).
 
-Есть кнопки «Вставить примеры». Полная политика путей и команд: [security-ru.md](security-ru.md).
+### Ignore путей и политика проекта - файлы, не UI
+
+| Что                                | Где править                                 | Описание                                                           |
+| ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| Пути и папки                       | **`.haratsanignore`** в корне workspace     | Синтаксис как у `.gitignore`; основной способ закрыть файлы агенту |
+| Команды / redact / sensitive write | **`.haratsan/config.json`** (или user JSON) | Ключи ниже; **не** для ignore папок                                |
+
+В `config.json` (не Settings UI, не globalState):
+
+| Ключ                    | По умолчанию        | Описание                                 |
+| ----------------------- | ------------------- | ---------------------------------------- |
+| `sensitivePathPatterns` | `.env`, `.env.*`    | Чувствительные пути (ask/deny на запись) |
+| `deniedCommands`        | встроенный denylist | Имена бинарников для `run_command`       |
+| `secretPatterns`        | `[]`                | JS-regexp; совпадения -> `[REDACTED]`    |
+
+При `Haratsan: Инициализировать проект` создаются `.haratsanignore` и `config.json` с ключами команд/redact. Полная политика: [security-ru.md](security-ru.md).
 
 ### Web search (`web_search`)
 

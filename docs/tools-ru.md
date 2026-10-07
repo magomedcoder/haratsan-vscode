@@ -4,7 +4,7 @@
 
 Режим **Agent**. Пути только внутри workspace. Модели могут писать `/workspace/...` как портативный алиас корня первой папки workspace.
 
-Учитываются `.gitignore` и `.haratsanignore` в корне workspace (вместе с `deniedPaths` из настроек). Агент **не** обходит ignore «чтобы всё видеть». Подробнее: [security-ru.md](security-ru.md).
+Учитываются `.gitignore` и `.haratsanignore` в корне workspace. Игнорирование путей/папок - через `.haratsanignore` (не через `config.json`). Агент **не** обходит ignore «чтобы всё видеть». Подробнее: [security-ru.md](security-ru.md).
 
 Подтверждение - **Settings -> Безопасность**: `approvalPolicy` (`allow` / `ask` / `review` / `deny`) и `autoApprove` (ask -> allow; deny остаётся; **review** на edits всё равно требует Accept + diff). Capability-флаги могут полностью отключить terminal / file / web.
 

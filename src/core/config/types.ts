@@ -27,13 +27,6 @@ export type TabEvictionPolicy = 'block' | 'closeOldestIdle';
 export type OutlineEngine = 'auto' | 'treesitter' | 'lsp' | 'typescript';
 // Нарезка чанков: AST через Tree-sitter / построчная эвристика / auto
 export type ChunkEngine = 'auto' | 'treesitter' | 'lines';
-/**
- * Политика `provider.use`:
- * - `allow` - allowlist (пустой список = всё разрешено; иначе нужен match)
- * - `deny` - denylist (match * отказ)
- */
-export type ProviderUsePolicy = 'allow' | 'deny';
-
 // Режимы с tool-calling (не «просто чат»)
 export function isAgentLikeMode(mode: ChatMode): boolean {
 	return mode === 'agent' || mode === 'debug' || mode === 'design' || mode === 'plan' || mode === 'multitask' || mode === 'project';
@@ -271,16 +264,10 @@ export interface HaratsanSettings {
 	 */
 	commentSystemPrompt: string;
 	/**
-	 * Glob-шаблоны запрещённых путей (по одному на строку).
-	 * Пусто - ничего не запрещать. 
-	 * На первом запуске НЕ автозаполняем (см. EXAMPLE_DENIED_PATHS).
-	 * Для `.env*` по умолчанию используй `sensitivePathPatterns`, а не этот список.
-	 */
-	deniedPaths: string[];
-	/**
 	 * Glob’ы чувствительных путей: запись/удаление всегда ask (или deny по политике),
 	 * даже при autoApprove / session-allow. Default: `.env`, `.env.*`.
-	 * Не путать с `deniedPaths` (жёсткий deny на уровне sandbox).
+	 * Только user/project JSON, не Settings UI.
+	 * Ignore путей/папок - `.haratsanignore`, не этот ключ.
 	 */
 	sensitivePathPatterns: string[];
 	/**
@@ -291,23 +278,15 @@ export interface HaratsanSettings {
 	/**
 	 * Имена бинарников, запрещённых для run_command (по одному на строку).
 	 * Пусто - не запрещать по имени (eval / git write / package install остаются в коде).
+	 * Только user/project JSON, не Settings UI.
 	 */
 	deniedCommands: string[];
 	/**
 	 * JS-регулярки для маскировки секретов в тексте, уходящем в LLM.
 	 * Пусто - не маскировать.
+	 * Только user/project JSON, не Settings UI.
 	 */
 	secretPatterns: string[];
-	/**
-	 * Политика использования провайдера: allowlist / denylist по паттернам.
-	 * default - allow
-	 */
-	providerUsePolicy: ProviderUsePolicy;
-	/**
-	 * Glob-паттерны (`*`) для host из baseUrl или model id.
-	 * Пусто + allow = всё разрешено; пусто + deny = ничего не запрещено.
-	 */
-	providerUsePatterns: string[];
 	/**
 	 * Имя HTTP-заголовка с ключом.
 	 * Пусто - Authorization.
@@ -546,10 +525,10 @@ export interface HaratsanSettings {
 	tabEvictionPolicy: TabEvictionPolicy;
 }
 
-// Примеры для кнопки в Security settings - не подставляются в deniedPaths автоматически
-export const EXAMPLE_DENIED_PATHS: string[] = ['.env','.env.*','credentials.json','secrets.json','id_rsa','id_ed25519','id_ecdsa','.npmrc','.pypirc','.netrc','*.pem','*.key','*.p12','*.pfx','node_modules','.git',];
+// Шаблоны для seed `.haratsanignore` при init проекта
+export const DEFAULT_HARATSANIGNORE_PATTERNS: string[] = ['.env','.env.*','credentials.json','secrets.json','id_rsa','id_ed25519','id_ecdsa','.npmrc','.pypirc','.netrc','*.pem','*.key','*.p12','*.pfx','node_modules','.git',];
 
-// Default sensitivePathPatterns: правки `.env*` -> ask/deny, отдельно от deniedPaths
+// Default sensitivePathPatterns: правки `.env*` -> ask/deny (отдельно от .haratsanignore)
 export const DEFAULT_SENSITIVE_PATH_PATTERNS: string[] = ['.env', '.env.*'];
 
 export const EXAMPLE_DENIED_COMMANDS: string[] = ['sudo', 'doas', 'su', 'rm', 'rmdir', 'unlink', 'dd', 'mkfs', 'fdisk', 'chmod', 'chown', 'chgrp', 'curl', 'wget', 'nc', 'ncat', 'netcat', 'ssh', 'scp', 'sftp', 'docker', 'podman', 'kubectl', 'nerdctl', 'sh', 'bash', 'zsh', 'fish', 'dash', 'csh', 'tcsh', 'cmd', 'powershell', 'pwsh',];
@@ -604,13 +583,10 @@ export const DEFAULT_SETTINGS: HaratsanSettings = {
 	commentStyle: 'inline',
 	previewBeforeApply: true,
 	commentSystemPrompt: '',
-	deniedPaths: [],
 	sensitivePathPatterns: [...DEFAULT_SENSITIVE_PATH_PATTERNS],
 	allowExternalDirectory: false,
 	deniedCommands: [...EXAMPLE_DENIED_COMMANDS],
 	secretPatterns: [],
-	providerUsePolicy: 'allow',
-	providerUsePatterns: [],
 	authHeader: 'Authorization',
 	authScheme: 'Bearer',
 	planWriteToFile: true,

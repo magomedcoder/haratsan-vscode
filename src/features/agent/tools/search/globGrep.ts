@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { getSettings } from '../../../../core/config/settings';
-import { AGENT_LIMITS, deniedDirectoryExcludeGlob } from '../../policy';
+import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { resolveWorkspacePath, throwIfAborted } from '../../workspacePath';
+
+const FIND_EXCLUDE = '**/{.haratsan,node_modules,.git}/**';
 
 function toGlob(pattern: string): string {
 	const trimmed = pattern.trim() || '**/*';
@@ -19,7 +20,7 @@ function toGlob(pattern: string): string {
 
 export const globTool: ToolDefinition = {
 	name: 'glob',
-	description: 'Найти файлы по glob внутри workspace (без чтения содержимого). Учитывает ignore и deniedPaths.',
+	description: 'Найти файлы по glob внутри workspace (без чтения содержимого). Учитывает .gitignore / .haratsanignore.',
 	parameters: {
 		type: 'object',
 		properties: {
@@ -38,8 +39,7 @@ export const globTool: ToolDefinition = {
 		throwIfAborted(ctx.signal);
 		const pattern = toGlob(asString(args, 'pattern', '**/*'));
 		const cap = Math.min(Math.max(1, asOptionalInt(args, 'max_results') ?? AGENT_LIMITS.maxSearchFiles), AGENT_LIMITS.maxSearchFiles);
-		const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths);
-		const uris = await vscode.workspace.findFiles(pattern, exclude, cap + 1);
+		const uris = await vscode.workspace.findFiles(pattern, FIND_EXCLUDE, cap + 1);
 		const files: string[] = [];
 		for (const uri of uris.slice(0, cap)) {
 			throwIfAborted(ctx.signal);
@@ -93,8 +93,7 @@ export const grepTool: ToolDefinition = {
 
 		const glob = toGlob(asString(args, 'glob', '**/*'));
 		const cap = Math.min(Math.max(1, asOptionalInt(args, 'max_results') ?? AGENT_LIMITS.maxSearchMatches), AGENT_LIMITS.maxSearchMatches);
-		const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths);
-		const uris = await vscode.workspace.findFiles(glob, exclude, AGENT_LIMITS.maxSearchFiles);
+		const uris = await vscode.workspace.findFiles(glob, FIND_EXCLUDE, AGENT_LIMITS.maxSearchFiles);
 		const matches: Array<{
 			path: string
 			line: number

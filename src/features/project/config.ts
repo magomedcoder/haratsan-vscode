@@ -1,10 +1,18 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { DEFAULT_HARATSANIGNORE_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS, EXAMPLE_DENIED_COMMANDS } from '../../core/config/types';
 
 export const HARATSAN_DIR_RELATIVE = '.haratsan';
 export const HARATSAN_CONFIG_RELATIVE = '.haratsan/config.json';
+export const HARATSAN_IGNORE_RELATIVE = '.haratsanignore';
 export const HARATSAN_CONFIG_VERSION = 1;
+
+const HARATSAN_IGNORE_CONTENT = `# .haratsanignore - пути/папки, недоступные агенту Haratsan
+# Синтаксис как у .gitignore. Не путать с .haratsan/config.json (команды / redact).
+#
+${DEFAULT_HARATSANIGNORE_PATTERNS.join('\n')}
+`;
 
 /**
  * Каталоги MVP под `.haratsan/` - создаются командой `haratsan.initProject` и `/init`.
@@ -29,7 +37,12 @@ Project files for Haratsan / файлы проекта Haratsan.
 | \`plans/\` | Multi-file plans | Планы агента |
 | \`scratch/\` | Ephemeral scripts (\`run_scratch\`) | Одноразовые скрипты |
 
-Also: \`config.json\` (opt-in), \`hooks.json\`, \`shell.json\` (env profiles), \`references.json\` (on demand), \`plan.md\`.
+Also under workspace root: \`.haratsanignore\` (ignore paths/folders for the agent; gitignore syntax).
+
+Inside \`.haratsan/\`: \`config.json\` (\`deniedCommands\`, \`sensitivePathPatterns\`, \`secretPatterns\`, other settings - not path ignore), \`hooks.json\`, \`shell.json\`, \`references.json\` (on demand), \`plan.md\`.
+
+Path/folder ignore -> edit \`.haratsanignore\` (not \`config.json\`).
+Commands / redact patterns -> edit \`.haratsan/config.json\` by hand (not Settings UI).
 
 Index / project map caches live in VS Code workspace storage (\`storageUri\`), not under \`.haratsan/\`.
 `;
@@ -110,6 +123,7 @@ export async function enableProject(folderPath?: string): Promise<vscode.Workspa
 
 	const root = folder.uri.fsPath;
 	await ensureHaratsanScaffold(root);
+	await writeIfMissing(path.join(root, HARATSAN_IGNORE_RELATIVE), HARATSAN_IGNORE_CONTENT);
 
 	const configPath = path.join(root, HARATSAN_CONFIG_RELATIVE);
 	try {
@@ -118,6 +132,10 @@ export async function enableProject(folderPath?: string): Promise<vscode.Workspa
 		const config: HaratsanProjectConfig = {
 			version: HARATSAN_CONFIG_VERSION,
 			createdAt: new Date().toISOString(),
+			// Команды / redact / sensitive write - не path-ignore (path-ignore = .haratsanignore)
+			sensitivePathPatterns: [...DEFAULT_SENSITIVE_PATH_PATTERNS],
+			deniedCommands: [...EXAMPLE_DENIED_COMMANDS],
+			secretPatterns: [],
 		};
 		await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
 	}

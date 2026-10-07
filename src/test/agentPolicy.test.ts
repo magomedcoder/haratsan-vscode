@@ -12,7 +12,7 @@ import { redactSecrets } from '../features/agent/secrets.js';
 import { parseToolArguments, sanitizeToolArgumentsForApi } from '../features/agent/types.js';
 import { AgentWriteTracker, denyWriteOverUserEdits } from '../features/agent/userEdits.js';
 import { matchesSensitivePath } from '../features/agent/permissionPolicy.js';
-import { EXAMPLE_DENIED_PATHS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS } from '../core/config/types.js';
+import { DEFAULT_HARATSANIGNORE_PATTERNS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS } from '../core/config/types.js';
 
 suite('path sandbox', () => {
 	const root = path.resolve('/tmp/ws');
@@ -53,12 +53,12 @@ suite('path sandbox', () => {
 	});
 
 	test('шаблоны из настроек запрещают .env, ключи и node_modules', () => {
-		assert.ok(isDeniedRelativePath('node_modules/pkg/index.js', EXAMPLE_DENIED_PATHS));
-		assert.ok(isDeniedRelativePath('.env', EXAMPLE_DENIED_PATHS));
-		assert.ok(isDeniedRelativePath('app/.env.local', EXAMPLE_DENIED_PATHS));
-		assert.ok(isDeniedRelativePath('certs/server.pem', EXAMPLE_DENIED_PATHS));
-		assert.ok(isDeniedRelativePath('.git/config', EXAMPLE_DENIED_PATHS));
-		assert.ok(!isDeniedRelativePath('src/index.ts', EXAMPLE_DENIED_PATHS));
+		assert.ok(isDeniedRelativePath('node_modules/pkg/index.js', DEFAULT_HARATSANIGNORE_PATTERNS));
+		assert.ok(isDeniedRelativePath('.env', DEFAULT_HARATSANIGNORE_PATTERNS));
+		assert.ok(isDeniedRelativePath('app/.env.local', DEFAULT_HARATSANIGNORE_PATTERNS));
+		assert.ok(isDeniedRelativePath('certs/server.pem', DEFAULT_HARATSANIGNORE_PATTERNS));
+		assert.ok(isDeniedRelativePath('.git/config', DEFAULT_HARATSANIGNORE_PATTERNS));
+		assert.ok(!isDeniedRelativePath('src/index.ts', DEFAULT_HARATSANIGNORE_PATTERNS));
 	});
 
 	test('sensitivePathPatterns ловит .env*', () => {

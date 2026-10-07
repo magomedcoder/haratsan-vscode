@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { deepMerge, parseFileConfig, pickNonDefaultSettings } from '../core/config/layers.js';
+import { deepMerge, parseFileConfig, pickNonDefaultSettings, stripUiExcludedKeys, UI_LAYER_EXCLUDED_KEYS } from '../core/config/layers.js';
 import { applyAdminPolicy, matchAdminPattern, parseAdminPolicy, reloadAdminPolicy, resetAdminPolicyForTests, resolveAdminPolicyCandidates } from '../core/config/adminPolicy.js';
 import { DEFAULT_SETTINGS } from '../core/config/types.js';
 import { getHaratsanUserConfigDir, getHaratsanUserConfigPath } from '../core/config/userPaths.js';
@@ -52,6 +52,44 @@ suite('config layers', () => {
 		});
 		assert.strictEqual(overlay.systemPrompt, 'custom');
 		assert.strictEqual(overlay.temperature, undefined);
+	});
+
+	test('pickNonDefaultSettings: игнорирует команды/redact из UI-хранилища', () => {
+		const overlay = pickNonDefaultSettings({
+			systemPrompt: 'x',
+			deniedCommands: ['curl'],
+			sensitivePathPatterns: ['*.pem'],
+			secretPatterns: ['secret'],
+		});
+		assert.strictEqual(overlay.systemPrompt, 'x');
+		for (const key of UI_LAYER_EXCLUDED_KEYS) {
+			assert.strictEqual(overlay[key], undefined, key);
+		}
+	});
+
+	test('stripUiExcludedKeys убирает ключи команд/redact', () => {
+		const stripped = stripUiExcludedKeys({
+			...DEFAULT_SETTINGS,
+			deniedCommands: ['curl'],
+			systemPrompt: 'keep',
+		});
+		assert.strictEqual(stripped.systemPrompt, 'keep');
+		assert.strictEqual('deniedCommands' in stripped, false);
+		assert.strictEqual('sensitivePathPatterns' in stripped, false);
+		assert.strictEqual('secretPatterns' in stripped, false);
+	});
+
+	test('parseFileConfig: project может задать команды/redact; deniedPaths игнорируется', () => {
+		const parsed = parseFileConfig({
+			deniedPaths: ['.env'],
+			deniedCommands: ['rm'],
+			sensitivePathPatterns: ['.env.*'],
+			secretPatterns: ['token'],
+		});
+		assert.strictEqual((parsed.settings as { deniedPaths?: unknown }).deniedPaths, undefined);
+		assert.deepStrictEqual(parsed.settings.deniedCommands, ['rm']);
+		assert.deepStrictEqual(parsed.settings.sensitivePathPatterns, ['.env.*']);
+		assert.deepStrictEqual(parsed.settings.secretPatterns, ['token']);
 	});
 
 	test('getHaratsanUserConfigPath уважает HARATSAN_CONFIG_DIR и XDG', () => {
@@ -111,15 +149,12 @@ suite('admin policy', () => {
 			$schema: './schemas/haratsan-policy.schema.json',
 			webSearchEnabled: false,
 			systemPrompt: 'ignored',
-			providerUsePatterns: ['corp-*', ''],
 			otelEnabled: false,
 		});
 		assert.strictEqual(parsed.settings.webSearchEnabled, false);
 		assert.strictEqual(parsed.settings.otelEnabled, false);
 		assert.strictEqual((parsed.settings as { systemPrompt?: unknown }).systemPrompt, undefined);
-		assert.deepStrictEqual(parsed.settings.providerUsePatterns, ['corp-*', '']);
 		assert.ok(parsed.lockedKeys.includes('webSearchEnabled'));
-		assert.ok(parsed.lockedKeys.includes('providerUsePatterns'));
 		assert.ok(parsed.lockedKeys.includes('otelEnabled'));
 	});
 
@@ -144,8 +179,7 @@ suite('admin policy', () => {
 			JSON.stringify({
 				webSearchEnabled: false,
 				allowExternalDirectory: false,
-				providerUsePolicy: 'deny',
-				providerUsePatterns: ['blocked-*'],
+				enableTerminal: false,
 			}),
 			'utf8',
 		);
@@ -157,13 +191,11 @@ suite('admin policy', () => {
 		const merged = applyAdminPolicy({
 			webSearchEnabled: true,
 			allowExternalDirectory: true,
-			providerUsePolicy: 'allow',
-			providerUsePatterns: [],
+			enableTerminal: true,
 		});
 		assert.strictEqual(merged.webSearchEnabled, false);
 		assert.strictEqual(merged.allowExternalDirectory, false);
-		assert.strictEqual(merged.providerUsePolicy, 'deny');
-		assert.deepStrictEqual(merged.providerUsePatterns, ['blocked-*']);
+		assert.strictEqual(merged.enableTerminal, false);
 
 		fs.rmSync(dir, { recursive: true, force: true });
 	});

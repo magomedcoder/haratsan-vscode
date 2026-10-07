@@ -372,7 +372,6 @@ export class AgentSession {
 			buildAgentSystemPrompt({
 				toolsAvailable,
 				textToolFormat,
-				deniedPaths: settings.deniedPaths,
 				userEditsAppendix,
 				planAppendix,
 				planEditsAppendix,

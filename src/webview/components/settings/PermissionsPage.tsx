@@ -1,5 +1,4 @@
 import type { ApprovalActionType, ApprovalMode } from '../../../core/config/approvalTypes';
-import { EXAMPLE_DENIED_COMMANDS, EXAMPLE_DENIED_PATHS, EXAMPLE_SECRET_PATTERNS, DEFAULT_SENSITIVE_PATH_PATTERNS } from '../../../core/config/types';
 import { t } from '../../i18n';
 import type { SettingsPageProps } from './pages';
 import { FieldTextarea, FieldToggle } from './SettingsFields';
@@ -19,13 +18,6 @@ export function PermissionsPage({
 	persistedAlwaysAllow = [],
 	onPersistedAlwaysAllowChange,
 }: PermissionsPageProps) {
-	const setListField = (
-		key: 'deniedPaths' | 'deniedCommands' | 'secretPatterns' | 'sensitivePathPatterns',
-		text: string,
-	) => {
-		setField(key, text.split(/\r?\n/));
-	};
-
 	const setApprovalRule = (
 		action: ApprovalActionType,
 		patch: Partial<{
@@ -158,81 +150,6 @@ export function PermissionsPage({
 						</div>
 					);
 				})}
-			</SettingsSection>
-
-			<SettingsSection titleKey="settings.section.permissions.lists" defaultOpen={false}>
-				<div className="field">
-					<span className="field__label">{t('settings.deniedPaths.label')}</span>
-					<textarea
-						className="field__input field__input--multiline"
-						rows={6}
-						value={draft.deniedPaths.join('\n')}
-						placeholder={EXAMPLE_DENIED_PATHS.join('\n')}
-						spellCheck={false}
-						onChange={(e) => setListField('deniedPaths', e.target.value)}
-					/>
-					<span className="field__hint">{t('settings.deniedPaths.hint')}</span>
-					<button
-						className="btn btn--secondary"
-						type="button"
-						onClick={() => setField('deniedPaths', [...EXAMPLE_DENIED_PATHS])}
-					>
-						{t('settings.insertExamples')}
-					</button>
-				</div>
-
-				<div className="field">
-					<span className="field__label">{t('settings.sensitivePathPatterns.label')}</span>
-					<textarea
-						className="field__input field__input--multiline"
-						rows={4}
-						value={draft.sensitivePathPatterns.join('\n')}
-						placeholder={DEFAULT_SENSITIVE_PATH_PATTERNS.join('\n')}
-						spellCheck={false}
-						onChange={(e) => setListField('sensitivePathPatterns', e.target.value)}
-					/>
-					<span className="field__hint">{t('settings.sensitivePathPatterns.hint')}</span>
-				</div>
-
-				<div className="field">
-					<span className="field__label">{t('settings.deniedCommands.label')}</span>
-					<textarea
-						className="field__input field__input--multiline"
-						rows={6}
-						value={draft.deniedCommands.join('\n')}
-						placeholder={EXAMPLE_DENIED_COMMANDS.join('\n')}
-						spellCheck={false}
-						onChange={(e) => setListField('deniedCommands', e.target.value)}
-					/>
-					<span className="field__hint">{t('settings.deniedCommands.hint')}</span>
-					<button
-						className="btn btn--secondary"
-						type="button"
-						onClick={() => setField('deniedCommands', [...EXAMPLE_DENIED_COMMANDS])}
-					>
-						{t('settings.insertExamples')}
-					</button>
-				</div>
-
-				<div className="field">
-					<span className="field__label">{t('settings.secretPatterns.label')}</span>
-					<textarea
-						className="field__input field__input--multiline"
-						rows={5}
-						value={draft.secretPatterns.join('\n')}
-						placeholder={EXAMPLE_SECRET_PATTERNS.join('\n')}
-						spellCheck={false}
-						onChange={(e) => setListField('secretPatterns', e.target.value)}
-					/>
-					<span className="field__hint">{t('settings.secretPatterns.hint')}</span>
-					<button
-						className="btn btn--secondary"
-						type="button"
-						onClick={() => setField('secretPatterns', [...EXAMPLE_SECRET_PATTERNS])}
-					>
-						{t('settings.insertExamples')}
-					</button>
-				</div>
 			</SettingsSection>
 		</>
 	);

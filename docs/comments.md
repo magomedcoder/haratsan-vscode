@@ -27,7 +27,7 @@ If the model changed more than comments:
 
 ## Diff UX
 
-- Virtual documents (`gen-comment:`) are not cleared while the diff tab is open.
+- Virtual documents (`haratsan-comment:`) are not cleared while the diff tab is open.
 - Language highlighting follows `languageId`.
 - Confirmation is modal.
 

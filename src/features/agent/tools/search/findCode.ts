@@ -5,13 +5,14 @@ import { getSettings } from '../../../../core/config/settings';
 import { semanticSearchWorkspace } from '../../../index/embeddings';
 import { getIndexManager } from '../../../index/IndexManager';
 import { findInSymbolIndex } from '../../../index/symbolIndex';
-import { AGENT_LIMITS, deniedDirectoryExcludeGlob } from '../../policy';
+import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { resolveWorkspacePath, throwIfAborted } from '../../workspacePath';
 import { FIND_CODE_MAX_CHARS, mergeFindCodeHits, truncateFindCodeJson, type FindCodeRawHit } from './findCodeMerge';
-
 export { FIND_CODE_MAX_CHARS, mergeFindCodeHits, truncateFindCodeJson } from './findCodeMerge';
 export type { FindCodeMergedHit, FindCodeRawHit, FindCodeMergeBoosts } from './findCodeMerge';
+
+const FIND_EXCLUDE = '**/{.haratsan,node_modules,.git}/**';
 
 const execFileAsync = promisify(execFile);
 const DEFAULT_MAX_RESULTS = 12;
@@ -170,8 +171,7 @@ async function runGlob(query: string, cap: number, signal?: AbortSignal): Promis
 	}
 
 	const pattern = toGlobPattern(query);
-	const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths);
-	const uris = await vscode.workspace.findFiles(pattern, exclude, cap);
+	const uris = await vscode.workspace.findFiles(pattern, FIND_EXCLUDE, cap);
 	const hits: FindCodeRawHit[] = [];
 	for (const uri of uris) {
 		throwIfAborted(signal);
@@ -200,8 +200,7 @@ async function runGrep(query: string, cap: number, signal?: AbortSignal): Promis
 		};
 	}
 
-	const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths);
-	const uris = await vscode.workspace.findFiles('**/*', exclude, AGENT_LIMITS.maxSearchFiles);
+	const uris = await vscode.workspace.findFiles('**/*', FIND_EXCLUDE, AGENT_LIMITS.maxSearchFiles);
 	const matches: FindCodeRawHit[] = [];
 	const q = query.toLowerCase();
 	for (const uri of uris) {

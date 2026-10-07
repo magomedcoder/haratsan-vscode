@@ -20,7 +20,6 @@ import { UsagePage } from './settings/UsagePage';
 import { ActivityPage } from './settings/ActivityPage';
 import { AgentBehaviorPage } from './settings/AgentBehaviorPage';
 import { AgentsPage, type AgentsPageData } from './settings/AgentsPage';
-
 interface SettingsScreenProps {
 	settings: HaratsanSettings;
 	personas?: PersonaOption[];
@@ -188,19 +187,17 @@ export function SettingsScreen({
 	};
 
 	const onReset = () => {
-		const next: HaratsanSettings = {
-			...DEFAULT_SETTINGS,
-			deniedPaths: [...DEFAULT_SETTINGS.deniedPaths],
-			sensitivePathPatterns: [...DEFAULT_SETTINGS.sensitivePathPatterns],
-			deniedCommands: [...DEFAULT_SETTINGS.deniedCommands],
-			secretPatterns: [...DEFAULT_SETTINGS.secretPatterns],
-		};
+		const next: HaratsanSettings = { ...DEFAULT_SETTINGS };
 		// Admin-forced значения остаются из effective settings
 		for (const key of lockedKeySet) {
 			if (key in settings) {
 				(next as unknown as Record<string, unknown>)[key] = settings[key as keyof HaratsanSettings];
 			}
 		}
+		// Команды/redact - не из UI; сохраняем effective (project/user/default)
+		next.sensitivePathPatterns = [...settings.sensitivePathPatterns];
+		next.deniedCommands = [...settings.deniedCommands];
+		next.secretPatterns = [...settings.secretPatterns];
 		
 		setDraft(next);
 		setApiKeyDraft('');
@@ -306,17 +303,7 @@ export function SettingsScreen({
 							/>
 						) : null}
 						{page === 'agent' ? (
-							<>
-								<AgentBehaviorPage draft={draft} setField={setField} />
-								<IndexingPage
-									draft={draft}
-									setField={setField}
-									indexStatus={indexStatus}
-									onLoadIndexStatus={onLoadIndexStatus}
-									onCancelIndex={onCancelIndex}
-									onRepairIndex={onRepairIndex}
-								/>
-							</>
+							<AgentBehaviorPage draft={draft} setField={setField} />
 						) : null}
 						{page === 'security' ? (
 							<>
@@ -331,6 +318,14 @@ export function SettingsScreen({
 						) : null}
 						{page === 'project' ? (
 							<>
+								<IndexingPage
+									draft={draft}
+									setField={setField}
+									indexStatus={indexStatus}
+									onLoadIndexStatus={onLoadIndexStatus}
+									onCancelIndex={onCancelIndex}
+									onRepairIndex={onRepairIndex}
+								/>
 								<RulesSkillsPage
 									data={rulesSkills}
 									onLoad={onLoadRulesSkills}

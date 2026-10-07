@@ -14,12 +14,11 @@ The agent works **only** inside the open workspace:
 
 A path is unavailable to tools if **any** layer matches:
 
-| Layer               | Source                     | Purpose                                                   |
-| ------------------- | -------------------------- | --------------------------------------------------------- |
-| Workspace / symlink | built-in                   | Do not leave the project                                  |
-| `.gitignore`        | file at workspace **root** | Like git: build output, `node_modules`, logs...           |
-| `.haratsanignore`   | file at workspace **root** | Haratsan-only: tracked in git but off-limits to the agent |
-| `deniedPaths`       | settings                   | User globs (`.env`, `*.pem`, ...)                         |
+| Layer               | Source                     | Purpose                                              |
+| ------------------- | -------------------------- | ---------------------------------------------------- |
+| Workspace / symlink | built-in                   | Do not leave the project                             |
+| `.gitignore`        | file at workspace **root** | Like git: build output, `node_modules`, logs...      |
+| `.haratsanignore`   | file at workspace **root** | Hide paths/folders from the agent (gitignore syntax) |
 
 The `.gitignore` / `.haratsanignore` matcher is cached for one agent turn (`ignore` package, **no** `git check-ignore` spawn). The `.git` directory is always closed.
 

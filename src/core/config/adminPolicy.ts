@@ -27,8 +27,6 @@ export const ADMIN_POLICY_KEYS = [
 	'allowExternalDirectory',
 	'otelEnabled',
 	'otelEndpoint',
-	'providerUsePolicy',
-	'providerUsePatterns',
 ] as const satisfies readonly (keyof HaratsanSettings)[];
 
 export type AdminPolicyKey = (typeof ADMIN_POLICY_KEYS)[number];

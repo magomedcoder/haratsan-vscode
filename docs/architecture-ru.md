@@ -18,8 +18,7 @@ Comment command
 ## Политика путей
 
 1. `resolveAgainstFolders` / symlink check  
-2. `deniedPaths` (`policy.ts`)  
-3. `.gitignore` + `.haratsanignore` (`gitIgnore.ts`, кэш на turn)
+2. `.gitignore` + `.haratsanignore` (`gitIgnore.ts`, кэш на turn)
 
 ## Совместное редактирование
 
@@ -55,7 +54,7 @@ Comment command
 ## Слои конфига
 
 - User JSON + project `.haratsan/config.json` мержатся в effective `HaratsanSettings` (`src/core/config/layers.ts`).
-- Опциональная **admin policy** (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` / `%ProgramData%/gen/policy.json`) блокирует security-subset - наивысший приоритет (`src/core/config/adminPolicy.ts`).
+- Опциональная **admin policy** (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` / `%ProgramData%/haratsan/policy.json`) блокирует security-subset - наивысший приоритет (`src/core/config/adminPolicy.ts`).
 - Приоритет: defaults user UI (non-default) project **admin policy**. Remote `.well-known` / полный MDM - не реализован.
 - Подробнее: [settings-ru.md](settings-ru.md).
 

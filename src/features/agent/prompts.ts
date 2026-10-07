@@ -9,7 +9,6 @@ export function buildAgentSystemPrompt(options?: {
 	toolsAvailable: boolean;
 	// Native tools API недоступен - модель шлёт <tool_call> в тексте
 	textToolFormat?: boolean;
-	deniedPaths?: readonly string[];
 	userEditsAppendix?: string;
 	planAppendix?: string;
 	planEditsAppendix?: string;
@@ -50,7 +49,6 @@ export function buildAgentSystemPrompt(options?: {
 		|| options?.mode === 'project'
 			? options.mode
 			: 'agent';
-	const deniedPaths = (options?.deniedPaths ?? []).map((item) => item.trim()).filter((item) => item && !item.startsWith('#'));
 
 	const patchHint = includeApplyPatch ? 'apply_patch' : 'write_file / apply_workspace_edit';
 	const targetedEditHint = includeApplyPatch
@@ -134,10 +132,7 @@ export function buildAgentSystemPrompt(options?: {
 			planWriteToFile
 				? 'Пока активен план - следуй ему и файлу `.haratsan/plan.md` (пользователь может править файл; при перезапуске VSCode план загружается только из файла). Новая задача: update_plan replace/clear или удаление `.haratsan/plan.md`.'
 				: 'Пока активен план - следуй ему в текущей сессии. Если есть `.haratsan/plan.md`, он подхватывается при старте и перед ходом. Новая задача: update_plan replace/clear.',
-			'Пути - относительно корня workspace. Можно писать `/workspace/...` как портативный корень (то же, что `.` / путь от первой папки). Учитывай `.gitignore` и `.haratsanignore` в корне: игнорируемые файлы недоступны для tools.',
-			deniedPaths.length > 0
-				? `Также не трогай файлы по шаблонам из настроек: ${deniedPaths.join(', ')}.`
-				: 'Дополнительные запреты путей задаются в настройках (deniedPaths).',
+			'Пути - относительно корня workspace. Можно писать `/workspace/...` как портативный корень (то же, что `.` / путь от первой папки). Учитывай `.gitignore` и `.haratsanignore` в корне: игнорируемые файлы/папки недоступны для tools. Ignore путей - только в `.haratsanignore` (не в `.haratsan/config.json`).',
 		);
 		if (readOnly) {
 			lines.push('Сейчас режим только чтения (edits/delete/shell = deny): без записи, удаления и shell-команд.');

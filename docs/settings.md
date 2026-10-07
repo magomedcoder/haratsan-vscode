@@ -18,7 +18,7 @@ Effective `HaratsanSettings` is merged from several layers (**low * high** prece
 
 1. Built-in `DEFAULT_SETTINGS`
 2. User: `~/.config/haratsan/config.json`; override: `HARATSAN_CONFIG_DIR`
-3. Haratsan Settings UI (extension `globalState`) - only fields that **differ from defaults**
+3. Haratsan Settings UI (extension `globalState`) - only fields that **differ from defaults** (excludes `deniedCommands` / `sensitivePathPatterns` / `secretPatterns` - not from UI)
 4. Project: `<workspace>/.haratsan/config.json` (only keys present in the file)
 5. **Admin policy** (highest): locks/forces a security subset - cannot be overridden by project or UI
 
@@ -32,7 +32,7 @@ Optional machine-wide policy file (first match):
 2. Linux / macOS: `/etc/haratsan/policy.json`
 3. Windows: `%ProgramData%/haratsan/policy.json`
 
-Keys present in the file are **locked** and force effective settings. Supported lock keys: `approvalPolicy`, `autoApprove`, `continueLoopOnDeny`, `enableTerminal`, `enableFileReading`, `enableWorkspaceContext`, `webSearchEnabled`, `webFetchEnabled`, `allowExternalDirectory`, `otelEnabled`, `otelEndpoint`, `providerUsePolicy`, `providerUsePatterns`.
+Keys present in the file are **locked** and force effective settings. Supported lock keys: `approvalPolicy`, `autoApprove`, `continueLoopOnDeny`, `enableTerminal`, `enableFileReading`, `enableWorkspaceContext`, `webSearchEnabled`, `webFetchEnabled`, `allowExternalDirectory`, `otelEnabled`, `otelEndpoint`.
 
 Example:
 
@@ -72,27 +72,27 @@ Shell commands per event. Always set `HARATSAN_HOOK_EVENT`. Non-zero exit **veto
 
 Aliases: `sessionDiff` / `session.diff`, `shellEnv` / `shell.env`, `fileWatcher` / `file.watcher`.
 
-Project metadata (`version`, `createdAt`, `$schema`) is not mapped into settings. Arrays (e.g. `deniedPaths`, `skillsPaths`) are **replaced** on merge, not concatenated.
+Project metadata (`version`, `createdAt`, `$schema`) is not mapped into settings. Arrays (e.g. `deniedCommands`, `skillsPaths`) are **replaced** on merge, not concatenated.
 
 ### JSON Schema
 
 With the extension installed, VSCode validates matching files via `contributes.jsonValidation` (no `$schema` required):
 
-| File                                                             | Schema in extension                  |
-| ---------------------------------------------------------------- | ------------------------------------ |
-| `**/.haratsan/config.json`, `**/gen/config.json` (user XDG)      | `schemas/gen-config.schema.json`     |
-| `**/.haratsan/hooks.json`                                        | `schemas/gen-hooks.schema.json`      |
-| `**/.haratsan/references.json`, `**/.haratsan/references/*.json` | `schemas/gen-references.schema.json` |
+| File                                                             | Schema in extension                       |
+| ---------------------------------------------------------------- | ----------------------------------------- |
+| `**/.haratsan/config.json`, `**/haratsan/config.json` (user XDG) | `schemas/haratsan-config.schema.json`     |
+| `**/.haratsan/hooks.json`                                        | `schemas/haratsan-hooks.schema.json`      |
+| `**/.haratsan/references.json`, `**/.haratsan/references/*.json` | `schemas/haratsan-references.schema.json` |
 
 Optional `$schema` (editors without the extension, or explicit pinning):
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/gen-config.schema.json"
+  "$schema": "https://raw.githubusercontent.com/magomedcoder/haratsan-vscode/main/schemas/haratsan-config.schema.json"
 }
 ```
 
-Same pattern for hooks / references - swap the filename (`gen-hooks.schema.json`, `gen-references.schema.json`). Relative path from a workspace that vendors the repo: `"$schema": "./schemas/gen-config.schema.json"` (adjust depth).
+Same pattern for hooks / references - swap the filename (`haratsan-hooks.schema.json`, `haratsan-references.schema.json`). Relative path from a workspace that vendors the repo: `"$schema": "./schemas/haratsan-config.schema.json"` (adjust depth).
 
 ## General
 
@@ -124,15 +124,26 @@ Comment options live on the **Chat** screen (collapsible **Comments** section): 
 | Timeout (ms)         | `120000` | min 1000                          |
 | Max input characters | `8000`   | Limit for comment fragments, etc. |
 
-## Security
+## Security (UI)
 
-| Field           | Default           | Description                                                     |
-| --------------- | ----------------- | --------------------------------------------------------------- |
-| Denied paths    | empty             | Globs, one per line (`deniedPaths`)                             |
-| Denied commands | built-in denylist | Binary names for `run_command`, one per line (`deniedCommands`) |
-| Secret patterns | empty             | JS regexps; matches -> `[REDACTED]`                             |
+Settings -> Security keeps agent capabilities and approval policy (presets / Always / allow ask review deny).
 
-There are “Insert examples” buttons. Full path/command policy: [security.md](security.md).
+### Path ignore & project policy - files, not UI
+
+| What                                | Edit where                                 | Description                                                |
+| ----------------------------------- | ------------------------------------------ | ---------------------------------------------------------- |
+| Paths and folders                   | **`.haratsanignore`** at workspace root    | Gitignore syntax; primary way to hide files from the agent |
+| Commands / redact / sensitive write | **`.haratsan/config.json`** (or user JSON) | Keys below; **not** for folder ignore                      |
+
+In `config.json` (not Settings UI, not globalState):
+
+| Key                     | Default           | Description                         |
+| ----------------------- | ----------------- | ----------------------------------- |
+| `sensitivePathPatterns` | `.env`, `.env.*`  | Sensitive paths (ask/deny on write) |
+| `deniedCommands`        | built-in denylist | Binary names for `run_command`      |
+| `secretPatterns`        | `[]`              | JS regexps; matches -> `[REDACTED]` |
+
+`Haratsan: Initialize project` seeds `.haratsanignore` and a `config.json` with command/redact keys. Full policy: [security.md](security.md).
 
 ### Web search (`web_search`)
 

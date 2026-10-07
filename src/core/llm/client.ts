@@ -5,7 +5,6 @@ import { httpErrorMessage, isAbortError, isRetryableError, LlmHttpError, parseEr
 import type { LlmRetryInfo } from './types';
 import { logLlm } from './log';
 import { beginLlmCompleteSpan } from './otel';
-import { assertProviderUseAllowed } from './providerUsePolicy';
 import { parseModelsListResponse, type LlmModelOption } from './modelLabel';
 import { parseUsage } from './usage';
 import { extractThinkingDelta, splitAssistantPayload } from './thinking';
@@ -285,9 +284,6 @@ export class HttpLlmClient implements LlmClient {
 			if (!model) {
 				throw new Error(vscode.l10n.t('llm.needModel'));
 			}
-
-			// Policy provider.use - до любого HTTP
-			assertProviderUseAllowed(settings, model);
 
 			// Soft probe n_ctx до первого 400 (не блокирует complete)
 			await this.probeNCtxSoft(settings, model, params.signal);

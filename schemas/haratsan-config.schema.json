@@ -68,10 +68,6 @@
 		},
 		"personaId": { "type": "string" },
 		"usernameDisplay": { "type": "string" },
-		"deniedPaths": {
-			"type": "array",
-			"items": { "type": "string" }
-		},
 		"deniedCommands": {
 			"type": "array",
 			"items": { "type": "string" }
@@ -83,16 +79,6 @@
 		"secretPatterns": {
 			"type": "array",
 			"items": { "type": "string" }
-		},
-		"providerUsePolicy": {
-			"type": "string",
-			"enum": ["allow", "deny"],
-			"description": "provider.use: allow = allowlist of patterns; deny = denylist. Empty patterns allow all."
-		},
-		"providerUsePatterns": {
-			"type": "array",
-			"items": { "type": "string" },
-			"description": "Glob patterns matched against baseUrl hostname or model id."
 		},
 		"allowExternalDirectory": { "type": "boolean" },
 		"enableTerminal": { "type": "boolean" },

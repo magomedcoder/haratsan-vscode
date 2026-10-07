@@ -18,8 +18,7 @@ Comment command
 ## Path policy
 
 1. `resolveAgainstFolders` / symlink check  
-2. `deniedPaths` (`policy.ts`)  
-3. `.gitignore` + `.haratsanignore` (`gitIgnore.ts`, cached per turn)
+2. `.gitignore` + `.haratsanignore` (`gitIgnore.ts`, cached per turn)
 
 ## Collaborative editing
 
@@ -55,7 +54,7 @@ The agent loads body via `plugin` (by name) or `read_file` using the catalog pat
 ## Config layers
 
 - User JSON + project `.haratsan/config.json` merge into effective `HaratsanSettings` (`src/core/config/layers.ts`).
-- Optional **admin policy** (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` / `%ProgramData%/gen/policy.json`) locks a security subset - highest precedence (`src/core/config/adminPolicy.ts`).
+- Optional **admin policy** (`HARATSAN_ADMIN_POLICY` / `/etc/haratsan/policy.json` / `%ProgramData%/haratsan/policy.json`) locks a security subset - highest precedence (`src/core/config/adminPolicy.ts`).
 - Precedence: defaults user UI (non-default) project **admin policy**. Remote `.well-known` / full MDM not implemented.
 - Details: [settings.md](settings.md).
 

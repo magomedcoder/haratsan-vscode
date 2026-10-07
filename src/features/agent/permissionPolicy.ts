@@ -103,7 +103,7 @@ export function isRiskySubject(action: ApprovalActionType, subject: string): boo
 	return false;
 }
 
-// Совпадение пути с sensitivePathPatterns (например `.env`, `.env.*`) - те же glob’ы, что deniedPaths
+// Совпадение пути с sensitivePathPatterns (например `.env`, `.env.*`)
 export function matchesSensitivePath(subject: string, patterns: readonly string[]): boolean {
 	const s = subject.trim().replace(/\\/g, '/');
 	if (!s || patterns.length === 0) {

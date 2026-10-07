@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import { getSettings } from '../../core/config/settings';
-import { deniedDirectoryExcludeGlob } from '../agent/policy';
 import { formatMentionPathArg, type MentionKind } from './mentions';
 import { getSessionPeek } from './sessionStore';
 import { loadReferenceDefs } from '../project/references';
@@ -373,12 +371,11 @@ export async function suggestMentions(query: string): Promise<MentionSuggestion[
 
 	const kind: 'file' | 'folder' = prefix.startsWith('folder') ? 'folder' : 'file';
 
-	const exclude = deniedDirectoryExcludeGlob(getSettings().deniedPaths) ?? '**/{.haratsan,node_modules,.git}/**';
 	const glob = pathQuery ? `**/*${pathQuery.replace(/[^\w./-]/g, '')}*` : '**/*';
 
 	const uris = await vscode.workspace.findFiles(
 		new vscode.RelativePattern(folder, glob),
-		exclude,
+		'**/{.haratsan,node_modules,.git}/**',
 		30,
 	);
 

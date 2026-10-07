@@ -30,17 +30,7 @@
 		"webFetchEnabled": { "type": "boolean" },
 		"allowExternalDirectory": { "type": "boolean" },
 		"otelEnabled": { "type": "boolean" },
-		"otelEndpoint": { "type": "string" },
-		"providerUsePolicy": {
-			"type": "string",
-			"enum": ["allow", "deny"],
-			"description": "Force provider.use mode (allowlist / denylist)."
-		},
-		"providerUsePatterns": {
-			"type": "array",
-			"items": { "type": "string" },
-			"description": "Force provider.use patterns (host or model id globs)."
-		}
+		"otelEndpoint": { "type": "string" }
 	},
 	"additionalProperties": false
 }
