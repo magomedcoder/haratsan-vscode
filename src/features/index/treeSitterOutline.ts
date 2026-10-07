@@ -1,5 +1,5 @@
 /**
- * Записи outline из Tree-sitter spans -> общая схема OutlineEntry
+ * Записи outline из Tree-sitter spans -> общая схема OutlineEntry.
  */
 
 import type { OutlineEntry, OutlineKind } from './tsOutlineParse';
@@ -13,6 +13,11 @@ const KIND_MAP: Record<string, OutlineKind> = {
 	type: 'type',
 	enum: 'enum',
 	variable: 'variable',
+	namespace: 'namespace',
+	module: 'module',
+	field: 'field',
+	property: 'property',
+	macro: 'macro',
 };
 
 export function outlineEntriesFromTreeSitterSpans(
@@ -25,12 +30,9 @@ export function outlineEntriesFromTreeSitterSpans(
 		if (!kind) {
 			continue;
 		}
-
-		// Пропуск анонимных / шумных имён
 		if (!s.name || s.name === s.kind || s.name.length > 200) {
 			continue;
 		}
-
 		out.push({
 			name: s.name,
 			kind,
@@ -51,6 +53,5 @@ export async function extractOutlineViaTreeSitter(
 	if (!parsed || parsed.spans.length === 0) {
 		return undefined;
 	}
-	
 	return outlineEntriesFromTreeSitterSpans(relativePath, parsed.spans);
 }

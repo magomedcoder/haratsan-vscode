@@ -39,7 +39,7 @@ export async function loadManifest(folderFsPath: string): Promise<IndexManifest>
 	}
 }
 
-// Проверить манифест на диске: corrupt / missing digests (для UI Repair)
+// Проверить манифест на диске: повреждён / нет digests (для UI Repair)
 export async function inspectManifest(folderFsPath: string): Promise<{
 	exists: boolean;
 	corrupt: boolean;

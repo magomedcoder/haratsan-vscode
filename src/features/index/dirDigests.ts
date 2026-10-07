@@ -108,7 +108,7 @@ export function applyDirDigests(manifest: IndexManifest): void {
 	manifest.dirDigests = recomputeDirDigests(manifest.files);
 }
 
-// Прямой потомок каталога для Merkle skip (size alone недостаточно).
+// Прямой потомок каталога для пропуска Merkle (одного size недостаточно).
 export type DirRewalkChild = {
 	relative: string;
 	size: number;
@@ -128,6 +128,7 @@ export function canSkipDirRewalk(
 	manifest: IndexManifest,
 	dir: string,
 	filesUnderDir: ReadonlyArray<DirRewalkChild>,
+	opts?: { forceContentHash?: boolean },
 ): boolean {
 	if (!manifest.dirDigests?.[dir]) {
 		return false;
@@ -162,7 +163,12 @@ export function canSkipDirRewalk(
 			continue;
 		}
 
-		// Без явного hash - только size+mtime gate (доверенный stored content-hash)
+		// Жёсткий режим: без явного content-hash не пропускать (mtime ненадёжен)
+		if (opts?.forceContentHash) {
+			return false;
+		}
+
+		// Без явного hash - только size+mtime (доверенный сохранённый content-hash)
 		if (
 			child.mtimeMs === undefined ||
 			record.mtimeMs === undefined ||

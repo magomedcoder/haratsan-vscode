@@ -18,8 +18,9 @@
 - LSP **symbol index**: `symbols.json`.
 - **Outline** (`outlineEngine`, default **auto**): Tree-sitter wasm -> иначе TS `createSourceFile` / LSP / regex. Значения: `auto` \| `treesitter` \| `lsp` \| `typescript`. В `outline.json` у записей поле `source` (`treesitter` \| `typescript` \| `lsp` \| `regex`).
 - **Chunking** (`chunkEngine`, default **auto**): AST через Tree-sitter (стабильные content-hash id чанков) или `lines`. Лимиты: ~400KB / ~2s parse; soft-fail.
-- Грамматики в `dist/tree-sitter/*.wasm` (whitelist MVP: typescript/tsx/javascript/python/go/rust/java/cpp/c_sharp/ruby/php/bash); lazy load.
-- Метрики skip Merkle -> Activity + опционально OTEL (`otelEnabled`) span `index.full`.
+- Грамматики: MVP в VSIX + opt-in `css`; `treeSitterLanguages` (пусто = MVP, `*` = все доступные). Reserved (kotlin/swift/...) - когда wasm в `dist/tree-sitter/`.
+- Perf: пул Parser, кэш spans, LRU языков; `treeSitterUseWorker` уступает event loop.
+- Метрики parse -> Activity + OTEL `index.treesitter`; skip Merkle -> `index.full`.
 - `.haratsan/` не индексируется.
 - При изменении файла - per-file reindex; outline/symbols с debounce.
 - Результаты `codebase_search` - фрагменты (path, строки, snippet, score).

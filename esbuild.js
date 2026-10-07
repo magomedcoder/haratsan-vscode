@@ -21,6 +21,7 @@ const TREE_SITTER_COPY = new Set([
 	'tree-sitter-ruby.wasm',
 	'tree-sitter-php.wasm',
 	'tree-sitter-bash.wasm',
+	'tree-sitter-css.wasm',
 ]);
 
 function copyTreeSitterWasm() {
@@ -31,12 +32,19 @@ function copyTreeSitterWasm() {
 		return;
 	}
 
+	const copySet = new Set(TREE_SITTER_COPY);
+	for (const name of String(process.env.TREE_SITTER_EXTRA || '')
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)) {
+		copySet.add(name.endsWith('.wasm') ? name : `tree-sitter-${name}.wasm`);
+	}
+
 	fs.mkdirSync(destDir, { recursive: true });
 	for (const name of fs.readdirSync(srcDir)) {
-		if (!TREE_SITTER_COPY.has(name)) {
+		if (!copySet.has(name)) {
 			continue;
 		}
-
 		fs.copyFileSync(path.join(srcDir, name), path.join(destDir, name));
 	}
 }

@@ -15,7 +15,7 @@ export const SYMBOL_INDEX_LIMITS = {
 	staleMs: 15 * 60_000,
 } as const;
 
-// vscode.SymbolKind numeric values (без require('vscode') на parse-пути)
+// Числовые значения vscode.SymbolKind (без require('vscode') на пути разбора)
 const KIND_NAMES: Record<number, string> = {
 	0: 'file',
 	1: 'module',
@@ -114,7 +114,7 @@ async function loadVscode(): Promise<typeof import('vscode')> {
 	return import('vscode');
 }
 
-// LSP-backed symbol index (без Tree-sitter): vscode.executeDocumentSymbolProvider по файлам из manifest, с throttle и cap.
+// Индекс символов через LSP (без Tree-sitter): vscode.executeDocumentSymbolProvider по файлам из manifest, с throttle и cap.
 export async function buildSymbolIndex(
 	folder: vscodeTypes.WorkspaceFolder,
 	opts?: { signal?: AbortSignal; maxFiles?: number },
@@ -199,7 +199,7 @@ async function saveSymbolDoc(folderFs: string, doc: SymbolIndexDocument): Promis
 	await writeSymbolIndex(folderFs, doc);
 }
 
-// Per-file upsert в symbols.json через LSP DocumentSymbolProvider
+// Обновление одного файла в symbols.json через LSP DocumentSymbolProvider
 export async function updateSymbolIndexForFile(
 	folder: vscodeTypes.WorkspaceFolder,
 	relative: string,

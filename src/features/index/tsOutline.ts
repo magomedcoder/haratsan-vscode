@@ -76,7 +76,7 @@ export async function saveOutlineIndex(folderFsPath: string, doc: OutlineDocumen
 	await fs.writeFile(file, JSON.stringify(doc, null, 2), 'utf8');
 }
 
-/** Sync-extract: TS/JS через createSourceFile; остальные языки - только regex fallback. */
+/** Синхронное извлечение: TS/JS через createSourceFile; остальные языки - только regex fallback. */
 export function extractOutlineForFile(relativePath: string, sourceText: string): OutlineEntry[] {
 	if (isJsLikeOutlinePath(relativePath)) {
 		return parseTsOutline(relativePath, sourceText);
@@ -112,7 +112,8 @@ export async function extractOutlineFromLsp(
 	}
 }
 
-// Порядок: Tree-sitter (если engine позволяет) -> TS createSourceFile (JS-like) / LSP (non-JS) -> regex fallback
+// Порядок: Tree-sitter (если engine позволяет) -> TS / LSP / regex.
+// Строгий режим: outlineEngine=treesitter без скрытого запасного пути.
 export async function extractOutlineForFileAsync(
 	relativePath: string,
 	uri: vscode.Uri,
@@ -120,20 +121,18 @@ export async function extractOutlineForFileAsync(
 ): Promise<OutlineEntry[]> {
 	const settings = getSettings();
 	const eng = settings.outlineEngine ?? 'auto';
+	const strictTreesitter = eng === 'treesitter';
 
 	if (sourceText && shouldUseTreeSitterOutline(settings, relativePath)) {
 		const tsOutline = await extractOutlineViaTreeSitter(relativePath, sourceText);
 		if (tsOutline && tsOutline.length > 0) {
 			return tsOutline;
 		}
-
-		if (eng === 'treesitter') {
-
+		if (strictTreesitter) {
+			return [];
 		}
-	}
-
-	if (eng === 'treesitter' && !isJsLikeOutlinePath(relativePath)) {
-
+	} else if (strictTreesitter) {
+		return [];
 	}
 
 	if (isJsLikeOutlinePath(relativePath)) {
@@ -172,7 +171,17 @@ function clipText(text: string): string {
 		: text;
 }
 
-// Пересобрать outline.json в workspace storage: TS/JS createSourceFile; non-JS LSP (+ regex fallback)
+// Доля outline entries по `source` (для IndexEngineStatus)
+export function outlineSourceBreakdown(entries: OutlineEntry[]): Record<string, number> {
+	const out: Record<string, number> = {};
+	for (const e of entries) {
+		const s = e.source ?? 'unknown';
+		out[s] = (out[s] ?? 0) + 1;
+	}
+	return out;
+}
+
+// Пересобрать outline.json - тот же путь, что extractOutlineForFileAsync (сначала Tree-sitter)
 export async function rebuildOutlineIndex(folder: vscode.WorkspaceFolder): Promise<OutlineDocument> {
 	const files = await listIndexableFiles(folder);
 	const entries: OutlineEntry[] = [];
@@ -194,17 +203,8 @@ export async function rebuildOutlineIndex(folder: vscode.WorkspaceFolder): Promi
 		try {
 			const text = await readIndexableText(file.uri);
 			const clipped = text ? clipText(text) : undefined;
-			const remaining = OUTLINE_INDEX_LIMITS.maxEntries - entries.length;
-			let part: OutlineEntry[];
-
-			if (isJsLikeOutlinePath(file.relative)) {
-				part = clipped ? parseTsOutline(file.relative, clipped) : [];
-			} else {
-				const lsp = await extractOutlineFromLsp(file.relative, file.uri, remaining);
-				const regex = clipped && isRegexOutlineFallbackPath(file.relative)
-					? parseRegexOutlineFallback(file.relative, clipped)
-					: [];
-				part = preferLspOrRegexOutline(lsp, regex);
+			const part = await extractOutlineForFileAsync(file.relative, file.uri, clipped);
+			if (!isJsLikeOutlinePath(file.relative)) {
 				await sleep(OUTLINE_INDEX_LIMITS.lspThrottleMs);
 			}
 
@@ -254,7 +254,7 @@ function isOutlineablePath(relative: string): boolean {
 	return isJsLikeOutlinePath(relative) || isRegexOutlineFallbackPath(relative);
 }
 
-// Per-file upsert в outline.json (без полного rebuild)
+// Обновление одного файла в outline.json (без полного rebuild)
 export async function updateOutlineIndexForFile(
 	folder: vscode.WorkspaceFolder,
 	relative: string,

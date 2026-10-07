@@ -248,7 +248,7 @@ export function checkRetrievalGate(
 	};
 }
 
-// CI fail gate: бросает Error со списком провалов
+// Порог CI: бросает Error со списком провалов
 export function assertRetrievalGate(
 	metrics: RetrievalSuiteMetrics,
 	thresholds: RetrievalGateThresholds = DEFAULT_RETRIEVAL_GATE,
@@ -256,6 +256,6 @@ export function assertRetrievalGate(
 	const result = checkRetrievalGate(metrics, thresholds);
 	if (!result.ok) {
 		const detail = result.failures.join('; ');
-		throw new Error(`retrieval eval gate failed: ${detail}`);
+		throw new Error(`порог eval retrieval не пройден: ${detail}`);
 	}
 }

@@ -3,7 +3,11 @@ import { getSettings } from '../../core/config/settings';
 import type { HaratsanSettings } from '../../core/config/types';
 import { isIndexStorageAvailable } from './indexStorage';
 import { getIndexManagerInstance } from './IndexManager';
+import { astChunkRatio, getIndexRunStats } from './indexStats';
+import { isSqliteIndexAvailable } from './indexSqlite';
+import { detectMerkleIssues, loadMerkle } from './merkle';
 import { inspectManifest, loadManifest } from './store';
+import { isTreeSitterAvailable, listSupportedTreeSitterLanguages } from './treeSitter';
 import type { IndexProgress } from './types';
 
 /**
@@ -14,7 +18,6 @@ export type IndexEngineMode = 'cpu-trigram' | 'remote' | 'local-vector';
 
 export interface IndexEngineStatus {
 	mode: IndexEngineMode;
-	// GPU-ускорение - всегда false (нет локального GPU embedding runtime)
 	gpu: boolean;
 	indexingEnabled: boolean;
 	progressState?: IndexProgress['state'];
@@ -23,17 +26,20 @@ export interface IndexEngineStatus {
 	updatedAt?: string;
 	lastError?: string;
 	partialErrors?: string[];
-	// Битый JSON или несовместимый version манифеста
 	corrupt?: boolean;
-	// Есть файлы, но dirDigests пуст - нужен Repair
 	missingDirDigests?: boolean;
+	// Расхождение manifest <-> merkle
+	merkleMismatch?: boolean;
+	treeSitterAvailable?: boolean;
+	treeSitterGrammars?: string[];
+	// 0..1 доля файлов с AST-чанками в последнем прогоне
+	astChunkRatio?: number;
+	outlineBySource?: Record<string, number>;
+	merkleSkipPct?: number;
+	indexStorageBackend?: string;
+	sqliteAvailable?: boolean;
 }
 
-/**
- * Приоритет: localEmbeddingsMode=vector -> local-vector;
- * иначе remote если есть embeddingsBaseUrl|baseUrl;
- * иначе CPU trigram.
- */
 export function resolveIndexEngineMode(
 	settings: Pick<HaratsanSettings, 'embeddingsBaseUrl' | 'baseUrl' | 'localEmbeddingsMode'>,
 ): IndexEngineMode {
@@ -62,8 +68,18 @@ export async function collectIndexEngineStatus(): Promise<IndexEngineStatus> {
 	const partialErrors = progress?.partialErrors;
 	let corrupt = false;
 	let missingDirDigests = false;
+	let merkleMismatch = false;
+	let astRatio: number | undefined;
+	let outlineBySource: Record<string, number> | undefined;
+	let merkleSkipPct: number | undefined;
 
 	if (folderFs) {
+		const stats = getIndexRunStats(folderFs);
+		astRatio = astChunkRatio(stats);
+		outlineBySource = stats.outlineBySource;
+		if (stats.lastMerkle && stats.lastMerkle.filesTotal > 0) {
+			merkleSkipPct = Math.round((100 * stats.lastMerkle.filesSkipped) / stats.lastMerkle.filesTotal);
+		}
 		try {
 			if (!isIndexStorageAvailable()) {
 				progressState = progressState && progressState !== 'idle' ? progressState : 'error';
@@ -74,14 +90,26 @@ export async function collectIndexEngineStatus(): Promise<IndexEngineStatus> {
 				missingDirDigests = probe.missingDirDigests;
 				if (probe.corrupt && (!progressState || progressState === 'idle' || progressState === 'ready')) {
 					progressState = 'error';
-					lastError = lastError || `Corrupt index manifest (${probe.repairReason ?? 'invalid'})`;
+					lastError = lastError || `Повреждённый manifest индекса (${probe.repairReason ?? 'invalid'})`;
 				} else if (
 					probe.missingDirDigests &&
 					(!progressState || progressState === 'idle' || progressState === 'ready') &&
 					!lastError
 				) {
-					lastError = 'Missing dirDigests - Repair recommended';
+					lastError = 'Нет dirDigests - рекомендуется Repair';
 				}
+				
+				try {
+					const manifest = await loadManifest(folderFs);
+					const merkle = await loadMerkle(folderFs);
+					const issues = detectMerkleIssues(manifest, merkle);
+					if (issues.mismatches.length || issues.orphans.length || issues.missingNodes.length) {
+						merkleMismatch = true;
+						if (!lastError) {
+							lastError = `Расхождение Merkle (файлы=${issues.mismatches.length}) - рекомендуется Repair`;
+						}
+					}
+				} catch {}
 			}
 		} catch {}
 	}
@@ -113,5 +141,13 @@ export async function collectIndexEngineStatus(): Promise<IndexEngineStatus> {
 		partialErrors,
 		corrupt,
 		missingDirDigests,
+		merkleMismatch,
+		treeSitterAvailable: isTreeSitterAvailable(),
+		treeSitterGrammars: listSupportedTreeSitterLanguages(),
+		astChunkRatio: astRatio,
+		outlineBySource,
+		merkleSkipPct,
+		indexStorageBackend: settings.indexStorageBackend,
+		sqliteAvailable: isSqliteIndexAvailable(),
 	};
 }

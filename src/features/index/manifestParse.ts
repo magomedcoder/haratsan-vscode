@@ -66,7 +66,7 @@ export function parseManifestJson(raw: string): ManifestParseResult {
 
 	const fileCount = Object.keys(files).length;
 	const digestCount = Object.keys(dirDigests).length;
-	// Пустой индекс без digests - норма; иначе missing digests -> repair recompute
+	// Пустой индекс без digests - норма; иначе нет digests -> нужен repair/recompute
 	const missingDirDigests = fileCount > 0 && (!hasDirDigestsField || digestCount === 0);
 
 	const manifest: IndexManifest = {
@@ -84,7 +84,7 @@ export function parseManifestJson(raw: string): ManifestParseResult {
 	return { ok: true, manifest, missingDirDigests };
 }
 
-// Нужен ли repair (битый JSON / version / missing digests)
+// Нужен ли repair (битый JSON / version / нет digests)
 export function needsManifestRepair(result: ManifestParseResult): boolean {
 	if (!result.ok) {
 		return true;
@@ -149,7 +149,7 @@ export class IndexAbortFlag {
 	}
 }
 
-export function createIndexAbortError(message = 'Index cancelled'): Error {
+export function createIndexAbortError(message = 'Индексация отменена'): Error {
 	const err = new Error(message);
 	err.name = 'AbortError';
 	return err;
@@ -159,7 +159,7 @@ export function isIndexAbortError(err: unknown): boolean {
 	return err instanceof Error && err.name === 'AbortError';
 }
 
-// Сводка partial errors для lastError (короткая строка в UI)
+// Сводка частичных ошибок для lastError (короткая строка в UI)
 export function summarizePartialErrors(errors: string[], max = 3): string {
 	if (errors.length === 0) {
 		return '';
@@ -167,8 +167,8 @@ export function summarizePartialErrors(errors: string[], max = 3): string {
 	
 	const head = errors.slice(0, max).join('; ');
 	if (errors.length <= max) {
-		return `Partial index errors (${errors.length}): ${head}`;
+		return `Частичные ошибки индекса (${errors.length}): ${head}`;
 	}
 
-	return `Partial index errors (${errors.length}): ${head}; ...+${errors.length - max}`;
+	return `Частичные ошибки индекса (${errors.length}): ${head}; ...+${errors.length - max}`;
 }

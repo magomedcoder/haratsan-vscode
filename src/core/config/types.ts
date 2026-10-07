@@ -439,6 +439,30 @@ export interface HaratsanSettings {
 	 */
 	chunkEngine: ChunkEngine;
 	/**
+	 * Языки Tree-sitter: пусто = MVP whitelist; `*` / `all` = все доступные wasm;
+	 * иначе список id (typescript, css, ...). Opt-in сверх MVP: css (+ reserved без wasm).
+	 */
+	treeSitterLanguages: string[];
+	/**
+	 * Уступать event loop перед parse (заготовка под worker; wasm остаётся in-process).
+	 * default - false
+	 */
+	treeSitterUseWorker: boolean;
+	/**
+	 * Dir skip только при явном content-hash (без size+mtime gate).
+	 * default - false
+	 */
+	indexForceContentHash: boolean;
+	/**
+	 * Backend индекса: json (default) | sqlite sidecar для merkle при больших репо.
+	 */
+	indexStorageBackend: 'json' | 'sqlite';
+	/**
+	 * Порог fileCount для записи merkle в SQLite (при backend=sqlite).
+	 * default - 500
+	 */
+	indexSqliteMinFiles: number;
+	/**
 	 * Сколько последних ходов оставлять при /compact.
 	 * min - 1, max - 40, default - 4
 	 */
@@ -614,6 +638,11 @@ export const DEFAULT_SETTINGS: HaratsanSettings = {
 	localEmbeddingsMode: 'trigram',
 	outlineEngine: 'auto',
 	chunkEngine: 'auto',
+	treeSitterLanguages: [],
+	treeSitterUseWorker: false,
+	indexForceContentHash: false,
+	indexStorageBackend: 'json',
+	indexSqliteMinFiles: 500,
 	compactTailTurns: 4,
 	compactPruneToolResults: true,
 	compactReservedTokens: 0,

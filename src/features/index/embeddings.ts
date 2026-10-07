@@ -154,7 +154,7 @@ export async function embedTexts(texts: string[], signal?: AbortSignal): Promise
 
 				const statusMatch = err instanceof Error && /HTTP (429|5\d\d)/.test(err.message);
 				if (!statusMatch && attempt > 0) {
-					// Не-retryable после первой попытки (4xx кроме 429)
+					// Не повторять после первой попытки (4xx кроме 429)
 					break;
 				}
 
@@ -299,7 +299,7 @@ async function remoteSemanticSearchWorkspace(
 
 	let chunks = pickChunksForRemote(manifest.chunks);
 
-	// Fallback: нет индекса - ad-hoc sample файлов (как раньше, но с кэшем)
+	// Запасной путь: нет индекса - ad-hoc sample файлов (как раньше, но с кэшем)
 	if (chunks.length === 0) {
 		const maxFiles = opts?.maxFiles ?? 40;
 		const uris = await vscode.workspace.findFiles(
@@ -370,7 +370,7 @@ async function remoteSemanticSearchWorkspace(
 		source: 'remote',
 	});
 
-	// Если кэш шире чем текущий sample - фильтруем только выбранные chunk ids
+	// Если кэш шире текущего sample - фильтруем только выбранные id чанков
 	const allow = new Set(chunks.map((c) => c.id));
 	const filtered = hits.filter((h) => allow.has(h.chunkId) || h.chunkId.startsWith('adhoc:'));
 	const use = filtered.length > 0 ? filtered : hits;
@@ -403,14 +403,14 @@ export async function semanticSearchWorkspace(
 			return local;
 		}
 
-		// Пустой vector index -> trigram как последний resort
+		// Пустой vector index -> trigram как последний запасной путь
 		return trigramSemanticFallback(query, maxResults);
 	}
 
 	if (mode === 'off') {
 		if (unavailable) {
 			throw new Error(
-				'semantic_search: remote embeddings unavailable (localEmbeddingsMode=off)',
+				'semantic_search: удалённые embeddings недоступны (localEmbeddingsMode=off)',
 			);
 		}
 
@@ -437,7 +437,7 @@ export async function semanticSearchWorkspace(
 	const local = await trigramSemanticFallback(query, maxResults);
 	if (local.length === 0 && unavailable) {
 		throw new Error(
-			'semantic_search: remote embeddings unavailable; trigram/vector index empty or not ready',
+			'semantic_search: удалённые embeddings недоступны; trigram/vector индекс пуст или не готов',
 		);
 	}
 
@@ -445,10 +445,14 @@ export async function semanticSearchWorkspace(
 }
 
 // Пересобрать local-hash векторы после индексации (вызывается из IndexManager)
-export async function rebuildLocalVectorIndex(folderFsPath: string): Promise<number> {
+export async function rebuildLocalVectorIndex(
+	folderFsPath: string,
+	opts?: { onlyChunkIds?: ReadonlyArray<string> },
+): Promise<number> {
 	const manifest = await loadManifest(folderFsPath);
 	const prev = await loadVectorIndex(folderFsPath);
-	const next = syncLocalHashVectors(manifest, prev);
+	const only = opts?.onlyChunkIds?.length ? new Set(opts.onlyChunkIds) : undefined;
+	const next = syncLocalHashVectors(manifest, prev, only ? { onlyChunkIds: only } : undefined);
 	await saveVectorIndex(folderFsPath, next);
 	return Object.values(next.entries).filter((e) => e.source === 'local-hash').length;
 }

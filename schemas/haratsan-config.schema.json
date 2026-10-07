@@ -224,6 +224,29 @@
 			"enum": ["auto", "treesitter", "lines"],
 			"description": "Chunking: auto (AST Tree-sitter when available) | treesitter | lines"
 		},
+		"treeSitterLanguages": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Tree-sitter languages: empty = MVP; * / all = all available wasm; else ids (typescript, css, ...)"
+		},
+		"treeSitterUseWorker": {
+			"type": "boolean",
+			"description": "Yield event loop before Tree-sitter parse (worker placeholder; parse stays in-process)"
+		},
+		"indexForceContentHash": {
+			"type": "boolean",
+			"description": "Require explicit content-hash for dir skip (ignore mtime gate)"
+		},
+		"indexStorageBackend": {
+			"type": "string",
+			"enum": ["json", "sqlite"],
+			"description": "Index storage: json (default) | sqlite sidecar for merkle when fileCount >= indexSqliteMinFiles"
+		},
+		"indexSqliteMinFiles": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Min fileCount to persist merkle in SQLite when backend=sqlite"
+		},
 		"compactTailTurns": {
 			"type": "integer",
 			"minimum": 1,

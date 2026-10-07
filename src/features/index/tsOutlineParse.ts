@@ -13,7 +13,12 @@ export type OutlineKind =
 	| 'function'
 	| 'method'
 	| 'import'
-	| 'variable';
+	| 'variable'
+	| 'namespace'
+	| 'module'
+	| 'field'
+	| 'property'
+	| 'macro';
 
 export type OutlineSource = 'treesitter' | 'typescript' | 'lsp' | 'regex';
 
@@ -251,15 +256,18 @@ export function mapLspSymbolKindToOutlineKind(kind: number): OutlineKind | undef
 		case 8: // Constructor
 			return 'method';
 		case 6: // Property
+			return 'property';
 		case 7: // Field
+			return 'field';
 		case 12: // Variable
 		case 13: // Constant
 		case 21: // EnumMember
 			return 'variable';
 		case 1: // Module
-		case 2: // Namespace
 		case 3: // Package
-			return 'class';
+			return 'module';
+		case 2: // Namespace
+			return 'namespace';
 		default:
 			return undefined;
 	}
@@ -406,7 +414,7 @@ export function outlineEntriesFromLspProviderResult(
 	return [];
 }
 
-// Дешёвый regex-fallback для не-TS языков (Python/Go-ish)
+// Дешёвый regex-запасной путь для не-TS языков (Python/Go-ish)
 export function parseRegexOutlineFallback(relativePath: string, sourceText: string): OutlineEntry[] {
 	const out: OutlineEntry[] = [];
 	const lines = sourceText.split(/\r?\n/);

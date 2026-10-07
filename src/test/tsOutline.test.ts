@@ -41,7 +41,10 @@ suite('tsOutlineParse', () => {
 		assert.strictEqual(mapLspSymbolKindToOutlineKind(12), 'variable');
 		assert.strictEqual(mapLspSymbolKindToOutlineKind(13), 'variable'); // Constant
 		assert.strictEqual(mapLspSymbolKindToOutlineKind(25), 'type'); // TypeParameter
-		assert.strictEqual(mapLspSymbolKindToOutlineKind(1), 'class'); // Module
+		assert.strictEqual(mapLspSymbolKindToOutlineKind(1), 'module'); // Module
+		assert.strictEqual(mapLspSymbolKindToOutlineKind(2), 'namespace'); // Namespace
+		assert.strictEqual(mapLspSymbolKindToOutlineKind(6), 'property'); // Property
+		assert.strictEqual(mapLspSymbolKindToOutlineKind(7), 'field'); // Field
 		assert.strictEqual(mapLspSymbolKindToOutlineKind(0), undefined); // File
 		assert.strictEqual(mapLspSymbolKindToOutlineKind(14), undefined); // String
 	});

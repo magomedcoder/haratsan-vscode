@@ -44,7 +44,7 @@ export function localHashEmbed(text: string, dims: number = DEFAULT_DIMS): numbe
 	const vec = new Array<number>(d).fill(0);
 	const tokens = tokenize(text);
 	if (tokens.length === 0) {
-		// Fallback: char 3-grams если нет токенов
+		// Запасной путь: char 3-граммы, если нет токенов
 		const raw = text.toLowerCase();
 		for (let i = 0; i + 2 < raw.length; i += 1) {
 			const gram = raw.slice(i, i + 3);

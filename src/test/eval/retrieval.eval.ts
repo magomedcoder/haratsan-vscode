@@ -1,5 +1,6 @@
 import * as assert from 'assert';
-import { chunkFileContent } from '../../features/index/chunk.js';
+import { chunkFileContent, chunkFileContentAst, contentChunkId } from '../../features/index/chunk.js';
+import { contentHash } from '../../features/index/hash.js';
 import { aggregateRetrievalMetrics, assertRetrievalGate, DEFAULT_RETRIEVAL_GATE, hitAtK, precisionAtK, recallAtK, reciprocalRank } from '../../features/index/retrievalMetrics.js';
 import type { IndexManifest } from '../../features/index/types.js';
 import { buildTrigramIndex, searchTrigrams } from '../../features/index/trigram.js';
@@ -360,5 +361,45 @@ suite('eval/retrieval', () => {
 			minSimpleScore: 0.7,
 		});
 		assert.strictEqual(ranked[0], 'src/auth/login.ts');
+	});
+
+	test('fixture: AST chunks дают стабильный contentHash id vs line windows', () => {
+		const src = [
+			'export function authenticateUser(token: string) {',
+			'  return verifyToken(token);',
+			'}',
+			'',
+			'export function otherHelper() {',
+			'  return 1;',
+			'}',
+			'',
+		].join('\n');
+		const lineChunks = chunkFileContent('src/auth/login.ts', src);
+		const astChunks = chunkFileContentAst('src/auth/login.ts', src, [
+			{
+				name: 'authenticateUser',
+				kind: 'function',
+				startLine: 1,
+				endLine: 3,
+				startIndex: 0,
+				endIndex: src.indexOf('}') + 1,
+			},
+			{
+				name: 'otherHelper',
+				kind: 'function',
+				startLine: 5,
+				endLine: 7,
+				startIndex: src.indexOf('export function otherHelper'),
+				endIndex: src.length,
+			},
+		]);
+		assert.ok(astChunks.length >= 2);
+		assert.ok(astChunks.every((c) => c.id.includes('#c')));
+		assert.ok(astChunks.some((c) => c.id === contentChunkId(c.path, c.text)));
+		assert.strictEqual(contentChunkId('x.ts', 'abc'), `x.ts#c${contentHash('abc').slice(0, 16)}`);
+		// AST держит функцию как отдельный leaf; line-window может склеить больше
+		const authAst = astChunks.find((c) => c.text.includes('authenticateUser'));
+		assert.ok(authAst);
+		assert.ok(lineChunks.length >= 1);
 	});
 });

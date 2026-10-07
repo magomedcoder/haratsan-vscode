@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getSettings } from '../../../../core/config/settings';
 import { getIndexManager } from '../../../index/IndexManager';
+import { getIndexRunStats } from '../../../index/indexStats';
 import { AGENT_LIMITS } from '../../policy';
 import { asOptionalInt, asString, type ToolContext, type ToolDefinition, type ToolResult } from '../../types';
 import { throwIfAborted } from '../../workspacePath';
@@ -18,6 +19,10 @@ export const codebaseSearchTool: ToolDefinition = {
 			max_results: {
 				type: 'integer',
 				description: 'Лимит фрагментов',
+			},
+			debug: {
+				type: 'boolean',
+				description: 'Включить merkle skip % / AST ratio в ответ',
 			},
 		},
 		required: ['query'],
@@ -68,6 +73,9 @@ export const codebaseSearchTool: ToolDefinition = {
 		}
 
 		const hits = await manager.search(query, cap);
+		const folderFs = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+		const debug = args.debug === true;
+		const stats = folderFs && debug ? getIndexRunStats(folderFs) : undefined;
 		return {
 			ok: true,
 			content: JSON.stringify({
@@ -76,6 +84,21 @@ export const codebaseSearchTool: ToolDefinition = {
 				fileCount: progress.fileCount,
 				chunkCount: progress.chunkCount,
 				hits,
+				...(stats
+					? {
+							indexDebug: {
+								merkleSkipPct:
+									stats.lastMerkle && stats.lastMerkle.filesTotal > 0
+										? Math.round((100 * stats.lastMerkle.filesSkipped) / stats.lastMerkle.filesTotal)
+										: undefined,
+								chunksReuse: stats.lastMerkle?.chunksSkipped,
+								chunksIndexed: stats.lastMerkle?.chunksIndexed,
+								astFiles: stats.filesAstChunked,
+								lineFiles: stats.filesLineChunked,
+								outlineBySource: stats.outlineBySource,
+							},
+						}
+					: {}),
 			}, null, 2),
 		};
 	},

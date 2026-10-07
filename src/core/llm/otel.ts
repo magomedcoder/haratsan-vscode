@@ -175,7 +175,7 @@ export interface IndexMerkleOtelAttrs {
 }
 
 /**
- * Opt-in OTLP/консольный span с метриками skip Merkle на fullIndex.
+ * Опциональный OTLP/консольный span с метриками skip Merkle на fullIndex.
  * Тот же флаг, что у LLM: `otelEnabled` (+ опционально `otelEndpoint`).
  */
 export function emitIndexMerkleMetrics(
@@ -236,6 +236,84 @@ export function emitIndexMerkleMetrics(
 								attributes,
 								status: { 
 									code: 1 
+								},
+							},
+						],
+					},
+				],
+			},
+		],
+	};
+	void postOtlp(endpoint, JSON.stringify(body));
+}
+
+export interface TreeSitterOtelAttrs {
+	ok: number;
+	fail: number;
+	timeout: number;
+	oversized: number;
+	cacheHit: number;
+	lastError?: string;
+}
+
+// Опциональный span `index.treesitter` со счётчиками разбора
+export function emitTreeSitterMetrics(
+	settings: Pick<HaratsanSettings, 'otelEnabled' | 'otelEndpoint'>,
+	attrs: TreeSitterOtelAttrs,
+): void {
+	if (!settings.otelEnabled) {
+		return;
+	}
+
+	const startMs = Date.now();
+	const startNs = BigInt(startMs) * 1_000_000n;
+	const endNs = startNs + 1_000_000n;
+	const line = `[${new Date().toISOString()}] otel index.treesitter ` +
+		`ok=${attrs.ok} fail=${attrs.fail} timeout=${attrs.timeout} ` +
+		`oversized=${attrs.oversized} cacheHit=${attrs.cacheHit}` +
+		(attrs.lastError ? ` err=${attrs.lastError}` : '');
+	const endpoint = settings.otelEndpoint.trim();
+	if (!endpoint) {
+		appendLogLine('llm', line);
+		return;
+	}
+
+	const attributes = [
+		otlpStringAttr('haratsan.index.op', 'treesitter'),
+		otlpIntAttr('haratsan.treesitter.ok', attrs.ok),
+		otlpIntAttr('haratsan.treesitter.fail', attrs.fail),
+		otlpIntAttr('haratsan.treesitter.timeout', attrs.timeout),
+		otlpIntAttr('haratsan.treesitter.oversized', attrs.oversized),
+		otlpIntAttr('haratsan.treesitter.cache_hit', attrs.cacheHit),
+	];
+
+	if (attrs.lastError) {
+		attributes.push(otlpStringAttr('haratsan.treesitter.last_error', attrs.lastError.slice(0, 200)));
+	}
+
+	const body = {
+		resourceSpans: [
+			{
+				resource: {
+					attributes: [otlpStringAttr('service.name', 'haratsan-vscode')],
+				},
+				scopeSpans: [
+					{
+						scope: { 
+							name: 'haratsan.index', 
+							version: '0.1.0' 
+						},
+						spans: [
+							{
+								traceId: hexId(16),
+								spanId: hexId(8),
+								name: 'index.treesitter',
+								kind: 3,
+								startTimeUnixNano: startNs.toString(),
+								endTimeUnixNano: endNs.toString(),
+								attributes,
+								status: { 
+									code: attrs.fail > attrs.ok ? 2 : 1 
 								},
 							},
 						],

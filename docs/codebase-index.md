@@ -13,13 +13,14 @@ The agent searches it via the `codebase_search` tool (trigrams), without sending
 
 ## How it works
 
-- The index is written to workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests**) plus companion **`merkle.json`** (Merkle v2 nodes, chunk digests, symbol leaf digests, skip metrics).
-- On update, ancestor digests are recomputed; unchanged dirs skip re-read when paths + **content-hash** match (size+mtime gate). Unchanged AST chunks keep digests -> skip re-trigram/re-embed work for those leaves.
+- The index is written to workspace storage `index/<key>/manifest.json` (files, chunks, trigrams, **dirDigests**) plus companion **`merkle.json`** (Merkle v2 nodes, chunk digests, symbol leaf digests, skip metrics). Optional **`index.sqlite`** when `indexStorageBackend=sqlite` and `fileCount ≥ indexSqliteMinFiles`.
+- On update, ancestor digests are recomputed; unchanged dirs skip re-read when paths + **content-hash** match (size+mtime gate, or `indexForceContentHash`). Unchanged AST chunks / symbol leaves skip re-trigram/re-embed (`onlyChunkIds`).
 - LSP **symbol index** (optional cache): `symbols.json` via `vscode.executeDocumentSymbolProvider`.
 - **Outline** (`outlineEngine`): default **auto** - Tree-sitter wasm (`@vscode/tree-sitter-wasm`) when available, else TS `createSourceFile` (JS-like) / LSP / regex. Settings: `auto` \| `treesitter` \| `lsp` \| `typescript`. Entries in `outline.json` carry `source` (`treesitter` \| `typescript` \| `lsp` \| `regex`).
 - **Chunking** (`chunkEngine`): default **auto** - AST spans via Tree-sitter (stable content-hash chunk ids), else line/heuristic windows (`lines`). Caps: ~400KB / ~2s parse; soft-fail -> previous engines.
-- Grammars shipped in `dist/tree-sitter/*.wasm` (MVP whitelist: typescript/tsx/javascript/python/go/rust/java/cpp/c_sharp/ruby/php/bash); lazy load per language.
-- Skip metrics from Merkle fullIndex -> Activity + optional OTEL (`otelEnabled`) span `index.full`.
+- Grammars: MVP in VSIX + opt-in `css`; `treeSitterLanguages` (empty = MVP, `*` = all available). Reserved ids (kotlin/swift/scala/html/json/yaml/sql) when wasm is dropped into `dist/tree-sitter/`.
+- Perf: Parser pool, per-file span cache, language LRU; `treeSitterUseWorker` yields the event loop (parse stays in-process).
+- Parse metrics -> Activity + OTEL `index.treesitter`; Merkle fullIndex skip -> `index.full`.
 - `.haratsan/` is not indexed (same for `.git`, `node_modules` via ignore).
 - On file change, only that file is reindexed (content-hash compare); outline/symbols update **per-file** (debounced).
 - `codebase_search` results are fragments (path, lines, snippet, score).

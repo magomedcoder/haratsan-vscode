@@ -1,3 +1,4 @@
+import { contentHash } from './hash';
 import type { IndexChunk } from './types';
 import type { TreeSitterSpan } from './treeSitter';
 
@@ -14,14 +15,9 @@ function chunkId(path: string, startLine: number, endLine: number): string {
 	return `${path}#${startLine}-${endLine}`;
 }
 
-// Стабильный id по содержимому чанка - переживает сдвиг соседних символов
+// Стабильный id = тот же sha256, что merkle chunk digest (первые 16 hex)
 export function contentChunkId(path: string, text: string): string {
-	let h = 0;
-	for (let i = 0; i < text.length; i += 1) {
-		h = (Math.imul(31, h) + text.charCodeAt(i)) | 0;
-	}
-
-	const hex = (h >>> 0).toString(16).padStart(8, '0');
+	const hex = contentHash(text).slice(0, 16);
 	return `${path}#c${hex}`;
 }
 
@@ -157,7 +153,7 @@ export function chunkFileContentAst(
 		}
 	}
 
-	// Промежутки между span - line-window
+	// Промежутки между span - окна по строкам
 	let gapStart: number | undefined;
 	const flushGap = (endInclusive: number): void => {
 		if (gapStart === undefined) {
@@ -194,6 +190,6 @@ export function chunkFileContentAst(
 	if (out.length > CHUNK_LIMITS.maxChunksPerFile) {
 		return out.slice(0, CHUNK_LIMITS.maxChunksPerFile);
 	}
-	
+
 	return out;
 }

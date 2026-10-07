@@ -4,7 +4,7 @@
 
 ## dev (Версия в разработке)
 
-- **Index / Tree-sitter + Merkle v2:** wasm Tree-sitter (`@vscode/tree-sitter-wasm`) для outline и AST-чанков (`outlineEngine` / `chunkEngine`); `merkle.json` (узлы, digests чанков/символов, метрики skip); reuse чанков при правках; Repair пересобирает merkle
+- **Index / Tree-sitter + Merkle v2:** wasm outline/AST; field-правила, пул Parser и кэш spans, `treeSitterLanguages`, OTEL `index.treesitter`; строгие движки outline/chunk; rebuild через Tree-sitter; id чанков = contentHash; `merkle.json` + leaf skip / переиспользование чанков и dirty-only vectors; patch/repair Merkle + UI mismatch; SQLite sidecar; статус wasm/AST%/skip%; CI smoke; `codebase_search` debug
 - **Index:** фоновая индексация при открытии workspace (без баннера setup / opt-in `.haratsan`); команда `Haratsan: Инициализировать проект (.haratsan)` только для scaffold
 - **Index storage:** индекс кодовой базы и project map перенесены в VS Code `storageUri` (больше не пишутся в `.haratsan/index` / `.haratsan/map`; миграции старых файлов проекта нет)
 - **Переименование:** продукт переименован с Gen в **Haratsan** (UI, команды, настройки, пути конфига)

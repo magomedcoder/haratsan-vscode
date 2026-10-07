@@ -30,6 +30,24 @@ jobs:
       - name: Build extension
         run: yarn package
 
+      - name: Smoke Tree-sitter wasm
+        run: |
+          test -f dist/tree-sitter/tree-sitter.wasm
+          test -f dist/tree-sitter/tree-sitter-typescript.wasm
+          node -e "
+            const path=require('path');
+            const root=path.join(process.cwd(),'dist/tree-sitter');
+            const mod=require(path.join(root,'tree-sitter.js'));
+            (async()=>{
+              await mod.Parser.init({locateFile:n=>path.join(root,path.basename(n))});
+              const lang=await mod.Language.load(path.join(root,'tree-sitter-typescript.wasm'));
+              const p=new mod.Parser(); p.setLanguage(lang);
+              const tree=p.parse('export function ok(){return 1}');
+              if(!tree.rootNode) throw new Error('parse failed');
+              console.log('tree-sitter smoke ok');
+            })().catch(e=>{console.error(e); process.exit(1);});
+          "
+
       - name: Package VSIX
         run: yarn package:vsix
 

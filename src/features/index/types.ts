@@ -43,7 +43,7 @@ export interface IndexProgress {
 	// ISO из manifest.updatedAt после успешной индексации
 	updatedAt?: string;
 	lastError?: string;
-	// Ошибки по отдельным файлам при partial failure (fullIndex не валится целиком)
+	// Ошибки по отдельным файлам при частичном сбое (fullIndex не валится целиком)
 	partialErrors?: string[];
 }
 

@@ -114,31 +114,60 @@ export function hashChunkText(text: string): string {
 }
 
 /**
- * Построить / обновить local-hash векторы для всех чанков манифеста.
- * Удаляет устаревшие entries той же model.
+ * Построить / обновить local-hash векторы.
+ * `onlyChunkIds` - переэмбеддить только эти id; остальные reuse из prev (если vector жив).
  */
 export function syncLocalHashVectors(
 	manifest: IndexManifest,
 	prev: VectorIndexFile,
+	opts?: { onlyChunkIds?: ReadonlySet<string> },
 ): VectorIndexFile {
 	const next = emptyVectorIndex();
 	const model = LOCAL_HASH_MODEL_ID;
 	const keepRemote = Object.entries(prev.entries).filter(([, e]) => e.source === 'remote');
+	const only = opts?.onlyChunkIds;
+	const prevByChunk = new Map<string, VectorIndexFile['entries'][string]>();
+	for (const e of Object.values(prev.entries)) {
+		if (e.source === 'local-hash' && e.vector.length === LOCAL_HASH_DIMS) {
+			prevByChunk.set(e.chunkId, e);
+		}
+	}
 
 	for (const [chunkId, chunk] of Object.entries(manifest.chunks)) {
 		const fileRec = manifest.files[chunk.path];
-		const contentHash = fileRec?.hash ?? hashChunkText(chunk.text);
-		const key = vectorEntryKey(contentHash, model, chunkId);
+		const ch = fileRec?.hash ?? hashChunkText(chunk.text);
+		const key = vectorEntryKey(ch, model, chunkId);
 		const existing = prev.entries[key];
-		if (existing && existing.source === 'local-hash' && existing.contentHash === contentHash && existing.vector.length === LOCAL_HASH_DIMS) {
+		const mustReembed = !only || only.has(chunkId);
+
+		if (
+			existing &&
+			existing.source === 'local-hash' &&
+			existing.contentHash === ch &&
+			existing.vector.length === LOCAL_HASH_DIMS
+		) {
 			next.entries[key] = existing;
 			continue;
+		}
+
+		if (!mustReembed) {
+			const reused = prevByChunk.get(chunkId);
+			if (reused) {
+				next.entries[key] = {
+					...reused,
+					chunkId,
+					path: chunk.path,
+					contentHash: ch,
+					model,
+				};
+				continue;
+			}
 		}
 
 		next.entries[key] = {
 			chunkId,
 			path: chunk.path,
-			contentHash,
+			contentHash: ch,
 			model,
 			source: 'local-hash',
 			dims: LOCAL_HASH_DIMS,
@@ -147,7 +176,6 @@ export function syncLocalHashVectors(
 		};
 	}
 
-	// Сохраняем remote-кэш, если chunk ещё существует
 	const liveChunkIds = new Set(Object.keys(manifest.chunks));
 	for (const [key, entry] of keepRemote) {
 		if (liveChunkIds.has(entry.chunkId)) {
@@ -166,7 +194,7 @@ export interface VectorSearchHit {
 	source: VectorSource;
 }
 
-// Cosine search по индексу (фильтр по model optional)
+// Cosine-поиск по индексу (фильтр по model опционален)
 export function searchVectorIndex(
 	index: VectorIndexFile,
 	queryVec: number[],
@@ -192,7 +220,7 @@ export function searchVectorIndex(
 		});
 	}
 	scored.sort((a, b) => b.score - a.score);
-	// Дедуп по path: лучший chunk
+	// Дедуп по path: лучший чанк
 	const best = new Map<string, VectorSearchHit>();
 	for (const hit of scored) {
 		const prev = best.get(hit.path);
@@ -204,7 +232,7 @@ export function searchVectorIndex(
 	return [...best.values()].sort((a, b) => b.score - a.score).slice(0, maxResults);
 }
 
-// Upsert remote vectors для чанков
+// Обновить/вставить remote-векторы для чанков
 export function upsertRemoteVectors(
 	index: VectorIndexFile,
 	items: Array<{

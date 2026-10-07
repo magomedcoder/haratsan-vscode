@@ -53,6 +53,48 @@ export function rebuildManifestTrigrams(manifest: IndexManifest): void {
 	manifest.trigrams = buildTrigramIndex(Object.values(manifest.chunks));
 }
 
+/**
+ * Инкремент: убрать id из inverted index и добавить граммы только для `addChunks`.
+ * Если `fullRebuild` или trigrams пусты - полный rebuild.
+ */
+export function patchManifestTrigrams(
+	manifest: IndexManifest,
+	opts: {
+		removedChunkIds: ReadonlyArray<string>;
+		addChunks: ReadonlyArray<IndexChunk>;
+		fullRebuild?: boolean;
+	},
+): void {
+	if (opts.fullRebuild || !manifest.trigrams || Object.keys(manifest.trigrams).length === 0) {
+		rebuildManifestTrigrams(manifest);
+		return;
+	}
+
+	const remove = new Set(opts.removedChunkIds);
+	if (remove.size > 0) {
+		for (const [gram, ids] of Object.entries(manifest.trigrams)) {
+			const next = ids.filter((id) => !remove.has(id));
+			if (next.length === 0) {
+				delete manifest.trigrams[gram];
+			} else {
+				manifest.trigrams[gram] = next;
+			}
+		}
+	}
+
+	for (const chunk of opts.addChunks) {
+		const grams = new Set(tokenize(`${chunk.path} ${chunk.text}`));
+		for (const gram of grams) {
+			const list = manifest.trigrams[gram] ?? [];
+			if (!list.includes(chunk.id)) {
+				list.push(chunk.id);
+			}
+			
+			manifest.trigrams[gram] = list;
+		}
+	}
+}
+
 export interface TrigramSearchHit {
 	chunkId: string;
 	score: number;

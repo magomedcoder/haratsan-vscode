@@ -48,7 +48,7 @@ function buildIndexEngineLine(status: IndexEngineStatus): string {
 		parts.push(t('settings.indexEngine.indexing'));
 	} else if (status.progressState === 'cancelled') {
 		parts.push(t('settings.indexEngine.cancelled'));
-	} else if (status.progressState === 'error' || status.corrupt) {
+	} else if (status.progressState === 'error' || status.corrupt || status.merkleMismatch) {
 		parts.push(t('settings.indexEngine.error'));
 	}
 
@@ -62,6 +62,35 @@ function buildIndexEngineLine(status: IndexEngineStatus): string {
 	}
 
 	return `${t('settings.indexEngine.label')}: ${parts.toString()}`;
+}
+
+function buildIndexExtrasLine(status: IndexEngineStatus): string | undefined {
+	const bits: string[] = [];
+	if (status.treeSitterAvailable) {
+		const n = status.treeSitterGrammars?.length ?? 0;
+		bits.push(t('settings.indexEngine.treesitterOn', n));
+	} else {
+		bits.push(t('settings.indexEngine.treesitterOff'));
+	}
+
+	if (typeof status.astChunkRatio === 'number') {
+		bits.push(t('settings.indexEngine.astRatio', Math.round(status.astChunkRatio * 100)));
+	}
+
+	if (typeof status.merkleSkipPct === 'number') {
+		bits.push(t('settings.indexEngine.merkleSkip', status.merkleSkipPct));
+	}
+
+	if (status.outlineBySource && Object.keys(status.outlineBySource).length > 0) {
+		const parts = Object.entries(status.outlineBySource).map(([k, v]) => `${k}:${v}`).join(' ');
+		bits.push(t('settings.indexEngine.outlineSources', parts));
+	}
+
+	if (status.indexStorageBackend) {
+		bits.push(t('settings.indexEngine.storage', status.indexStorageBackend + (status.sqliteAvailable ? '' : ' (нет node:sqlite)')));
+	}
+	
+	return bits.length ? bits.toString() : undefined;
 }
 
 function showRepairButton(status: IndexEngineStatus): boolean {
@@ -78,6 +107,7 @@ function showRepairButton(status: IndexEngineStatus): boolean {
 		status.progressState === 'cancelled' ||
 		Boolean(status.corrupt) ||
 		Boolean(status.missingDirDigests) ||
+		Boolean(status.merkleMismatch) ||
 		Boolean(status.partialErrors?.length) ||
 		Boolean(status.lastError)
 	);
@@ -101,6 +131,9 @@ export function IndexingPage({
 				<div className="field field-status" role="status">
 					<span className="field__label">{buildIndexEngineLine(indexStatus)}</span>
 					<span className="field__hint">{t('settings.indexEngine.hint')}</span>
+					{buildIndexExtrasLine(indexStatus) ? (
+						<span className="field__hint">{buildIndexExtrasLine(indexStatus)}</span>
+					) : null}
 					{indexStatus.lastError ? (
 						<span className="field__hint field__hint--error">{indexStatus.lastError}</span>
 					) : null}
@@ -186,6 +219,44 @@ export function IndexingPage({
 				<option value="treesitter">{t('settings.chunkEngine.treesitter')}</option>
 				<option value="lines">{t('settings.chunkEngine.lines')}</option>
 			</FieldSelect>
+			<FieldTextarea
+				labelKey="settings.treeSitterLanguages.label"
+				hintKey="settings.treeSitterLanguages.hint"
+				code
+				rows={2}
+				value={draft.treeSitterLanguages.join('\n')}
+				onChange={(v) => setField('treeSitterLanguages', v.split(/\r?\n/))}
+			/>
+			<FieldSelect
+				labelKey="settings.treeSitterUseWorker.label"
+				hintKey="settings.treeSitterUseWorker.hint"
+				value={draft.treeSitterUseWorker ? 'on' : 'off'}
+				onChange={(v) => setField('treeSitterUseWorker', v === 'on')}
+			>
+				<option value="off">{t('settings.treeSitterUseWorker.off')}</option>
+				<option value="on">{t('settings.treeSitterUseWorker.on')}</option>
+			</FieldSelect>
+			<FieldToggle
+				labelKey="settings.indexForceContentHash.label"
+				hintKey="settings.indexForceContentHash.hint"
+				checked={draft.indexForceContentHash}
+				onChange={(v) => setField('indexForceContentHash', v)}
+			/>
+			<FieldSelect
+				labelKey="settings.indexStorageBackend.label"
+				hintKey="settings.indexStorageBackend.hint"
+				value={draft.indexStorageBackend}
+				onChange={(v) => setField('indexStorageBackend', v as typeof draft.indexStorageBackend)}
+			>
+				<option value="json">{t('settings.indexStorageBackend.json')}</option>
+				<option value="sqlite">{t('settings.indexStorageBackend.sqlite')}</option>
+			</FieldSelect>
+			<FieldText
+				labelKey="settings.indexSqliteMinFiles.label"
+				hintKey="settings.indexSqliteMinFiles.hint"
+				value={String(draft.indexSqliteMinFiles)}
+				onChange={(v) => setField('indexSqliteMinFiles', Math.max(0, Number(v) || 0))}
+			/>
 			<FieldText
 				labelKey="settings.embeddingsBaseUrl.label"
 				hintKey="settings.embeddingsBaseUrl.hint"

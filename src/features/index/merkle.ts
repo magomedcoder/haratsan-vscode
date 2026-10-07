@@ -1,6 +1,6 @@
 /**
  * Merkle-дерево v2 для skip индексации и проверки целостности.
- * Хранение: `<storageUri>/index/<folderKey>/merkle.json` `dirDigests` в manifest - совместимый flat-view (корень/каталоги).
+ * Хранение: `<storageUri>/index/<folderKey>/merkle.json`; `dirDigests` в manifest - совместимый flat-view (корень/каталоги).
  */
 
 import * as fs from 'node:fs/promises';
@@ -134,6 +134,63 @@ export function symbolLeafKey(path: string, startLine: number, endLine: number, 
 	return `${path}#${startLine}-${endLine}:${name}`;
 }
 
+// Инкремент: пересобрать дерево из актуальных files, сохранив chunk/symbol digests (полная пересборка nodes дешевле patch-графа при JSON; digests мержатся)
+export function patchMerkleDocument(
+	prev: MerkleDocument,
+	files: Record<string, Pick<IndexFileRecord, 'hash'>>,
+	opts?: {
+		chunkDigests?: Record<string, string>;
+		symbolDigests?: Record<string, string>;
+		metrics?: MerkleMetrics;
+		changedPaths?: ReadonlySet<string>;
+	},
+): MerkleDocument {
+	const chunkDigests = { 
+		...prev.chunkDigests, ...(opts?.chunkDigests ?? {}) 
+	};
+	const symbolDigests = { 
+		...prev.symbolDigests, ...(opts?.symbolDigests ?? {}) 
+	};
+
+	const live = new Set(Object.keys(files).map((p) => p.replace(/\\/g, '/')));
+	for (const id of Object.keys(chunkDigests)) {
+		const pathPart = id.split('#')[0] ?? '';
+		if (pathPart && !live.has(pathPart)) {
+			delete chunkDigests[id];
+		}
+	}
+
+	for (const key of Object.keys(symbolDigests)) {
+		const pathPart = key.split('#')[0] ?? '';
+		if (pathPart && !live.has(pathPart)) {
+			delete symbolDigests[key];
+		}
+	}
+
+	void opts?.changedPaths;
+	return buildMerkleDocument(files, {
+		chunkDigests,
+		symbolDigests,
+		metrics: opts?.metrics,
+		prev,
+	});
+}
+
+// Неизменённые symbol leaves (для пропуска outline/trigram leaf)
+export function unchangedSymbolLeaves(
+	prev: Record<string, string>,
+	next: Record<string, string>,
+): string[] {
+	const out: string[] = [];
+	for (const [key, digest] of Object.entries(next)) {
+		if (prev[key] === digest) {
+			out.push(key);
+		}
+	}
+	
+	return out;
+}
+
 // Построить дерево узлов из files + опциональных chunk/symbol digests
 export function buildMerkleDocument(
 	files: Record<string, Pick<IndexFileRecord, 'hash'>>,
@@ -222,7 +279,7 @@ export function digestsFromChunks(chunks: Record<string, IndexChunk>): Record<st
 	return out;
 }
 
-// При reindex файла: сохранить старые чанки с тем же digest (по тексту), вернуть список chunkId которые можно не переэмбеддить
+// При reindex файла: сохранить старые чанки с тем же digest (по тексту), вернуть chunkId, которые можно не переэмбеддить
 export function mergeChunksPreservingDigests(
 	prevChunks: Record<string, IndexChunk>,
 	prevDigests: Record<string, string>,
@@ -302,7 +359,7 @@ export function detectMerkleIssues(
 			missingNodes.push(rel);
 			continue;
 		}
-		
+
 		if (node.digest !== record.hash) {
 			mismatches.push(rel);
 		}

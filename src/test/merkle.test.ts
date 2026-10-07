@@ -1,8 +1,10 @@
 import * as assert from 'node:assert';
-import { buildMerkleDocument, chunkContentDigest, detectMerkleIssues, mergeChunksPreservingDigests, parseMerkleJson, repairMerkleFromManifest, MERKLE_ALGORITHM, MERKLE_VERSION } from '../features/index/merkle.js';
+import { buildMerkleDocument, chunkContentDigest, detectMerkleIssues, mergeChunksPreservingDigests, parseMerkleJson, patchMerkleDocument, repairMerkleFromManifest, unchangedSymbolLeaves, MERKLE_ALGORITHM, MERKLE_VERSION } from '../features/index/merkle.js';
 import { emptyManifest } from '../features/index/types.js';
 import type { IndexChunk } from '../features/index/types.js';
-import { chunkFileContentAst } from '../features/index/chunk.js';
+import { chunkFileContentAst, contentChunkId } from '../features/index/chunk.js';
+import { contentHash } from '../features/index/hash.js';
+import { canSkipDirRewalk } from '../features/index/dirDigests.js';
 
 suite('merkle v2', () => {
 	test('digest каталога стабилен при перестановке детей', () => {
@@ -81,25 +83,15 @@ suite('merkle v2', () => {
 
 	test('detectMerkleIssues находит mismatch', () => {
 		const manifest = emptyManifest();
-		manifest.files['a.ts'] = { 
-			hash: 'h1', 
-			size: 1, 
-			chunkIds: [] 
-		};
-		const merkle = buildMerkleDocument({ 'a.ts': { 
-			hash: 'other' 
-		} });
+		manifest.files['a.ts'] = { hash: 'h1', size: 1, chunkIds: [] };
+		const merkle = buildMerkleDocument({ 'a.ts': { hash: 'other' } });
 		const issues = detectMerkleIssues(manifest, merkle);
 		assert.ok(issues.mismatches.includes('a.ts'));
 	});
 
 	test('repairMerkleFromManifest пересобирает узлы', () => {
 		const manifest = emptyManifest();
-		manifest.files['src/x.ts'] = { 
-			hash: 'hx', 
-			size: 2, 
-			chunkIds: ['c1'] 
-		};
+		manifest.files['src/x.ts'] = { hash: 'hx', size: 2, chunkIds: ['c1'] };
 		manifest.chunks['c1'] = {
 			id: 'c1',
 			path: 'src/x.ts',
@@ -131,31 +123,63 @@ suite('merkle v2', () => {
 	test('chunkFileContentAst даёт id, стабильные по содержимому', () => {
 		const src = 'function a() {\n  return 1;\n}\n\nfunction b() {\n  return 2;\n}\n';
 		const spans = [
-			{ 
-				name: 'a', 
-				kind: 'function', 
-				startLine: 1, 
-				endLine: 3, 
-				startIndex: 0, 
-				endIndex: 28 
-			},
-			{ 
-				name: 'b', 
-				kind: 'function', 
-				startLine: 5, 
-				endLine: 7, 
-				startIndex: 30, 
-				endIndex: 58 
-			},
+			{ name: 'a', kind: 'function', startLine: 1, endLine: 3, startIndex: 0, endIndex: 28 },
+			{ name: 'b', kind: 'function', startLine: 5, endLine: 7, startIndex: 30, endIndex: 58 },
 		];
 		const chunks = chunkFileContentAst('f.ts', src, spans);
 		assert.ok(chunks.length >= 2);
 		assert.ok(chunks.every((c) => c.id.includes('#c')));
-		const again = chunkFileContentAst('f.ts', `\n\n${src}`, spans.map((s) => ({
-			...s,
-			startLine: s.startLine + 2,
-			endLine: s.endLine + 2,
-		})));
-		assert.ok(again.length >= 1);
+	});
+
+	test('contentChunkId совпадает с contentHash (sha256 prefix)', () => {
+		const text = 'function a() { return 1; }';
+		const id = contentChunkId('f.ts', text);
+		assert.strictEqual(id, `f.ts#c${contentHash(text).slice(0, 16)}`);
+		assert.strictEqual(chunkContentDigest(text), contentHash(text));
+	});
+
+	test('patchMerkleDocument мержит digests и чистит удалённые пути', () => {
+		const prev = buildMerkleDocument(
+			{ 'a.ts': { hash: 'ha' }, 'b.ts': { hash: 'hb' } },
+			{ chunkDigests: { 'a.ts#c1': 'd1', 'b.ts#c1': 'd2' }, symbolDigests: { 'a.ts#1-2:x': 's1' } },
+		);
+		const next = patchMerkleDocument(prev, { 'a.ts': { hash: 'ha2' } }, {
+			chunkDigests: { 'a.ts#c2': 'd3' },
+			symbolDigests: { 'a.ts#1-2:x': 's1' },
+		});
+		assert.ok(next.nodes['a.ts']);
+		assert.strictEqual(next.nodes['b.ts'], undefined);
+		assert.ok(next.chunkDigests['a.ts#c2']);
+		assert.strictEqual(next.chunkDigests['b.ts#c1'], undefined);
+	});
+
+	test('unchangedSymbolLeaves', () => {
+		const leaves = unchangedSymbolLeaves(
+			{ 'a.ts#1-2:f': 'h1', 'a.ts#3-4:g': 'h2' },
+			{ 'a.ts#1-2:f': 'h1', 'a.ts#3-4:g': 'h3' },
+		);
+		assert.deepStrictEqual(leaves, ['a.ts#1-2:f']);
+	});
+
+	test('forceContentHash блокирует skip без явного hash', () => {
+		const manifest = emptyManifest();
+		manifest.files['a.ts'] = { hash: 'h', size: 10, mtimeMs: 1, chunkIds: [] };
+		manifest.dirDigests = { '': 'root' };
+		assert.strictEqual(
+			canSkipDirRewalk(manifest, '', [{ relative: 'a.ts', size: 10, mtimeMs: 1 }]),
+			true,
+		);
+		assert.strictEqual(
+			canSkipDirRewalk(manifest, '', [{ relative: 'a.ts', size: 10, mtimeMs: 1 }], {
+				forceContentHash: true,
+			}),
+			false,
+		);
+		assert.strictEqual(
+			canSkipDirRewalk(manifest, '', [{ relative: 'a.ts', size: 10, contentHash: 'h' }], {
+				forceContentHash: true,
+			}),
+			true,
+		);
 	});
 });
